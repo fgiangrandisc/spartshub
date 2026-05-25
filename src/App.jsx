@@ -248,24 +248,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
         ))}
       </div>
 
-      {/* Banners + search */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 300px", gap:12, marginBottom:24 }}>
-        <div style={{ background:`linear-gradient(135deg,rgba(232,50,10,.18),rgba(232,50,10,.06))`,border:`1px solid rgba(232,50,10,.3)`,borderRadius:12,padding:"20px 24px" }}>
-          <span className="tag t-red" style={{ fontSize:9,marginBottom:10,display:"inline-flex" }}>⚡ OFERTA RELÁMPAGO</span>
-          <p className="bebas" style={{ fontSize:26,color:TEXT,lineHeight:1.1,marginBottom:4 }}>20% OFF en repuestos CAT</p>
-          <p style={{ fontSize:13,color:SUB }}>Hasta agotar stock · 47 publicaciones</p>
-        </div>
-        <div style={{ background:BG3,border:`1px solid ${BORDER2}`,borderRadius:12,padding:"20px 24px" }}>
-          <span className="tag t-dim" style={{ fontSize:9,marginBottom:10,display:"inline-flex" }}>TRADE ASISTIDO</span>
-          <p className="bebas" style={{ fontSize:22,color:TEXT,lineHeight:1.1,marginBottom:4 }}>Lo encontramos por ti</p>
-          <p style={{ fontSize:13,color:MUTED }}>Sin compromiso · Respuesta en 24h</p>
-        </div>
-        <div style={{ background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:12,padding:"20px 24px",display:"flex",flexDirection:"column",justifyContent:"center",gap:10,cursor:"pointer" }} onClick={()=>onGoSearch()}>
-          <p style={{ fontSize:14,fontWeight:700,color:TEXT }}>🔔 Urgencias hoy en tu zona</p>
-          <p style={{ fontSize:13,color:MUTED }}>Solicitudes activas en tu zona · Responde ahora</p>
-          <span style={{ fontSize:12,color:GOLD,fontWeight:700 }}>Ver solicitudes →</span>
-        </div>
-      </div>
+
 
       {/* Category pills */}
       <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
