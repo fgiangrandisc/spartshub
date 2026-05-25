@@ -320,81 +320,280 @@ function MiniCard({ l, onClick }) {
    SEARCH PAGE
 ══════════════════════════════════════════════════════════════ */
 function SearchPage({ user, onSelect }) {
-  const [q,        setQ]        = useState("");
-  const [cat,      setCat]      = useState("all");
-  const [listings, setListings] = useState([]);
-  const [loading,  setLoading]  = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
+  const [q,          setQ]          = useState("");
+  const [cat,        setCat]        = useState("all");
+  const [condition,  setCondition]  = useState("");
+  const [marca,      setMarca]      = useState("");
+  const [modelo,     setModelo]     = useState("");
+  const [nSerie,     setNSerie]     = useState("");
+  const [nParte,     setNParte]     = useState("");
+  const [nMotor,     setNMotor]     = useState("");
+  const [nChasis,    setNChasis]    = useState("");
+  const [horasMin,   setHorasMin]   = useState("");
+  const [horasMax,   setHorasMax]   = useState("");
+  const [ciudad,     setCiudad]     = useState("");
+  const [priceMin,   setPriceMin]   = useState("");
+  const [priceMax,   setPriceMax]   = useState("");
+  const [sortBy,     setSortBy]     = useState("newest");
+  const [verified,   setVerified]   = useState(false);
+  const [priceCur,   setPriceCur]   = useState("CLP");
+  const [listings,   setListings]   = useState([]);
+  const [loading,    setLoading]    = useState(false);
+  const [viewMode,   setViewMode]   = useState("grid");
+  const [showFilters,setShowFilters]= useState(true);
+
+  const MARCAS = ["","Caterpillar","Komatsu","Rexroth","Parker","WEG","ABB","Siemens","SKF","Cummins","Fleetguard","Gates","SEW","Atlas Copco","Bosch","NSK","FAG","Timken"];
+  const SORT_OPTS = [["newest","Más recientes"],["price_asc","Menor precio"],["price_desc","Mayor precio"]];
 
   const load = useCallback(async () => {
     setLoading(true);
-    let query = sb.from("listings").select("*").order("created_at",{ascending:false});
-    if (cat !== "all") query = query.eq("cat", cat);
-    if (q) query = query.ilike("title",`%${q}%`);
+    const asc = sortBy === "price_asc";
+    const col = sortBy.startsWith("price") ? "price" : "created_at";
+    let query = sb.from("listings").select("*").order(col, {ascending: asc});
+    if (cat !== "all")  query = query.eq("cat", cat);
+    if (q)              query = query.ilike("title", `%${q}%`);
+    if (condition)      query = query.eq("condition", condition);
+    if (marca)          query = query.ilike("brand", `%${marca}%`);
+    if (modelo)         query = query.ilike("model", `%${modelo}%`);
+    if (nSerie)         query = query.ilike("serial_number", `%${nSerie}%`);
+    if (nParte)         query = query.ilike("part_number", `%${nParte}%`);
+    if (nMotor)         query = query.ilike("engine_number", `%${nMotor}%`);
+    if (nChasis)        query = query.ilike("chassis_number", `%${nChasis}%`);
+    if (horasMin)       query = query.gte("hours", Number(horasMin));
+    if (horasMax)       query = query.lte("hours", Number(horasMax));
+    if (ciudad)         query = query.ilike("location", `%${ciudad}%`);
+    if (priceMin)       query = query.gte("price", Number(priceMin));
+    if (priceMax)       query = query.lte("price", Number(priceMax));
+    if (priceMin||priceMax) query = query.eq("currency", priceCur);
+    if (verified)       query = query.eq("verified", true);
     const { data } = await query;
     setListings(data||[]);
     setLoading(false);
-  }, [cat, q]);
+  }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, nChasis, horasMin, horasMax, ciudad, priceMin, priceMax, priceCur, sortBy, verified]);
 
   useEffect(()=>{ load(); },[load]);
 
+  const activeFilters = [condition,marca,modelo,nSerie,nParte,nMotor,nChasis,horasMin,horasMax,ciudad,priceMin,priceMax,verified?'verificado':''].filter(Boolean).length;
+
+  const resetFilters = () => { setCondition(""); setMarca(""); setModelo(""); setNSerie(""); setNParte(""); setNMotor(""); setNChasis(""); setHorasMin(""); setHorasMax(""); setCiudad(""); setPriceMin(""); setPriceMax(""); setPriceCur("CLP"); setVerified(false); setSortBy("newest"); };
+
+  const INP = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
+
   return (
-    <div style={{ paddingBottom:100 }}>
-      <div style={{ padding:"0 0 16px" }}>
-        <div className="search-bar">
-          <Ic n="search" s={16} c={MUTED}/>
-          <input placeholder="Buscar repuestos, equipos, marcas…" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} autoFocus/>
-          {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
-        </div>
-      </div>
+    <div style={{ display:"flex", gap:24, alignItems:"flex-start" }}>
 
-      {/* Categories */}
-      <div style={{ padding:"0 0 14px", display:"flex", gap:8, flexWrap:"wrap" }}>
-        {CATS.map(c=>(
-          <button key={c.id} onClick={()=>setCat(c.id)}
-            style={{ flexShrink:0,padding:"7px 14px",borderRadius:20,fontSize:12,fontWeight:700,border:"none",cursor:"pointer",transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",
-              background:cat===c.id?RED:CARD, color:cat===c.id?"#fff":SUB, border:`1px solid ${cat===c.id?RED:BORDER}` }}>
-            {c.emoji} {c.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Results bar */}
-      <div style={{ padding:"0 0 12px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <span style={{ fontSize:13, color:MUTED }}>{listings.length} publicaciones</span>
-        <div style={{ display:"flex", gap:4 }}>
-          <button className="btn-ghost" style={{ padding:"6px 8px", color:viewMode==="grid"?RED:MUTED }} onClick={()=>setViewMode("grid")}><Ic n="grid" s={18}/></button>
-          <button className="btn-ghost" style={{ padding:"6px 8px", color:viewMode==="list"?RED:MUTED }} onClick={()=>setViewMode("list")}><Ic n="box" s={18}/></button>
+      {/* ── Sidebar de filtros ── */}
+      <div style={{ width:220, flexShrink:0, background:BG3, borderRadius:12, border:`1px solid ${BORDER}`, padding:"20px 16px", position:"sticky", top:0 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
+          <p className="bebas" style={{ fontSize:18, color:TEXT, letterSpacing:.5 }}>Filtros</p>
+          {activeFilters > 0 && (
+            <button onClick={resetFilters} style={{ fontSize:11, color:RED, background:"none", border:"none", cursor:"pointer", fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
+              Limpiar ({activeFilters})
+            </button>
+          )}
         </div>
-      </div>
 
-      {loading ? (
-        <div style={{ display:"flex", justifyContent:"center", paddingTop:40 }}><Spin size={30}/></div>
-      ) : listings.length === 0 ? (
-        <div style={{ padding:"60px 0",textAlign:"center" }}>
-          <div style={{ fontSize:48,marginBottom:12 }}>🔍</div>
-          <p className="bebas" style={{ fontSize:24,color:TEXT,marginBottom:8 }}>Sin resultados</p>
-          <p style={{ color:MUTED,fontSize:14 }}>Intentá con otro término o categoría</p>
+        {/* Categoría */}
+        <div style={{ marginBottom:20 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Categoría</p>
+          <select value={cat} onChange={e=>setCat(e.target.value)}
+            style={{ background:SURF, border:`1px solid ${cat!=="all"?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:cat!=="all"?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:cat!=="all"?700:400, transition:"border-color .2s" }}>
+            {CATS.map(c=><option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
+          </select>
         </div>
-      ) : viewMode === "grid" ? (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:14 }}>
-          {listings.map(l=>(
-            <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
-              <PhotoPlaceholder emoji={l.emoji||"📦"} h={130}/>
-              <div style={{ padding:"10px 12px 14px" }}>
-                <span className="tag t-dim" style={{ fontSize:9,marginBottom:6,display:"inline-flex" }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
-                <p style={{ fontSize:13,fontWeight:600,lineHeight:1.3,marginBottom:3,color:TEXT }}>{l.title}</p>
-                <p style={{ fontSize:11,color:MUTED,marginBottom:6 }}>{l.biz}</p>
-                <p className="bebas" style={{ fontSize:16,color:RED }}>{fmtPrice(l.price,l.currency)}</p>
-              </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:20 }}/>
+
+        {/* Condición */}
+        <div style={{ marginBottom:18 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Condición</p>
+          <select value={condition} onChange={e=>setCondition(e.target.value)}
+            style={{ background:SURF, border:`1px solid ${condition?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:condition?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:condition?700:400, transition:"border-color .2s" }}>
+            <option value="">Todas</option>
+            {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:20 }}/>
+
+        {/* Marca */}
+        <div style={{ marginBottom:18 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Marca</p>
+          <select value={marca} onChange={e=>setMarca(e.target.value)} style={{ ...INP }}>
+            {MARCAS.map(m=><option key={m} value={m}>{m||"Todas las marcas"}</option>)}
+          </select>
+        </div>
+
+        {/* Modelo */}
+        <div style={{ marginBottom:14 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Modelo</p>
+          <input value={modelo} onChange={e=>setModelo(e.target.value)} placeholder="Ej: 3406E, A10V, 6205…" style={{ background:SURF, border:`1px solid ${modelo?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:modelo?RED:TEXT, width:"100%", outline:"none", fontFamily:"inherit", fontWeight:modelo?700:400, transition:"border-color .2s" }}/>
+        </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
+
+        {/* Números técnicos */}
+        <div style={{ marginBottom:14 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Serie</p>
+          <input value={nSerie} onChange={e=>setNSerie(e.target.value)} placeholder="Nº serie del equipo" style={{ ...INP }}/>
+        </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:14 }}/>
+
+        <div style={{ marginBottom:14 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Parte</p>
+          <input value={nParte} onChange={e=>setNParte(e.target.value)} placeholder="Part number" style={{ ...INP }}/>
+        </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:14 }}/>
+
+        <div style={{ marginBottom:14 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Motor</p>
+          <input value={nMotor} onChange={e=>setNMotor(e.target.value)} placeholder="Nº motor" style={{ ...INP }}/>
+        </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:14 }}/>
+
+        <div style={{ marginBottom:14 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Chasis</p>
+          <input value={nChasis} onChange={e=>setNChasis(e.target.value)} placeholder="Nº chasis" style={{ ...INP }}/>
+        </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
+
+        {/* Horas de uso */}
+        <div style={{ marginBottom:14 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Horas de uso</p>
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            <input value={horasMin} onChange={e=>setHorasMin(e.target.value)} placeholder="Mín" type="number" style={{ ...INP, width:"50%" }}/>
+            <span style={{ color:MUTED, fontSize:13 }}>–</span>
+            <input value={horasMax} onChange={e=>setHorasMax(e.target.value)} placeholder="Máx" type="number" style={{ ...INP, width:"50%" }}/>
+          </div>
+        </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
+
+        {/* Ciudad */}
+        <div style={{ marginBottom:14 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Ciudad / Región</p>
+          <input value={ciudad} onChange={e=>setCiudad(e.target.value)} placeholder="Ej: Santiago, Antofagasta…" style={{ ...INP }}/>
+        </div>
+
+        <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
+
+        {/* Precio */}
+        <div style={{ marginBottom:18 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+            <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", fontFamily:"Barlow Condensed,sans-serif" }}>Rango de precio</p>
+            <div style={{ display:"flex", background:BG2, borderRadius:6, overflow:"hidden", border:`1px solid ${BORDER}` }}>
+              {["CLP","USD"].map(c=>(
+                <button key={c} onClick={()=>setPriceCur(c)}
+                  style={{ padding:"3px 10px", fontSize:11, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s",
+                    background:priceCur===c?RED:"transparent", color:priceCur===c?"#fff":MUTED }}>
+                  {c}
+                </button>
+              ))}
             </div>
-          ))}
+          </div>
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            <input value={priceMin} onChange={e=>setPriceMin(e.target.value)} placeholder="Mín" type="number" style={{ ...INP, width:"50%" }}/>
+            <span style={{ color:MUTED, fontSize:13 }}>–</span>
+            <input value={priceMax} onChange={e=>setPriceMax(e.target.value)} placeholder="Máx" type="number" style={{ ...INP, width:"50%" }}/>
+          </div>
         </div>
-      ) : (
-        <div style={{ padding:"0" }}>
-          {listings.map(l=><MiniCard key={l.id} l={l} onClick={()=>onSelect(l)}/>)}
+
+        <div style={{ height:1, background:BORDER, marginBottom:20 }}/>
+
+        {/* Solo verificados */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18, cursor:"pointer" }} onClick={()=>setVerified(v=>!v)}>
+          <p style={{ fontSize:13, color:verified?TEXT:SUB, fontWeight:verified?700:400 }}>Solo verificados ✓</p>
+          <div className="toggle" style={{ background:verified?RED:"rgba(255,255,255,.1)" }}>
+            <div className="toggle-knob" style={{ left:verified?20:2 }}/>
+          </div>
         </div>
-      )}
+
+        <button className="btn-red" onClick={load} style={{ width:"100%", padding:"11px", fontSize:13 }}>
+          Buscar
+        </button>
+      </div>
+
+      {/* ── Resultados ── */}
+      <div style={{ flex:1, minWidth:0 }}>
+        {/* Search bar + sort */}
+        <div style={{ display:"flex", gap:10, marginBottom:14, alignItems:"center" }}>
+          <div className="search-bar" style={{ flex:1 }}>
+            <Ic n="search" s={16} c={MUTED}/>
+            <input placeholder="Buscar repuestos, equipos, marcas…" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} autoFocus/>
+            {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
+          </div>
+          <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
+            style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:13, color:TEXT, outline:"none", cursor:"pointer", fontFamily:"inherit" }}>
+            {SORT_OPTS.map(([v,l])=><option key={v} value={v}>{l}</option>)}
+          </select>
+          <div style={{ display:"flex", gap:4 }}>
+            <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="grid"?RED:MUTED }} onClick={()=>setViewMode("grid")}><Ic n="grid" s={18}/></button>
+            <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="list"?RED:MUTED }} onClick={()=>setViewMode("list")}><Ic n="box" s={18}/></button>
+          </div>
+        </div>
+
+        {/* Active filter chips */}
+        {activeFilters > 0 && (
+          <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
+            {condition && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setCondition("")}>{condition} ✕</span>}
+            {marca     && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setMarca("")}>{marca} ✕</span>}
+            {modelo    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setModelo("")}>Modelo: {modelo} ✕</span>}
+            {nSerie    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNSerie("")}>Serie: {nSerie} ✕</span>}
+            {nParte    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNParte("")}>Parte: {nParte} ✕</span>}
+            {nMotor    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNMotor("")}>Motor: {nMotor} ✕</span>}
+            {nChasis   && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNChasis("")}>Chasis: {nChasis} ✕</span>}
+            {horasMin  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setHorasMin("")}>Hrs desde {horasMin} ✕</span>}
+            {horasMax  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setHorasMax("")}>Hrs hasta {horasMax} ✕</span>}
+            {ciudad    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setCiudad("")}>{ciudad} ✕</span>}
+            {priceMin  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setPriceMin("")}>Desde {priceMin} ✕</span>}
+            {priceMax  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setPriceMax("")}>Hasta {priceMax} ✕</span>}
+            {verified  && <span className="tag t-green" style={{ cursor:"pointer" }} onClick={()=>setVerified(false)}>Solo verificados ✕</span>}
+          </div>
+        )}
+
+        {/* Count */}
+        <p style={{ fontSize:13, color:MUTED, marginBottom:14 }}>
+          {loading ? "Buscando…" : `${listings.length} publicaciones encontradas`}
+        </p>
+
+        {loading ? (
+          <div style={{ display:"flex", justifyContent:"center", paddingTop:60 }}><Spin size={30}/></div>
+        ) : listings.length === 0 ? (
+          <div style={{ padding:"60px 0", textAlign:"center" }}>
+            <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
+            <p className="bebas" style={{ fontSize:24, color:TEXT, marginBottom:8 }}>Sin resultados</p>
+            <p style={{ color:MUTED, fontSize:14, marginBottom:16 }}>Intentá con otro término o ajustá los filtros</p>
+            <button className="btn-ol" onClick={resetFilters} style={{ fontSize:13 }}>Limpiar filtros</button>
+          </div>
+        ) : viewMode === "grid" ? (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:14 }}>
+            {listings.map(l=>(
+              <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
+                <PhotoPlaceholder emoji={l.emoji||"📦"} h={130}/>
+                <div style={{ padding:"10px 12px 14px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+                    <span className="tag t-dim" style={{ fontSize:9 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
+                    {l.verified && <span className="tag t-green" style={{ fontSize:9 }}>✓</span>}
+                  </div>
+                  <p style={{ fontSize:13, fontWeight:600, lineHeight:1.3, marginBottom:3, color:TEXT }}>{l.title}</p>
+                  <p style={{ fontSize:11, color:MUTED, marginBottom:2 }}>{l.biz}</p>
+                  {l.location && <p style={{ fontSize:11, color:MUTED, marginBottom:6 }}>📍 {l.location}</p>}
+                  {l.brand && <p style={{ fontSize:11, color:MUTED, marginBottom:6 }}>🏷️ {l.brand}</p>}
+                  <p className="bebas" style={{ fontSize:16, color:RED }}>{fmtPrice(l.price, l.currency)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div>
+            {listings.map(l=><MiniCard key={l.id} l={l} onClick={()=>onSelect(l)}/>)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -429,7 +628,7 @@ function ListingDetail({ l, onClose, onChat }) {
             <p className="bebas" style={{ fontSize:30,color:RED,marginBottom:16 }}>{l.currency} {Number(l.price).toLocaleString()}</p>
 
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20 }}>
-              {[["Condición",l.condition],["Operación",l.operation||"Venta"],["Stock",`${l.stock||1} u.`],["Marca",l.brand||"—"]].map(([k,v])=>(
+              {[["Condición",l.condition],["Marca",l.brand||"—"],["Modelo",l.model||"—"],["Stock",`${l.stock||1} u.`],l.hours&&["Horas de uso",`${l.hours} hrs`],l.serial_number&&["N° Serie",l.serial_number],l.part_number&&["N° Parte",l.part_number],l.engine_number&&["N° Motor",l.engine_number],l.chassis_number&&["N° Chasis",l.chassis_number]].filter(Boolean).map(([k,v])=>(
                 <div key={k} style={{ background:BG2,borderRadius:10,padding:"12px 14px",border:`1px solid ${BORDER}` }}>
                   <p style={{ fontSize:11,color:MUTED,marginBottom:3,fontWeight:600,textTransform:"uppercase",letterSpacing:.5 }}>{k}</p>
                   <p style={{ fontSize:14,fontWeight:600,color:TEXT }}>{v}</p>
@@ -490,7 +689,7 @@ function ListingDetail({ l, onClose, onChat }) {
 function PublishSheet({ user, profile, onClose, onDone }) {
   const [step, setStep]   = useState(0);
   const [type, setType]   = useState("producto");
-  const [f, setF]         = useState({ title:"",brand:"",model:"",cat:"min",condition:"Nuevo",operation:"Venta",price:"",currency:"USD",stock:"1",location:profile?.location||"",phone:profile?.phone||"",biz:profile?.biz||"",description:"" });
+  const [f, setF]         = useState({ title:"",brand:"",model:"",serial_number:"",part_number:"",engine_number:"",chassis_number:"",hours:"",cat:"min",condition:"Nuevo",operation:"Venta",price:"",currency:"USD",stock:"1",location:profile?.location||"",phone:profile?.phone||"",biz:profile?.biz||"",description:"" });
   const [loading, setLoading] = useState(false);
   const [err, setErr]     = useState("");
   const upd = (k,v) => setF(p=>({...p,[k]:v}));
@@ -581,8 +780,36 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 </div>
                 <div>
                   <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Marca</p>
-                  <input className="inp" placeholder="Caterpillar" value={f.brand} onChange={e=>upd("brand",e.target.value)}/>
+                  <input className="inp" placeholder="Caterpillar, SKF, WEG…" value={f.brand} onChange={e=>upd("brand",e.target.value)}/>
                 </div>
+              </div>
+
+              {/* Modelo + números técnicos */}
+              <div>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Modelo <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <input className="inp" placeholder="Ej: 3406E, A10V, 6205-2RS…" value={f.model} onChange={e=>upd("model",e.target.value)}/>
+              </div>
+
+              <div>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Serie <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <input className="inp" placeholder="Nº serie del equipo" value={f.serial_number} onChange={e=>upd("serial_number",e.target.value)}/>
+              </div>
+              <div>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Parte <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <input className="inp" placeholder="Part number" value={f.part_number} onChange={e=>upd("part_number",e.target.value)}/>
+              </div>
+              <div>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Motor <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <input className="inp" placeholder="Nº motor" value={f.engine_number} onChange={e=>upd("engine_number",e.target.value)}/>
+              </div>
+              <div>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Chasis <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <input className="inp" placeholder="Nº chasis" value={f.chassis_number} onChange={e=>upd("chassis_number",e.target.value)}/>
+              </div>
+
+              <div>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Horas de uso <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <input className="inp" type="number" placeholder="Ej: 4500" value={f.hours} onChange={e=>upd("hours",e.target.value)}/>
               </div>
               <div>
                 <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Estado</p>
