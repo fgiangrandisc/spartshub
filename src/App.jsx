@@ -2242,10 +2242,10 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
     { id:"home",        icon:"home",    label:"Inicio" },
     { id:"search",      icon:"search",  label:"Explorar" },
     { id:"messages",    icon:"msg",     label:"Mensajes" },
-    { id:"alertas",     icon:"bell",    label:"Alertas" },
+    { id:"mispubs",     icon:"box",     label:"Mis publicaciones" },
     { id:"profile",     icon:"user",    label:"Perfil" },
     { id:"publish",     icon:"plus",    label:"Publicar",        accent:true },
-    { id:"mispubs",     icon:"box",     label:"Mis publicaciones" },
+    { id:"solicitud",   icon:"search",  label:"Busco un repuesto", solicitud:true },
   ];
 
   return (
@@ -2301,13 +2301,14 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
               <button key={n.id+i}
                 className={n.accent ? "" : `sidebar-btn${tab===n.id?" active":""}`}
                 onClick={()=>{
-                  if (n.id==="publish") { setShowPublish(true); return; }
-                  if (n.id==="soporte") { setShowSupport(true); return; }
+                  if (n.id==="publish")   { setShowPublish(true); return; }
+                  if (n.id==="soporte")   { setShowSupport(true); return; }
+                  if (n.id==="solicitud") { setShowSolicitud(true); return; }
                   setTab(n.id);
                   if (n.id!=="messages") setChatListing(null);
                 }}
                 style={n.accent ? { display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:"1px solid rgba(232,50,10,.3)",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:8,background:"rgba(232,50,10,.1)",color:RED,fontWeight:700,fontFamily:"inherit",transition:"all .15s" } : undefined}>
-                <Ic n={n.icon} s={16} c={n.accent?RED:tab===n.id?RED:MUTED}/>{n.label}
+                <Ic n={n.icon} s={16} c={n.accent||n.solicitud?RED:tab===n.id?RED:MUTED}/>{n.label}
               </button>
             ))}
           </nav>
