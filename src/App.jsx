@@ -1830,19 +1830,19 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
     setTimeout(()=>{ onDone(); }, 3000);
   };
 
-  const INP = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:14, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
+  const INP = { background:"rgba(255,255,255,.07)", border:"1.5px solid rgba(255,255,255,.15)", borderRadius:8, padding:"11px 14px", fontSize:14, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
 
   return (
-    <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,width:"100%",maxWidth:560,maxHeight:"90vh",display:"flex",flexDirection:"column",border:`1px solid ${BORDER2}`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",overflow:"hidden",animation:"slideUp .3s ease" }}>
+    <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#1A1D21",borderRadius:20,width:"100%",maxWidth:580,maxHeight:"92vh",display:"flex",flexDirection:"column",border:`1px solid rgba(232,50,10,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(232,50,10,.15)",overflow:"hidden",animation:"slideUp .3s ease" }}>
 
         {/* Header */}
-        <div style={{ background:`linear-gradient(135deg,rgba(232,50,10,.15),rgba(232,50,10,.05))`,borderBottom:`1px solid ${BORDER}`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
+        <div style={{ background:`linear-gradient(135deg,${RED},#C42800)`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
           <div>
-            <p className="bebas" style={{ fontSize:22,color:TEXT,letterSpacing:.5 }}>Dejar una solicitud</p>
-            <p style={{ fontSize:13,color:MUTED,marginTop:2 }}>Te avisamos cuando alguien lo publique</p>
+            <p className="bebas" style={{ fontSize:24,color:"#fff",letterSpacing:.5 }}>Solicita un repuesto</p>
+            <p style={{ fontSize:13,color:"rgba(255,255,255,.75)",marginTop:2 }}>Te avisamos cuando alguien lo publique</p>
           </div>
-          <button onClick={onClose} style={{ background:"none",border:"none",cursor:"pointer",color:MUTED,fontSize:22,lineHeight:1 }}>✕</button>
+          <button onClick={onClose} style={{ background:"rgba(255,255,255,.15)",border:"none",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1,width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center" }}>✕</button>
         </div>
 
         {done ? (
@@ -1946,7 +1946,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
                   {URGENCY.map(([val,label])=>(
                     <div key={val} onClick={()=>upd("urgency",val)}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"232,50,10":val==="urgente"?"245,200,66":"59,158,255"},.08)`:"transparent",cursor:"pointer",transition:"all .15s" }}>
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"232,50,10":val==="urgente"?"245,200,66":"59,158,255"},.15)`:"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <div style={{ width:10,height:10,borderRadius:"50%",background:URGENCY_C[val],flexShrink:0 }}/>
                       <p style={{ fontSize:13,fontWeight:f.urgency===val?700:400,color:f.urgency===val?TEXT:SUB }}>{label}</p>
                       {f.urgency===val&&<span style={{ marginLeft:"auto",fontSize:11,color:URGENCY_C[val] }}>✓</span>}
@@ -1973,7 +1973,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                   {[["email","📧","Email",user?.email||""],["whatsapp","💬","WhatsApp",f.phone||"Agrega tu número arriba"],["inapp","🔔","Notificación en la app","Cuando estés conectado"]].map(([key,icon,label,sub])=>(
                     <div key={key} onClick={()=>toggleNotif(key)}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(232,50,10,.08)":"transparent",cursor:"pointer",transition:"all .15s" }}>
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(232,50,10,.2)":"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <span style={{ fontSize:18,flexShrink:0 }}>{icon}</span>
                       <div style={{ flex:1 }}>
                         <p style={{ fontSize:13,fontWeight:notif[key]?700:400,color:notif[key]?TEXT:SUB }}>{label}</p>
