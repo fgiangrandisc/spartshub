@@ -2071,15 +2071,9 @@ function AppFooter() {
             </p>
           </div>
           <div style={{ display:"flex",gap:16,alignItems:"center" }}>
-            <a href="#" style={{ fontSize:12,color:MUTED,textDecoration:"none",transition:"color .15s" }}
-              onMouseEnter={e=>e.currentTarget.style.color=RED}
-              onMouseLeave={e=>e.currentTarget.style.color=MUTED}>Privacidad</a>
-            <a href="#" style={{ fontSize:12,color:MUTED,textDecoration:"none",transition:"color .15s" }}
-              onMouseEnter={e=>e.currentTarget.style.color=RED}
-              onMouseLeave={e=>e.currentTarget.style.color=MUTED}>Términos</a>
-            <a href="#" style={{ fontSize:12,color:MUTED,textDecoration:"none",transition:"color .15s" }}
-              onMouseEnter={e=>e.currentTarget.style.color=RED}
-              onMouseLeave={e=>e.currentTarget.style.color=MUTED}>Cookies</a>
+            <span style={{ fontSize:12,color:MUTED }}>Privacidad</span>
+            <span style={{ fontSize:12,color:MUTED }}>Términos</span>
+            <span style={{ fontSize:12,color:MUTED }}>Cookies</span>
             <span style={{ fontSize:11,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>® & ™ SpartsHub</span>
           </div>
         </div>
@@ -2142,7 +2136,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
         {tab==="home"    &&<HomePage    user={session.user} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
         {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected}/>}
         {tab==="messages"&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
-        {tab==="alertas" &&<AlertasPage  user={session.user} profile={profile}/>}
+        {tab==="alertas" &&<AlertasPage  user={session.user} profile={profile} onSolicitud={()=>setShowSolicitud(true)}/>}
         {tab==="profile" &&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
         {tab==="mispubs" &&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
       </div>
@@ -2162,6 +2156,59 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {showPublish&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
+    </div>
+  );
+}
+
+/* ── Profile Dropdown ────────────────────────────────────────── */
+function ProfileDropdown({ profile, onProfile, onLogout }) {
+  const [open, setOpen] = useState(false);
+  useEffect(()=>{
+    if (!open) return;
+    const fn = ()=>setOpen(false);
+    setTimeout(()=>document.addEventListener("click",fn),0);
+    return ()=>document.removeEventListener("click",fn);
+  },[open]);
+  const name = profile?.name||profile?.biz||"Mi cuenta";
+  const initials = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  return (
+    <div style={{ position:"relative" }}>
+      <button onClick={e=>{ e.stopPropagation(); setOpen(v=>!v); }}
+        style={{ display:"flex",alignItems:"center",gap:8,background:open?"rgba(232,50,10,.1)":CARD,border:`1px solid ${open?RED:BORDER}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",transition:"all .15s" }}>
+        <div style={{ width:28,height:28,borderRadius:"50%",background:"rgba(232,50,10,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+          <span style={{ fontSize:11,fontWeight:700,color:RED,fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
+        </div>
+        <span style={{ fontSize:12,fontWeight:700,color:TEXT,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"Barlow Condensed,sans-serif" }}>{profile?.biz||profile?.name||"Mi cuenta"}</span>
+        <Ic n="chevR" s={14} c={MUTED} style={{ transform:open?"rotate(90deg)":"rotate(0deg)",transition:"transform .15s" }}/>
+      </button>
+      {open&&(
+        <div onClick={e=>e.stopPropagation()} style={{ position:"absolute",top:"calc(100% + 8px)",right:0,background:BG3,border:`1px solid ${BORDER2}`,borderRadius:10,padding:"6px",minWidth:200,zIndex:100,boxShadow:"0 8px 32px rgba(0,0,0,.5)",animation:"fadeIn .15s ease" }}>
+          <div style={{ padding:"10px 12px",borderBottom:`1px solid ${BORDER}`,marginBottom:4 }}>
+            <p style={{ fontSize:13,fontWeight:700,color:TEXT }}>{profile?.name||"Usuario"}</p>
+            <p style={{ fontSize:11,color:MUTED }}>{profile?.biz||""}</p>
+          </div>
+          {[
+            {icon:"user",    label:"Mi perfil",          action:()=>{ onProfile(); setOpen(false); }},
+            {icon:"box",     label:"Mis publicaciones",   action:null, tab:"mispubs"},
+            {icon:"bell",    label:"Solicitudes & Alertas",action:null, tab:"alertas"},
+            {icon:"settings",label:"Configuración",       action:null, tab:"profile_settings"},
+          ].map(({icon,label,action,tab})=>(
+            <button key={label} onClick={()=>{ setOpen(false); if(action) action(); else if(tab==="profile_settings"){ onProfile(); } else onProfile(); }}
+              style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:13,color:SUB,fontFamily:"inherit",transition:"all .15s" }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,255,255,.05)"; e.currentTarget.style.color=TEXT; }}
+              onMouseLeave={e=>{ e.currentTarget.style.background="none"; e.currentTarget.style.color=SUB; }}>
+              <Ic n={icon} s={15} c={MUTED}/>{label}
+            </button>
+          ))}
+          <div style={{ height:1,background:BORDER,margin:"4px 0" }}/>
+          <button onClick={()=>{ setOpen(false); onLogout(); }}
+            style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:13,color:RED,fontFamily:"inherit",transition:"all .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(232,50,10,.08)"}
+            onMouseLeave={e=>e.currentTarget.style.background="none"}>
+            <Ic n="logout" s={15} c={RED}/>Cerrar sesión
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -2207,6 +2254,12 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
             ))}
           </nav>
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            <button onClick={()=>setShowSolicitud(true)}
+              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 16px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase",transition:"all .15s" }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(232,50,10,.1)"; }}
+              onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
+              <Ic n="search" s={14} c={RED}/>Busco un repuesto
+            </button>
             <button onClick={()=>setShowPublish(true)}
               style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"8px 18px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase",transition:"all .15s" }}
               onMouseEnter={e=>e.currentTarget.style.background=RED2}
@@ -2257,7 +2310,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           {tab==="home"    &&<HomePage    user={session.user} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
           {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected}/>}
           {tab==="messages"&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
-          {tab==="alertas" &&<AlertasPage  user={session.user} profile={profile}/>}
+          {tab==="alertas" &&<AlertasPage  user={session.user} profile={profile} onSolicitud={()=>setShowSolicitud(true)}/>}
           {tab==="profile" &&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
           {tab==="mispubs" &&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
         </div>
@@ -2268,16 +2321,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
 
-      {/* Floating solicitud button */}
-      {!showSolicitud&&!showPublish&&!showSupport&&!selected&&(
-        <button onClick={()=>setShowSolicitud(true)}
-          style={{ position:"fixed",bottom:32,right:32,zIndex:70,background:RED,color:"#fff",border:"none",borderRadius:16,padding:"14px 22px",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:10,boxShadow:"0 8px 32px rgba(232,50,10,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase",transition:"all .2s",animation:"float 3s ease-in-out infinite" }}
-          onMouseEnter={e=>{ e.currentTarget.style.transform="translateY(-3px) scale(1.03)"; e.currentTarget.style.boxShadow="0 12px 40px rgba(232,50,10,.6)"; }}
-          onMouseLeave={e=>{ e.currentTarget.style.transform=""; e.currentTarget.style.boxShadow="0 8px 32px rgba(232,50,10,.45)"; }}>
-          <Ic n="search" s={18} c="#fff"/>
-          Busco un repuesto
-        </button>
-      )}
+
     </div>
   );
 }

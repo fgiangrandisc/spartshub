@@ -594,7 +594,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
                             <span style={{ fontSize:12,color:MUTED }}>🕐 {l.ts}</span>
                           </div>
                         </div>
-                        <button className={isSol?"btn-ol":"btn-red"} style={{ fontSize:13,padding:"8px 16px",flexShrink:0,...(isSol?{borderColor:PUR,color:PUR}:{}) }} onClick={openModal}>
+                        <button className={isSol?"btn-ol":"btn-red"} style={{ fontSize:13,padding:"8px 16px",flexShrink:0,...(isSol?{borderColor:PUR,color:PUR}:{}) }} onClick={()=>setAuthModal("register")}>
                           {isSol?"Ofertar":"Contactar"}
                         </button>
                       </div>
@@ -703,11 +703,11 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
               <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Empresa</p>
-              {["Cómo funciona","Industrias que cubrimos","Publicar un producto","Dejar una solicitud"].map(l=><a key={l} href="#" style={{ fontSize:13,color:SUB,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>)}
+              {[["Cómo funciona","#como-funciona"],["Industrias que cubrimos","#publicaciones"],["Publicar un producto","#registro"],["Dejar una solicitud","#registro"]].map(([l,h])=><a key={l} href={h} style={{ fontSize:13,color:SUB,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>)}
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
               <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Políticas</p>
-              {["Términos y condiciones","Política de privacidad","Política de cookies","Uso aceptable","Resolución de disputas","Aviso legal"].map(l=><a key={l} href="#" style={{ fontSize:13,color:SUB,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>)}
+              {["Términos y condiciones","Política de privacidad","Política de cookies","Uso aceptable","Resolución de disputas","Aviso legal"].map(l=><span key={l} style={{ fontSize:13,color:MUTED,cursor:"default" }}>{l}</span>)}
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
               <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Contacto</p>
@@ -722,7 +722,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               <p style={{ fontSize:11,color:"rgba(255,255,255,.2)" }}>SpartsHub es una marca registrada. El nombre, logo y diseño son propiedad exclusiva de SpartsHub. Queda prohibida su reproducción sin autorización expresa.</p>
             </div>
             <div style={{ display:"flex",gap:16,alignItems:"center" }}>
-              {["Privacidad","Términos","Cookies"].map(l=><a key={l} href="#" style={{ fontSize:12,color:MUTED,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=MUTED}>{l}</a>)}
+              {["Privacidad","Términos","Cookies"].map(l=><span key={l} style={{ fontSize:12,color:MUTED }}>{l}</span>)}
               <span style={{ fontSize:11,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif" }}>® & ™ SpartsHub</span>
             </div>
           </div>
