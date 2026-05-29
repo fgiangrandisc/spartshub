@@ -319,9 +319,9 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
       {/* NAV */}
       <nav style={{ position:"fixed",top:0,left:0,right:0,zIndex:60,background:"rgba(20,22,24,.92)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"13px 0" }}>
         <div className="wrap" style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
-            <SpartsLogo size={36}/>
-            <span style={{ fontSize:11,fontWeight:600,color:"rgba(255,255,255,.45)",letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2 }}>No vendemos repuestos, conectamos personas</span>
+          <div style={{ display:"flex",flexDirection:"column",gap:3 }}>
+            <SpartsLogo size={32}/>
+            <span style={{ fontSize:11,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>No vendemos repuestos, conectamos personas</span>
           </div>
           <div style={{ display:"flex",gap:8 }}>
             <button className="btn-ol" style={{ fontSize:12,padding:"8px 16px" }} onClick={()=>setAuthModal("login")}>Iniciar sesión</button>
@@ -330,8 +330,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
         </div>
       </nav>
 
-      {/* TICKER */}
-      <div style={{ paddingTop:63 }}><Ticker/></div>
+      <div style={{ paddingTop:63 }}/>
 
       {/* HERO */}
       <section style={{ padding:"72px 0 80px",position:"relative",overflow:"hidden",minHeight:"88vh",display:"flex",alignItems:"center" }}>
