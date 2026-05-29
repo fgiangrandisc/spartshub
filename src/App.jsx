@@ -1234,7 +1234,7 @@ function ProfilePage({ user, profile, onLogout }) {
 
   const SECTIONS = [
     { id:"perfil",   label:"Mi Perfil",     icn:"user" },
-    { id:"alertas",  label:"Mis Alertas",   icn:"bell" },
+    { id:"notif",    label:"Notificaciones", icn:"bell" },
     { id:"bulk",     label:"Carga Masiva",  icn:"box" },
     { id:"soporte",  label:"Soporte",       icn:"msg" },
     { id:"settings", label:"Configuración", icn:"settings" },
@@ -1324,10 +1324,10 @@ function ProfilePage({ user, profile, onLogout }) {
         )}
 
         {/* ── ALERTAS ── */}
-        {section==="alertas"&&(
+        {section==="notif"&&(
           <div style={{ maxWidth:"100%" }}>
-            <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Mis Alertas de Búsqueda</h2>
-            <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Recibe una notificación cuando se publique lo que estás buscando.</p>
+            <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Notificaciones</h2>
+            <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Tus notificaciones y alertas de búsqueda activas.</p>
             <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:24,display:"flex",flexDirection:"column",gap:12 }}>
               <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif" }}>Crear nueva alerta</p>
               <input className="inp" placeholder="Ej: Bomba hidráulica Rexroth A10V" value={alertForm.keyword} onChange={e=>setAlertForm(f=>({...f,keyword:e.target.value}))}/>
