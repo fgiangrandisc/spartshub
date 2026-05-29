@@ -2165,7 +2165,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {!showSolicitud&&!showPublish&&(
         <button onClick={()=>setShowSolicitud(true)}
           style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(232,50,10,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
-          <Ic n="search" s={16} c="#fff"/>Busco un repuesto
+          <Ic n="search" s={16} c="#fff"/>Solicita un repuesto
         </button>
       )}
 
@@ -2245,7 +2245,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
     { id:"mispubs",     icon:"box",     label:"Mis publicaciones" },
     { id:"profile",     icon:"user",    label:"Perfil" },
     { id:"publish",     icon:"plus",    label:"Publicar",        accent:true },
-    { id:"solicitud",   icon:"search",  label:"Busco un repuesto", solicitud:true },
+    { id:"solicitud",   icon:"search",  label:"Solicita un repuesto", solicitud:true, featured:true },
   ];
 
   return (
@@ -2275,7 +2275,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
               style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 16px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase",transition:"all .15s" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(232,50,10,.1)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
-              <Ic n="search" s={14} c={RED}/>Busco un repuesto
+              <Ic n="search" s={14} c={RED}/>Solicita un repuesto
             </button>
             <button onClick={()=>setShowPublish(true)}
               style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"8px 18px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase",transition:"all .15s" }}
@@ -2308,7 +2308,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   if (n.id!=="messages") setChatListing(null);
                 }}
                 style={n.accent ? { display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:"1px solid rgba(232,50,10,.3)",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:8,background:"rgba(232,50,10,.1)",color:RED,fontWeight:700,fontFamily:"inherit",transition:"all .15s" } : undefined}>
-                <Ic n={n.icon} s={16} c={n.accent||n.solicitud?RED:tab===n.id?RED:MUTED}/>{n.label}
+                <Ic n={n.icon} s={16} c={n.accent?RED:n.solicitud?"#fff":tab===n.id?RED:MUTED}/>{n.label}
               </button>
             ))}
           </nav>
