@@ -106,6 +106,7 @@ async function notifyMatch(match, newItem, type, user, profile) {
     to_id: otherUserId,
     body: autoMsg,
     listing_id: isListing ? newItem.id : candidate.id,
+    read: false,
   }).catch(()=>{});
 
   return { otherUserId, autoMsg, candidate };
@@ -2132,6 +2133,20 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
   const [showPublish,   setShowPublish]   = useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
+  const [unreadCount,   setUnreadCount]   = useState(0);
+
+  useEffect(()=>{
+    if (!session?.user) return;
+    const load = async () => {
+      const { count } = await sb.from("messages").select("*",{count:"exact",head:true}).eq("to_id",session.user.id).eq("read",false).catch(()=>({count:0}));
+      setUnreadCount(count||0);
+    };
+    load();
+    const ch = sb.channel("unread-"+session.user.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`to_id=eq.${session.user.id}`},()=>{ setUnreadCount(c=>c+1); })
+      .subscribe();
+    return ()=>sb.removeChannel(ch);
+  },[session?.user?.id]);
 
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT }}>
@@ -2237,14 +2252,27 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
   const [showPublish,   setShowPublish]   = useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
+  const [unreadCount,   setUnreadCount]   = useState(0);
+
+  useEffect(()=>{
+    if (!session?.user) return;
+    const load = async () => {
+      const { count } = await sb.from("messages").select("*",{count:"exact",head:true}).eq("to_id",session.user.id).eq("read",false).catch(()=>({count:0}));
+      setUnreadCount(count||0);
+    };
+    load();
+    const ch = sb.channel("unread-"+session.user.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`to_id=eq.${session.user.id}`},()=>{ setUnreadCount(c=>c+1); })
+      .subscribe();
+    return ()=>sb.removeChannel(ch);
+  },[session?.user?.id]);
 
   const SIDEBAR = [
     { id:"home",        icon:"home",    label:"Inicio" },
     { id:"publish",     icon:"plus",    label:"Publicar",             accent:true },
     { id:"solicitud",   icon:"search",  label:"Solicita un repuesto", solicitud:true, featured:true },
     { id:"search",      icon:"search",  label:"Explorar" },
-    { id:"messages",    icon:"msg",     label:"Mensajes" },
-    { id:"alertas",     icon:"bell",    label:"Mis solicitudes" },
+    { id:"messages",    icon:"msg",     label:"Mensajes",  badge:true },
     { id:"mispubs",     icon:"box",     label:"Mis publicaciones" },
     { id:"profile",     icon:"user",    label:"Perfil" },
   ];
@@ -2309,7 +2337,8 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   if (n.id!=="messages") setChatListing(null);
                 }}
                 style={n.accent ? { display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:"1px solid rgba(232,50,10,.3)",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:8,background:"rgba(232,50,10,.1)",color:RED,fontWeight:700,fontFamily:"inherit",transition:"all .15s" } : undefined}>
-                <Ic n={n.icon} s={16} c={n.accent?RED:n.solicitud?"#fff":tab===n.id?RED:MUTED}/>{n.label}
+                <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{n.label}
+                {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:10,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
               </button>
             ))}
           </nav>
@@ -2329,7 +2358,6 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           {tab==="home"    &&<HomePage    user={session.user} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
           {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected}/>}
           {tab==="messages"&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
-          {tab==="alertas" &&<AlertasPage  user={session.user} profile={profile} onSolicitud={()=>setShowSolicitud(true)}/>}
           {tab==="profile" &&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
           {tab==="mispubs" &&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
         </div>
