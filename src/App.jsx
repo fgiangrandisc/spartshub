@@ -2328,7 +2328,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           <nav style={{ padding:"0 10px",display:"flex",flexDirection:"column",gap:2,flex:1 }}>
             {SIDEBAR.map((n,i)=>(
               <button key={n.id+i}
-                className={n.accent ? "" : `sidebar-btn${tab===n.id?" active":""}`}
+                className={(n.accent||n.solicitud) ? "" : `sidebar-btn${tab===n.id?" active":""}`}
                 onClick={()=>{
                   if (n.id==="publish")   { setShowPublish(true); return; }
                   if (n.id==="soporte")   { setShowSupport(true); return; }
@@ -2336,7 +2336,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   setTab(n.id);
                   if (n.id!=="messages") setChatListing(null);
                 }}
-                style={n.accent ? { display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:"1px solid rgba(232,50,10,.3)",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:8,background:"rgba(232,50,10,.1)",color:RED,fontWeight:700,fontFamily:"inherit",transition:"all .15s" } : undefined}>
+                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C42800)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(232,50,10,.35)" } : undefined}>
                 <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{n.label}
                 {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:10,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
               </button>
