@@ -121,20 +121,85 @@ function Ticker() {
 }
 
 /* ── Data ───────────────────────────────────────────────────── */
+const IndustryIcon = ({ id, size=28, color="#E8320A" }) => {
+  const s = { fill:"none", stroke:color, strokeWidth:1.6, strokeLinecap:"round", strokeLinejoin:"round" };
+  const icons = {
+    mineria: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+      <line x1="12" y1="22" x2="12" y2="12"/><circle cx="12" cy="12" r="2" fill={color} stroke="none"/>
+    </svg>,
+    forestal: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M12 2L4 14h4l-2 8h12l-2-8h4L12 2z"/>
+      <line x1="12" y1="14" x2="12" y2="22"/>
+    </svg>,
+    construccion: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <rect x="2" y="14" width="20" height="8" rx="1"/>
+      <path d="M6 14V8l6-6 6 6v6"/><line x1="12" y1="8" x2="12" y2="14"/>
+      <rect x="9" y="17" width="6" height="5"/>
+    </svg>,
+    energia: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill={`${color}22`}/>
+    </svg>,
+    transporte: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M1 3h15l3 6 2 2v4H1V3z"/>
+      <path d="M1 9h18"/><circle cx="6" cy="17" r="2" fill={color} stroke="none"/>
+      <circle cx="18" cy="17" r="2" fill={color} stroke="none"/>
+      <line x1="8" y1="17" x2="16" y2="17"/>
+    </svg>,
+    herramientas: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+    </svg>,
+    transmision: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/>
+      <path d="M8.7 10.7L15.3 7.3"/><path d="M8.7 13.3L15.3 16.7"/>
+    </svg>,
+    fluidos: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M12 2C6 9 4 13 4 16a8 8 0 0 0 16 0c0-3-2-7-8-14z" fill={`${color}18`}/>
+      <path d="M8 18a4 4 0 0 0 8 0" strokeWidth={1.4}/>
+    </svg>,
+    rutas: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M3 17l4-4 4 4 4-8 4 4"/><line x1="3" y1="21" x2="21" y2="21"/>
+      <rect x="2" y="2" width="6" height="6" rx="1"/><rect x="16" y="2" width="6" height="6" rx="1"/>
+    </svg>,
+    sanitarias: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M12 2v6M2 12h6M16 12h6M12 16v6"/>
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M4.93 19.07l4.24-4.24"/>
+    </svg>,
+    maritimo: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M12 3v14"/><path d="M6 9l6-6 6 6"/>
+      <path d="M3 17l2.5 3h13L21 17H3z" fill={`${color}18`}/>
+      <path d="M2 20c2 2 4 2 6 0s4-2 6 0 4 2 6 0"/>
+    </svg>,
+    motores: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <rect x="2" y="7" width="14" height="10" rx="2"/>
+      <path d="M16 10h4l2 2-2 2h-4"/><path d="M6 7V5"/><path d="M10 7V5"/>
+      <circle cx="9" cy="12" r="2" fill={`${color}33`}/>
+      <line x1="2" y1="12" x2="0" y2="12"/>
+    </svg>,
+    atv: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
+      <path d="M4 15l2-8h12l2 8H4z"/><path d="M8 15v2"/><path d="M16 15v2"/>
+      <circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="18" r="2.5"/>
+      <path d="M10 7l1-4h2l1 4"/>
+    </svg>,
+  };
+  return icons[id] || <svg width={size} height={size} viewBox="0 0 24 24" {...s}><circle cx="12" cy="12" r="8"/></svg>;
+};
+
 const CATS = [
-  { e:"⛏️", n:"Minería",              s:"Equipos, repuestos y maquinaria para faenas mineras" },
-  { e:"🌲", n:"Forestal",             s:"Equipamiento y piezas para la industria forestal" },
-  { e:"🏗️", n:"Construcción",         s:"Maquinaria pesada, herramientas y repuestos" },
-  { e:"⚡", n:"Energía",              s:"Generadores, transformadores y equipos eléctricos" },
-  { e:"🚛", n:"Transporte",           s:"Repuestos, neumáticos y equipos para flotas" },
-  { e:"⚙️", n:"Herramientas",         s:"Herramientas industriales y de precisión" },
-  { e:"🔧", n:"Transmisión",          s:"Reductores, correas, cadenas y acoplamientos" },
-  { e:"💧", n:"Fluidos & Hidráulica", s:"Bombas, válvulas, sellos y sistemas hidráulicos" },
-  { e:"🛣️", n:"Rutas y Caminos",      s:"Equipos y maquinaria para obras viales" },
-  { e:"🔩", n:"Sanitarias",           s:"Tuberías, válvulas y equipos sanitarios" },
-  { e:"⚓", n:"Marítimo / Naval",     s:"Motores, repuestos y equipos para embarcaciones" },
-  { e:"🔧", n:"Motores",              s:"Motores industriales, automotrices y de todo tipo" },
-  { e:"🏍️", n:"ATVs / UTVs",         s:"Repuestos y accesorios para vehículos todo terreno" },
+  { id:"mineria",     n:"Minería",              s:"Equipos, repuestos y maquinaria para faenas mineras" },
+  { id:"forestal",    n:"Forestal",             s:"Equipamiento y piezas para la industria forestal" },
+  { id:"construccion",n:"Construcción",         s:"Maquinaria pesada, herramientas y repuestos" },
+  { id:"energia",     n:"Energía",              s:"Generadores, transformadores y equipos eléctricos" },
+  { id:"transporte",  n:"Transporte",           s:"Repuestos, neumáticos y equipos para flotas" },
+  { id:"herramientas",n:"Herramientas",         s:"Herramientas industriales y de precisión" },
+  { id:"transmision", n:"Transmisión",          s:"Reductores, correas, cadenas y acoplamientos" },
+  { id:"fluidos",     n:"Fluidos & Hidráulica", s:"Bombas, válvulas, sellos y sistemas hidráulicos" },
+  { id:"rutas",       n:"Rutas y Caminos",      s:"Equipos y maquinaria para obras viales" },
+  { id:"sanitarias",  n:"Sanitarias",           s:"Tuberías, válvulas y equipos sanitarios" },
+  { id:"maritimo",    n:"Marítimo / Naval",     s:"Motores, repuestos y equipos para embarcaciones" },
+  { id:"motores",     n:"Motores",              s:"Motores industriales, automotrices y de todo tipo" },
+  { id:"atv",         n:"ATVs / UTVs",          s:"Repuestos y accesorios para vehículos todo terreno" },
 ];
 
 const DEMO = [
@@ -396,7 +461,9 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
                   <div key={i} style={{ display:"flex",alignItems:"center",gap:14,padding:"11px 18px",borderBottom:i<CATS.length-1?"1px solid rgba(255,255,255,.05)":"none",transition:"background .15s",cursor:"pointer" }}
                     onMouseEnter={e=>e.currentTarget.style.background="rgba(232,50,10,.06)"}
                     onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                    <span style={{ fontSize:18,flexShrink:0,width:28,textAlign:"center" }}>{c.e}</span>
+                    <div style={{ width:32,height:32,borderRadius:8,background:"rgba(232,50,10,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                      <IndustryIcon id={c.id} size={18} color="#E8320A"/>
+                    </div>
                     <div style={{ flex:1 }}>
                       <p style={{ fontSize:13,fontWeight:700,color:TEXT,marginBottom:1 }}>{c.n}</p>
                       <p style={{ fontSize:11,color:MUTED,lineHeight:1.3 }}>{c.s}</p>

@@ -368,7 +368,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
             style={{ padding:"7px 14px",borderRadius:20,fontSize:12,fontWeight:700,border:`1px solid ${BORDER}`,background:CARD,color:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}
             onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
             onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=SUB; }}>
-            {c.emoji} {c.label}
+            {c.icon} {c.label}
           </button>
         ))}
       </div>
@@ -511,7 +511,7 @@ function SearchPage({ user, onSelect }) {
           <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Categoría</p>
           <select value={cat} onChange={e=>setCat(e.target.value)}
             style={{ background:SURF, border:`1px solid ${cat!=="all"?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:cat!=="all"?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:cat!=="all"?700:400, transition:"border-color .2s" }}>
-            {CATS.map(c=><option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
+            {CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
           </select>
         </div>
 
@@ -1859,7 +1859,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div>
                   <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Industria</p>
                   <select style={{ ...INP }} value={f.cat} onChange={e=>upd("cat",e.target.value)}>
-                    {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
+                    {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
                   </select>
                 </div>
                 <div>
