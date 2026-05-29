@@ -2286,6 +2286,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
    MAIN APP
 ══════════════════════════════════════════════════════════════ */
 export default function SpartsHub() {
+  const isMobile = useIsMobile();
   const [session,      setSession]      = useState(null);
   const [showAuthMode, setShowAuthMode] = useState("landing");
   const [profile,      setProfile]      = useState(null);
@@ -2321,8 +2322,6 @@ export default function SpartsHub() {
     );
     return <AuthScreen initialMode={showAuthMode==="register"?"register":"login"} onAuth={()=>sb.auth.getSession().then(({ data })=>setSession(data.session))} onBack={()=>setShowAuthMode("landing")}/>;
   }
-
-  const isMobile = useIsMobile();
 
   if (isMobile) return (
     <MobileLayout
