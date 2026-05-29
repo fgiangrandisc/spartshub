@@ -132,6 +132,9 @@ const CATS = [
   { e:"💧", n:"Fluidos & Hidráulica", s:"Bombas, válvulas, sellos y sistemas hidráulicos" },
   { e:"🛣️", n:"Rutas y Caminos",      s:"Equipos y maquinaria para obras viales" },
   { e:"🔩", n:"Sanitarias",           s:"Tuberías, válvulas y equipos sanitarios" },
+  { e:"⚓", n:"Marítimo / Naval",     s:"Motores, repuestos y equipos para embarcaciones" },
+  { e:"🔧", n:"Motores",              s:"Motores industriales, automotrices y de todo tipo" },
+  { e:"🏍️", n:"ATVs / UTVs",         s:"Repuestos y accesorios para vehículos todo terreno" },
 ];
 
 const DEMO = [
@@ -316,9 +319,9 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
       {/* NAV */}
       <nav style={{ position:"fixed",top:0,left:0,right:0,zIndex:60,background:"rgba(20,22,24,.92)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"13px 0" }}>
         <div className="wrap" style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+          <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
             <SpartsLogo size={36}/>
-            <span className="tag t-dim" style={{ fontSize:10,marginLeft:4 }}>No vendemos repuestos, conectamos personas</span>
+            <span style={{ fontSize:11,fontWeight:600,color:"rgba(255,255,255,.45)",letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2 }}>No vendemos repuestos, conectamos personas</span>
           </div>
           <div style={{ display:"flex",gap:8 }}>
             <button className="btn-ol" style={{ fontSize:12,padding:"8px 16px" }} onClick={()=>setAuthModal("login")}>Iniciar sesión</button>
@@ -602,11 +605,44 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ padding:"22px 0",borderTop:`1px solid ${BORDER}`,background:BG3 }}>
-        <div className="wrap" style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16 }}>
-          <SpartsLogo size={28}/>
-          <p style={{ fontSize:12,color:MUTED }}>El marketplace industrial global · P2P · 0% Comisión</p>
-          <p style={{ fontSize:12,color:MUTED }}>© 2026 SpartsHub</p>
+      <footer style={{ borderTop:`1px solid ${BORDER}`,background:BG3,padding:"56px 0 0" }}>
+        <div className="wrap">
+          <div style={{ display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:48,marginBottom:48 }}>
+            <div>
+              <SpartsLogo size={34}/>
+              <p style={{ fontSize:15,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginTop:12,marginBottom:8,lineHeight:1.3 }}>No vendemos repuestos,<br/>conectamos personas.</p>
+              <p style={{ fontSize:13,color:MUTED,lineHeight:1.75,marginBottom:16,maxWidth:300 }}>El marketplace industrial P2P que conecta compradores y vendedores de equipos, partes y repuestos a nivel global. Sin intermediarios. Sin comisiones.</p>
+              <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+                {["P2P","0% Comisión","Global","Verificado"].map(t=><span key={t} className="tag t-dim" style={{ fontSize:9 }}>{t}</span>)}
+              </div>
+            </div>
+            <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+              <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Empresa</p>
+              {["Quiénes somos","Cómo funciona","Industrias","Casos de éxito","Blog","Prensa"].map(l=><a key={l} href="#" style={{ fontSize:13,color:SUB,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>)}
+            </div>
+            <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+              <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Políticas</p>
+              {["Términos y condiciones","Política de privacidad","Política de cookies","Uso aceptable","Resolución de disputas","Aviso legal"].map(l=><a key={l} href="#" style={{ fontSize:13,color:SUB,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>)}
+            </div>
+            <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+              <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Contacto</p>
+              {[["Email general","contacto@spartshub.com"],["Soporte","soporte@spartshub.com"],["Partnerships","partners@spartshub.com"]].map(([label,val])=>(
+                <div key={label}><p style={{ fontSize:11,color:MUTED,marginBottom:2 }}>{label}</p><a href={`mailto:${val}`} style={{ fontSize:13,color:TEXT,textDecoration:"none" }}>{val}</a></div>
+              ))}
+              <div><p style={{ fontSize:11,color:MUTED,marginBottom:2 }}>WhatsApp</p><a href="https://wa.me/56932689914" target="_blank" style={{ fontSize:13,color:TEXT,textDecoration:"none" }}>+56 9 3268 9914</a></div>
+            </div>
+          </div>
+          <div style={{ height:1,background:BORDER,marginBottom:20 }}/>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,paddingBottom:24 }}>
+            <div>
+              <p style={{ fontSize:12,color:MUTED,marginBottom:4 }}>© {new Date().getFullYear()} SpartsHub™ — Todos los derechos reservados.</p>
+              <p style={{ fontSize:11,color:"rgba(255,255,255,.2)" }}>SpartsHub es una marca registrada. El nombre, logo y diseño son propiedad exclusiva de SpartsHub. Queda prohibida su reproducción sin autorización expresa.</p>
+            </div>
+            <div style={{ display:"flex",gap:16,alignItems:"center" }}>
+              {["Privacidad","Términos","Cookies"].map(l=><a key={l} href="#" style={{ fontSize:12,color:MUTED,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=MUTED}>{l}</a>)}
+              <span style={{ fontSize:11,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif" }}>® & ™ SpartsHub</span>
+            </div>
+          </div>
         </div>
       </footer>
 

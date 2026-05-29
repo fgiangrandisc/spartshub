@@ -5,6 +5,101 @@ import { T, CSS_BASE } from "./theme.js";
 
 const { RED, RED2, GOLD, BLUE, GREEN, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
 
+/* ══════════════════════════════════════════════════════════════
+   MATCH ENGINE — IA analiza similitud entre publicación y solicitud
+══════════════════════════════════════════════════════════════ */
+async function analyzeMatch(listingText, requestText) {
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 100,
+        messages: [{
+          role: "user",
+          content: `Analiza si esta PUBLICACIÓN satisface esta SOLICITUD de repuesto/equipo industrial.
+Responde SOLO con JSON: {"match": true/false, "score": 0-100, "reason": "breve razón en español"}
+
+PUBLICACIÓN: ${listingText}
+SOLICITUD: ${requestText}
+
+Considera: marca, modelo, categoría, números de parte/serie, descripción. 
+Match = true si el producto publicado es igual o muy similar a lo solicitado (score >= 70).`
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '{"match":false,"score":0,"reason":"Error"}';
+    const clean = text.replace(/```json|```/g, "").trim();
+    return JSON.parse(clean);
+  } catch(e) {
+    return { match: false, score: 0, reason: "Error de análisis" };
+  }
+}
+
+function buildText(item) {
+  return [item.title, item.brand, item.model, item.description, item.cat,
+    item.serial_number, item.part_number, item.engine_number, item.chassis_number
+  ].filter(Boolean).join(" | ");
+}
+
+async function runMatchEngine(newItem, type, user, profile) {
+  // type = "listing" (nueva publicación) o "request" (nueva solicitud)
+  const newText = buildText(newItem);
+  
+  // Buscar el lado opuesto
+  const table = type === "listing" ? "requests" : "listings";
+  const { data: candidates } = await sb.from(table).select("*").limit(50);
+  if (!candidates?.length) return [];
+
+  const matches = [];
+  for (const candidate of candidates) {
+    if (candidate.user_id === user.id) continue; // no matchear con uno mismo
+    const candText = buildText(candidate);
+    const listingT = type === "listing" ? newText : candText;
+    const requestT = type === "listing" ? candText : newText;
+    const result = await analyzeMatch(listingT, requestT);
+    if (result.match && result.score >= 70) {
+      matches.push({ candidate, score: result.score, reason: result.reason });
+    }
+  }
+  return matches;
+}
+
+async function notifyMatch(match, newItem, type, user, profile) {
+  const { candidate, score, reason } = match;
+  const isListing = type === "listing";
+
+  // Guardar match en DB
+  await sb.from("matches").insert({
+    listing_id:     isListing ? newItem.id : candidate.id,
+    request_id:     isListing ? candidate.id : newItem.id,
+    listing_user_id: isListing ? user.id : candidate.user_id,
+    request_user_id: isListing ? candidate.user_id : user.id,
+    score,
+    reason,
+    notified_at: new Date().toISOString(),
+  }).catch(()=>{}); // graceful if table doesn't exist yet
+
+  // Crear mensaje automático en chat
+  const otherUserId = candidate.user_id;
+  const myId = user.id;
+  const autoMsg = isListing
+    ? `🤝 ¡Match automático! Publicaste "${newItem.title}" y coincide con una solicitud activa de este usuario. Score: ${score}/100. ${reason}`
+    : `🤝 ¡Match automático! Dejaste una solicitud para "${newItem.title}" y hay una publicación que coincide. Score: ${score}/100. ${reason}`;
+
+  await sb.from("messages").insert({
+    from_id: myId,
+    to_id: otherUserId,
+    body: autoMsg,
+    listing_id: isListing ? newItem.id : candidate.id,
+  }).catch(()=>{});
+
+  return { otherUserId, autoMsg, candidate };
+}
+
+
 /* ── Icon system ────────────────────────────────────────────── */
 const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none" }) => {
   const p = {
@@ -865,6 +960,23 @@ function PublishSheet({ user, profile, onClose, onDone }) {
           )}
         </div>
       </div>
+
+      {/* Match alert */}
+      {showMatchAlert&&(
+        <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={()=>setShowMatchAlert(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(232,50,10,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
+            <div style={{ fontSize:56,marginBottom:12 }}>🤝</div>
+            <p className="bebas" style={{ fontSize:32,color:RED,marginBottom:8 }}>¡{matchCount} MATCH{matchCount>1?"ES":""} ENCONTRADO{matchCount>1?"S":""}!</p>
+            <p style={{ fontSize:15,color:TEXT,lineHeight:1.7,marginBottom:20 }}>
+              Tu publicación coincide con {matchCount} solicitud{matchCount>1?"es":""} activa{matchCount>1?"s":""}. Ya enviamos un mensaje automático a los interesados.
+            </p>
+            <div style={{ background:"rgba(74,222,128,.08)",border:"1px solid rgba(74,222,128,.2)",borderRadius:10,padding:"12px 16px",marginBottom:20 }}>
+              <p style={{ fontSize:13,color:GREEN }}>✓ Mensaje de contacto enviado automáticamente</p>
+            </div>
+            <button className="btn-red" style={{ width:"100%",padding:"13px" }} onClick={()=>setShowMatchAlert(false)}>Ver mis mensajes →</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1618,8 +1730,11 @@ function MisPublicaciones({ user, onSelect }) {
 function SolicitudSheet({ user, profile, onClose, onDone }) {
   const [step,    setStep]    = useState(0);
   const [loading, setLoading] = useState(false);
-  const [err,     setErr]     = useState("");
+  const [err,          setErr]          = useState("");
+  const [matchCount,   setMatchCount]   = useState(0);
+  const [showMatchAlert,setShowMatchAlert] = useState(false);
   const [done,    setDone]    = useState(false);
+  const [solicitudMatches, setSolicitudMatches] = useState(0);
   const [notif,   setNotif]   = useState({ email:true, whatsapp:false, inapp:true });
   const [f, setF] = useState({
     title:"", brand:"", model:"", cat:"min",
@@ -1640,7 +1755,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
   const submit = async () => {
     if (!f.title) { setErr("El título es obligatorio."); return; }
     setLoading(true); setErr("");
-    const { error } = await sb.from("requests").insert({
+    const { data:inserted, error } = await sb.from("requests").insert({
       user_id:     user.id,
       title:       f.title,
       brand:       f.brand||null,
@@ -1663,9 +1778,21 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
       notif_whatsapp:  notif.whatsapp,
       notif_inapp:     notif.inapp,
       biz:         profile?.biz||null,
-    });
+    }).select().single();
     setLoading(false);
     if (error) { setErr(error.message); return; }
+
+    // Run match engine in background
+    if (inserted) {
+      runMatchEngine(inserted, "request", user, profile).then(async matches => {
+        for (const match of matches) {
+          await notifyMatch(match, inserted, "request", user, profile);
+        }
+        if (matches.length > 0) {
+          setSolicitudMatches(matches.length);
+        }
+      });
+    }
     setDone(true);
     setTimeout(()=>{ onDone(); }, 3000);
   };
@@ -1691,9 +1818,16 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
               <Ic n="check" s={32} c={GREEN}/>
             </div>
             <p className="bebas" style={{ fontSize:28,color:TEXT }}>¡Solicitud enviada!</p>
-            <p style={{ fontSize:15,color:MUTED,lineHeight:1.7 }}>
-              Te notificaremos por {[notif.email&&"email",notif.whatsapp&&"WhatsApp",notif.inapp&&"la app"].filter(Boolean).join(", ")} cuando alguien publique lo que buscás.
-            </p>
+            {solicitudMatches > 0 ? (
+              <div style={{ background:"rgba(232,50,10,.1)",border:"1px solid rgba(232,50,10,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
+                <p className="bebas" style={{ fontSize:22,color:RED,marginBottom:6 }}>🤝 {solicitudMatches} MATCH{solicitudMatches>1?"ES":""} ENCONTRADO{solicitudMatches>1?"S":""}</p>
+                <p style={{ fontSize:14,color:TEXT,lineHeight:1.6 }}>¡Hay publicaciones que coinciden con tu búsqueda! Revisá tus mensajes para ver los contactos automáticos.</p>
+              </div>
+            ) : (
+              <p style={{ fontSize:15,color:MUTED,lineHeight:1.7 }}>
+                Analizando el catálogo con IA… Te notificaremos por {[notif.email&&"email",notif.whatsapp&&"WhatsApp",notif.inapp&&"la app"].filter(Boolean).join(", ")} cuando haya un match.
+              </p>
+            )}
           </div>
         ) : (
           <div style={{ overflowY:"auto",flex:1,padding:"24px" }}>
@@ -1834,6 +1968,112 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════════════════ */
+function AppFooter() {
+  const COL = { display:"flex",flexDirection:"column",gap:10 };
+  const LNK = { fontSize:13,color:SUB,cursor:"pointer",transition:"color .15s",textDecoration:"none",background:"none",border:"none",fontFamily:"inherit",textAlign:"left",padding:0 };
+  const HDR = { fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 };
+
+  return (
+    <footer style={{ background:BG3,borderTop:`1px solid ${BORDER}`,marginTop:48,padding:"48px 0 0" }}>
+      <div style={{ maxWidth:1200,margin:"0 auto",padding:"0 36px" }}>
+
+        {/* Top grid */}
+        <div style={{ display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:48,marginBottom:48 }}>
+
+          {/* Brand column */}
+          <div>
+            <SpartsLogo size={34}/>
+            <p style={{ fontSize:15,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginTop:10,marginBottom:8 }}>
+              No vendemos repuestos,<br/>conectamos personas.
+            </p>
+            <p style={{ fontSize:13,color:MUTED,lineHeight:1.75,marginBottom:16,maxWidth:300 }}>
+              El marketplace industrial P2P que conecta compradores y vendedores de equipos, partes y repuestos industriales a nivel global. Sin intermediarios. Sin comisiones.
+            </p>
+            <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+              {["P2P","0% Comisión","Global","Verificado"].map(t=>(
+                <span key={t} className="tag t-dim" style={{ fontSize:9 }}>{t}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Empresa */}
+          <div style={COL}>
+            <p style={HDR}>Empresa</p>
+            {[["Quiénes somos","#"],["Cómo funciona","#"],["Industrias que cubrimos","#"],["Casos de éxito","#"],["Blog","#"],["Prensa","#"]].map(([l,h])=>(
+              <a key={l} href={h} style={LNK}
+                onMouseEnter={e=>e.currentTarget.style.color=RED}
+                onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>
+            ))}
+          </div>
+
+          {/* Políticas */}
+          <div style={COL}>
+            <p style={HDR}>Políticas</p>
+            {[["Términos y condiciones","#"],["Política de privacidad","#"],["Política de cookies","#"],["Política de uso aceptable","#"],["Resolución de disputas","#"],["Aviso legal","#"]].map(([l,h])=>(
+              <a key={l} href={h} style={LNK}
+                onMouseEnter={e=>e.currentTarget.style.color=RED}
+                onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>
+            ))}
+          </div>
+
+          {/* Contacto */}
+          <div style={COL}>
+            <p style={HDR}>Contacto</p>
+            <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+              <div>
+                <p style={{ fontSize:11,color:MUTED,marginBottom:3 }}>Email general</p>
+                <a href="mailto:contacto@spartshub.com" style={{ ...LNK,color:TEXT }}>contacto@spartshub.com</a>
+              </div>
+              <div>
+                <p style={{ fontSize:11,color:MUTED,marginBottom:3 }}>Soporte</p>
+                <a href="mailto:soporte@spartshub.com" style={{ ...LNK,color:TEXT }}>soporte@spartshub.com</a>
+              </div>
+              <div>
+                <p style={{ fontSize:11,color:MUTED,marginBottom:3 }}>WhatsApp</p>
+                <a href="https://wa.me/56932689914" target="_blank" style={{ ...LNK,color:TEXT }}>+56 9 3268 9914</a>
+              </div>
+              <div>
+                <p style={{ fontSize:11,color:MUTED,marginBottom:3 }}>Ventas & Partnerships</p>
+                <a href="mailto:partners@spartshub.com" style={{ ...LNK,color:TEXT }}>partners@spartshub.com</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ height:1,background:BORDER,marginBottom:20 }}/>
+
+        {/* Bottom bar */}
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,paddingBottom:24 }}>
+          <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
+            <p style={{ fontSize:12,color:MUTED }}>
+              © {new Date().getFullYear()} SpartsHub™ — Todos los derechos reservados.
+            </p>
+            <p style={{ fontSize:11,color:"rgba(255,255,255,.2)" }}>
+              SpartsHub es una marca registrada. El nombre, logo y diseño son propiedad exclusiva de SpartsHub. Queda prohibida su reproducción sin autorización expresa.
+            </p>
+          </div>
+          <div style={{ display:"flex",gap:16,alignItems:"center" }}>
+            <a href="#" style={{ fontSize:12,color:MUTED,textDecoration:"none",transition:"color .15s" }}
+              onMouseEnter={e=>e.currentTarget.style.color=RED}
+              onMouseLeave={e=>e.currentTarget.style.color=MUTED}>Privacidad</a>
+            <a href="#" style={{ fontSize:12,color:MUTED,textDecoration:"none",transition:"color .15s" }}
+              onMouseEnter={e=>e.currentTarget.style.color=RED}
+              onMouseLeave={e=>e.currentTarget.style.color=MUTED}>Términos</a>
+            <a href="#" style={{ fontSize:12,color:MUTED,textDecoration:"none",transition:"color .15s" }}
+              onMouseEnter={e=>e.currentTarget.style.color=RED}
+              onMouseLeave={e=>e.currentTarget.style.color=MUTED}>Cookies</a>
+            <span style={{ fontSize:11,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>® & ™ SpartsHub</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    DESKTOP LAYOUT
 ══════════════════════════════════════════════════════════════ */
 function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout }) {
@@ -1857,9 +2097,12 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
       {/* GLOBAL HEADER */}
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 32px" }}>
-        <div style={{ display:"flex", alignItems:"center", height:58, gap:24 }}>
-          <SpartsLogo size={36}/>
-          <div style={{ width:1, height:28, background:BORDER }}/>
+        <div style={{ display:"flex", alignItems:"center", height:70, gap:24 }}>
+          <div style={{ display:"flex",flexDirection:"column",gap:3 }}>
+            <SpartsLogo size={30}/>
+            <span style={{ fontSize:11,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>No vendemos repuestos, conectamos personas</span>
+          </div>
+          <div style={{ width:1, height:36, background:BORDER }}/>
           <nav style={{ display:"flex", gap:4, flex:1 }}>
             {[{id:"home",label:"Inicio"},{id:"search",label:"Buscar"},{id:"profile",label:"Mi Perfil"},{id:"soporte",label:"Soporte"}].map((n,i)=>(
               <button key={i} onClick={()=>{ if(n.id==="soporte"){setShowSupport(true);return;} setTab(n.id); }}
@@ -1889,7 +2132,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
       <div style={{ display:"flex", flex:1, minHeight:0 }}>
         {/* Sidebar */}
-        <div style={{ width:180,background:BG3,borderRight:`1px solid ${BORDER}`,position:"sticky",top:58,height:"calc(100vh - 58px)",display:"flex",flexDirection:"column",padding:"12px 0",flexShrink:0,overflowY:"auto" }}>
+        <div style={{ width:180,background:BG3,borderRight:`1px solid ${BORDER}`,position:"sticky",top:70,height:"calc(100vh - 70px)",display:"flex",flexDirection:"column",padding:"12px 0",flexShrink:0,overflowY:"auto" }}>
           <nav style={{ padding:"0 10px",display:"flex",flexDirection:"column",gap:2,flex:1 }}>
             {SIDEBAR.map((n,i)=>(
               <button key={n.id+i}
