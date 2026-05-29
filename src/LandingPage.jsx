@@ -301,9 +301,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               <span className="bebas" style={{ fontSize:20,color:"#fff",lineHeight:1 }}>S</span>
             </div>
             <span className="bebas" style={{ fontSize:22,letterSpacing:1.5 }}>SPARTSHUB</span>
-            <div style={{ display:"flex",gap:6,marginLeft:8 }}>
-              {["P2P","Industrial","Chile"].map(t=><span key={t} className="tag t-dim" style={{ fontSize:9 }}>{t}</span>)}
-            </div>
+            <span className="tag t-dim" style={{ fontSize:10,marginLeft:8 }}>No vendemos repuestos, conectamos personas</span>
           </div>
           <div style={{ display:"flex",gap:8 }}>
             <button className="btn-ol" style={{ fontSize:12,padding:"8px 16px" }} onClick={()=>setAuthModal("login")}>Iniciar sesión</button>
@@ -327,18 +325,14 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
           <div style={{ display:"flex",gap:64,alignItems:"center" }}>
             {/* Left */}
             <div style={{ flex:1,minWidth:0 }}>
-              <div className="fu" style={{ display:"flex",alignItems:"center",gap:10,marginBottom:20,animationDelay:".05s" }}>
-                <span className="tag t-blue mono" style={{ fontSize:9 }}>SYS://MARKETPLACE.CL</span>
-                <span className="tag t-red" style={{ fontSize:9 }}>● LIVE</span>
-              </div>
+
               <h1 className="bebas fu" style={{ fontSize:"clamp(58px,9.5vw,116px)",lineHeight:.88,marginBottom:28,animationDelay:".1s" }}>
                 <span style={{ color:"rgba(255,255,255,.22)" }}>Publica lo</span><br/>
                 <span style={{ color:"rgba(255,255,255,.22)" }}>que </span><span style={{ color:RED }}>vendes</span><br/>
                 <span style={{ color:"rgba(255,255,255,.22)" }}>o lo que </span><span style={{ color:GOLD }}>buscas.</span>
               </h1>
               <p className="fu" style={{ fontSize:17,color:SUB,lineHeight:1.8,marginBottom:28,maxWidth:500,animationDelay:".15s" }}>
-                No dejes que tu faena frene la operación.<br/>
-                Conecta con la industria chilena — directo, sin comisión.
+                Que tu operación no deje de producir, encuentra tus equipos, partes y repuestos en Spartshub.
               </p>
               <div className="fu" style={{ display:"inline-flex",alignItems:"center",gap:10,background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:8,padding:"11px 18px",marginBottom:28,animationDelay:".18s" }}>
                 <span style={{ fontSize:18 }}>⚡</span>
@@ -398,7 +392,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               { n:"01",e:"📢",t:"Publica lo que vendes o lo que buscas",d:"¿Tienes stock parado en bodega? Publícalo. ¿Necesitas un repuesto urgente? Pídelo. Los proveedores llegan a ti." },
               { n:"02",e:"🤖",t:"La IA conecta oferta y demanda",       d:"Nuestro motor de Trade IA analiza tu necesidad y encuentra los matches más relevantes del catálogo industrial." },
               { n:"03",e:"🤝",t:"Negocian directo, sin comisión",        d:"Comprador y vendedor se contactan directamente. Sin intermediarios. Sin comisión. Solo negocios." },
-              { n:"04",e:"⚙️",t:"Tu operación no se detiene",            d:"Reduce los tiempos de parada no planificada. Encuentra el repuesto que necesitas antes de que la faena pare." },
+              { n:"04",e:"⚙️",t:"Tu operación no se detiene",            d:"Reduce los tiempos de Stall de operaciones. Encuentra lo que necesitas antes que sea tarde." },
             ].map((s,i)=>(
               <div key={i} className="card" style={{ padding:28,display:"flex",gap:20 }}>
                 <div style={{ flexShrink:0 }}>
@@ -459,9 +453,8 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
         <div className="wrap" style={{ position:"relative",zIndex:1 }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:20,marginBottom:32 }}>
             <div>
-              <span className="tag t-red" style={{ marginBottom:12,display:"inline-flex" }}>EN VIVO</span>
               <h2 className="bebas" style={{ fontSize:"clamp(32px,5vw,60px)",lineHeight:.9 }}>
-                <span style={{ color:"rgba(255,255,255,.18)" }}>LO QUE LA INDUSTRIA </span><span style={{ color:RED }}>OFRECE HOY.</span>
+                <span style={{ color:"rgba(255,255,255,.18)" }}>PUBLICACIONES </span><span style={{ color:RED }}>DESTACADAS.</span>
               </h2>
             </div>
             <div>
