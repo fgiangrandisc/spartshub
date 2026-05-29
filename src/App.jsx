@@ -2240,12 +2240,13 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
   const SIDEBAR = [
     { id:"home",        icon:"home",    label:"Inicio" },
+    { id:"publish",     icon:"plus",    label:"Publicar",             accent:true },
+    { id:"solicitud",   icon:"search",  label:"Solicita un repuesto", solicitud:true, featured:true },
     { id:"search",      icon:"search",  label:"Explorar" },
     { id:"messages",    icon:"msg",     label:"Mensajes" },
+    { id:"alertas",     icon:"bell",    label:"Mis solicitudes" },
     { id:"mispubs",     icon:"box",     label:"Mis publicaciones" },
     { id:"profile",     icon:"user",    label:"Perfil" },
-    { id:"publish",     icon:"plus",    label:"Publicar",        accent:true },
-    { id:"solicitud",   icon:"search",  label:"Solicita un repuesto", solicitud:true, featured:true },
   ];
 
   return (
