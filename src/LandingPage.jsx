@@ -4,6 +4,25 @@ import { T, CSS_BASE } from "./theme.js";
 
 const { RED, RED2, GOLD, BLUE, GREEN, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
 
+
+/* ── SpartsHub Logo component ─────────────────────────────── */
+function SpartsLogo({ size=36 }) {
+  const fw = size * 3.2;
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:size*0.28 }}>
+      <svg width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="8" fill="#E8320A"/>
+        <text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white" letterSpacing="1">S</text>
+        <circle cx="26" cy="10" r="4" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"/>
+        <circle cx="26" cy="10" r="1.5" fill="rgba(255,255,255,0.9)"/>
+      </svg>
+      <span style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:size*0.6, letterSpacing:size*0.04, color:"#E8ECF1", lineHeight:1 }}>
+        SPARTSHUB
+      </span>
+    </div>
+  );
+}
+
 /* ── Blueprint SVGs ─────────────────────────────────────────── */
 const BpBearing = ({ size=200 }) => (
   <svg width={size} height={size} viewBox="0 0 200 200" fill="none" stroke={BLUE} strokeWidth="0.8" opacity="1">
@@ -103,12 +122,16 @@ function Ticker() {
 
 /* ── Data ───────────────────────────────────────────────────── */
 const CATS = [
-  { e:"⚙️", n:"Rodamientos & Bujes",  s:"SKF · NSK · Timken · FAG",        v:1840, p:92, Bp:BpBearing },
-  { e:"💧", n:"Bombas Hidráulicas",    s:"Rexroth · Parker · Bosch",        v:1610, p:82, Bp:BpPump },
-  { e:"⚡", n:"Motores Eléctricos",    s:"WEG · ABB · Siemens",             v:1390, p:72, Bp:BpMotor },
-  { e:"🛢️", n:"Filtros Industriales",  s:"Fleetguard · Cummins · Mann",     v:1240, p:64, Bp:BpBearing },
-  { e:"🔗", n:"Correas & Transmisión", s:"Gates · SKF · Optibelt",          v:980,  p:52, Bp:BpGear },
-  { e:"🏗️", n:"Rep. Komatsu / CAT",   s:"Dientes · Sellos · Desgaste",     v:870,  p:46, Bp:BpGear },
+  { e:"⛏️", n:"Minería",              s:"Equipos, repuestos y maquinaria para faenas mineras" },
+  { e:"🌲", n:"Forestal",             s:"Equipamiento y piezas para la industria forestal" },
+  { e:"🏗️", n:"Construcción",         s:"Maquinaria pesada, herramientas y repuestos" },
+  { e:"⚡", n:"Energía",              s:"Generadores, transformadores y equipos eléctricos" },
+  { e:"🚛", n:"Transporte",           s:"Repuestos, neumáticos y equipos para flotas" },
+  { e:"⚙️", n:"Herramientas",         s:"Herramientas industriales y de precisión" },
+  { e:"🔧", n:"Transmisión",          s:"Reductores, correas, cadenas y acoplamientos" },
+  { e:"💧", n:"Fluidos & Hidráulica", s:"Bombas, válvulas, sellos y sistemas hidráulicos" },
+  { e:"🛣️", n:"Rutas y Caminos",      s:"Equipos y maquinaria para obras viales" },
+  { e:"🔩", n:"Sanitarias",           s:"Tuberías, válvulas y equipos sanitarios" },
 ];
 
 const DEMO = [
@@ -184,11 +207,8 @@ function AuthModal({ mode, onClose, onSuccess }) {
         <button onClick={onClose} style={{ position:"absolute",top:14,right:14,background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:20,lineHeight:1 }}>✕</button>
 
         {/* Logo */}
-        <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:22 }}>
-          <div style={{ width:30,height:30,background:RED,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <span className="bebas" style={{ fontSize:18,color:"#fff",lineHeight:1 }}>S</span>
-          </div>
-          <span className="bebas" style={{ fontSize:18,letterSpacing:1,color:TEXT }}>SPARTSHUB</span>
+        <div style={{ marginBottom:22 }}>
+          <SpartsLogo size={32}/>
         </div>
 
         {/* Tabs */}
@@ -296,12 +316,9 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
       {/* NAV */}
       <nav style={{ position:"fixed",top:0,left:0,right:0,zIndex:60,background:"rgba(20,22,24,.92)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"13px 0" }}>
         <div className="wrap" style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-            <div style={{ width:34,height:34,background:RED,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center" }}>
-              <span className="bebas" style={{ fontSize:20,color:"#fff",lineHeight:1 }}>S</span>
-            </div>
-            <span className="bebas" style={{ fontSize:22,letterSpacing:1.5 }}>SPARTSHUB</span>
-            <span className="tag t-dim" style={{ fontSize:10,marginLeft:8 }}>No vendemos repuestos, conectamos personas</span>
+          <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+            <SpartsLogo size={36}/>
+            <span className="tag t-dim" style={{ fontSize:10,marginLeft:4 }}>No vendemos repuestos, conectamos personas</span>
           </div>
           <div style={{ display:"flex",gap:8 }}>
             <button className="btn-ol" style={{ fontSize:12,padding:"8px 16px" }} onClick={()=>setAuthModal("login")}>Iniciar sesión</button>
@@ -352,20 +369,23 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               </div>
             </div>
 
-            {/* Right — cat panel */}
-            <div style={{ width:296,flexShrink:0,display:"none" }} className="cat-panel-hide">
+            {/* Right — industries list */}
+            <div style={{ width:320,flexShrink:0,display:"none" }} className="cat-panel-hide">
               <style>{`@media(min-width:960px){.cat-panel-hide{display:block!important}}`}</style>
-              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
-                {CATS.slice(0,6).map((c,i)=>(
-                  <div key={i} className="card" style={{ padding:14,position:"relative",overflow:"hidden",cursor:"pointer" }}>
-                    <div style={{ position:"absolute",bottom:-10,right:-10,opacity:.14 }}><c.Bp size={60}/></div>
-                    <div style={{ fontSize:18,marginBottom:5 }}>{c.e}</div>
-                    <p style={{ fontSize:11,fontWeight:700,marginBottom:2,color:TEXT,position:"relative" }}>{c.n}</p>
-                    <p style={{ fontSize:9,color:MUTED,marginBottom:7,position:"relative" }}>{c.s}</p>
-                    <div className="prog" style={{ marginBottom:4,position:"relative" }}>
-                      <div className="prog-fill" style={{ width:`${c.p}%` }}/>
+              <div style={{ background:"rgba(255,255,255,.03)",border:`1px solid rgba(255,255,255,.08)`,borderRadius:16,overflow:"hidden" }}>
+                <div style={{ padding:"14px 18px",borderBottom:"1px solid rgba(255,255,255,.07)" }}>
+                  <p className="bc" style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.2,textTransform:"uppercase" }}>Industrias que cubrimos</p>
+                </div>
+                {CATS.map((c,i)=>(
+                  <div key={i} style={{ display:"flex",alignItems:"center",gap:14,padding:"11px 18px",borderBottom:i<CATS.length-1?"1px solid rgba(255,255,255,.05)":"none",transition:"background .15s",cursor:"pointer" }}
+                    onMouseEnter={e=>e.currentTarget.style.background="rgba(232,50,10,.06)"}
+                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                    <span style={{ fontSize:18,flexShrink:0,width:28,textAlign:"center" }}>{c.e}</span>
+                    <div style={{ flex:1 }}>
+                      <p style={{ fontSize:13,fontWeight:700,color:TEXT,marginBottom:1 }}>{c.n}</p>
+                      <p style={{ fontSize:11,color:MUTED,lineHeight:1.3 }}>{c.s}</p>
                     </div>
-                    <span className="mono" style={{ fontSize:9,color:BLUE,position:"relative" }}>+{c.v.toLocaleString()}/mes</span>
+                    <span style={{ color:"rgba(232,50,10,.5)",fontSize:16,flexShrink:0 }}>›</span>
                   </div>
                 ))}
               </div>
@@ -422,7 +442,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               </h3>
               <p style={{ color:SUB,fontSize:15,lineHeight:1.8,marginBottom:24 }}>Cada hora de parada no planificada cuesta. Encuentra el repuesto que necesitas hoy.</p>
               <ul style={{ listStyle:"none",marginBottom:32,display:"flex",flexDirection:"column",gap:12 }}>
-                {["Publica tu necesidad y recibe ofertas verificadas","IA que identifica matches relevantes de todo Chile","Negocias directo, sin intermediarios"].map((b,i)=>(
+                {["Publica tu necesidad y recibe ofertas verificadas","IA que identifica matches relevantes a nivel global","Negocias directo, sin intermediarios"].map((b,i)=>(
                   <li key={i} style={{ display:"flex",gap:10,fontSize:14,color:SUB }}><span style={{ color:RED,flexShrink:0,fontWeight:700 }}>→</span>{b}</li>
                 ))}
               </ul>
@@ -435,7 +455,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               </h3>
               <p style={{ color:SUB,fontSize:15,lineHeight:1.8,marginBottom:24 }}>Repuestos parados son capital congelado. Publica tu inventario en minutos.</p>
               <ul style={{ listStyle:"none",marginBottom:32,display:"flex",flexDirection:"column",gap:12 }}>
-                {["0% de comisión — lo que vendes, es 100% tuyo","Tu catálogo visible para toda la industria chilena","Plan gratis de por vida para los primeros 300"].map((b,i)=>(
+                {["0% de comisión — lo que vendes, es 100% tuyo","Tu catálogo visible para la industria global","Plan gratis de por vida para los primeros 300"].map((b,i)=>(
                   <li key={i} style={{ display:"flex",gap:10,fontSize:14,color:SUB }}><span style={{ color:GOLD,flexShrink:0,fontWeight:700 }}>→</span>{b}</li>
                 ))}
               </ul>
@@ -511,7 +531,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
               onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(232,50,10,.18)"}>
               <p className="bebas" style={{ fontSize:36,color:RED,marginBottom:8 }}>+2.400 PUBLICACIONES ACTIVAS HOY</p>
-              <p style={{ color:MUTED,fontSize:15,marginBottom:20 }}>Repuestos, máquinas, servicios y solicitudes de toda la industria chilena.</p>
+              <p style={{ color:MUTED,fontSize:15,marginBottom:20 }}>Repuestos, máquinas, servicios y solicitudes de la industria global.</p>
               <button className="btn-red" style={{ fontSize:14 }}>Ver todas las publicaciones →</button>
             </div>
           </div>
@@ -533,7 +553,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
             {[
               { v:"0%", l:"Sin comisiones",     d:"Lo que acuerdas, es tuyo. No cobramos porcentaje sobre ventas ni compras.", c:RED  },
               { v:"P2P",l:"Contacto directo",    d:"Comprador y vendedor directos. Sin burocracia, sin formularios eternos.",   c:BLUE },
-              { v:"IA", l:"Trade Inteligente",   d:"Nuestra IA encuentra los mejores matches del catálogo industrial chileno.", c:PUR  },
+              { v:"IA", l:"Trade Inteligente",   d:"Nuestra IA encuentra los mejores matches del catálogo industrial global.", c:PUR  },
               { v:"✓",  l:"Usuarios verificados",d:"Todos los proveedores pasan por verificación. Sabés con quién tratás.",     c:GREEN},
             ].map((v,i)=>(
               <div key={i} className="card" style={{ padding:28,textAlign:"center" }}>
@@ -584,13 +604,8 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
       {/* FOOTER */}
       <footer style={{ padding:"22px 0",borderTop:`1px solid ${BORDER}`,background:BG3 }}>
         <div className="wrap" style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16 }}>
-          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-            <div style={{ width:28,height:28,background:RED,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center" }}>
-              <span className="bebas" style={{ fontSize:16,color:"#fff" }}>S</span>
-            </div>
-            <span className="bebas" style={{ fontSize:16,letterSpacing:1 }}>SPARTSHUB</span>
-          </div>
-          <p style={{ fontSize:12,color:MUTED }}>El marketplace industrial de Chile · P2P · 0% Comisión</p>
+          <SpartsLogo size={28}/>
+          <p style={{ fontSize:12,color:MUTED }}>El marketplace industrial global · P2P · 0% Comisión</p>
           <p style={{ fontSize:12,color:MUTED }}>© 2026 SpartsHub</p>
         </div>
       </footer>

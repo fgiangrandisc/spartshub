@@ -41,16 +41,22 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none" }) => {
 };
 
 /* ── Logo ───────────────────────────────────────────────────── */
-function Logo({ size=16 }) {
+function SpartsLogo({ size=36 }) {
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-      <div style={{ width:30, height:30, background:RED, borderRadius:7, display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <span className="bebas" style={{ color:"#fff", fontSize:18, lineHeight:1 }}>S</span>
-      </div>
-      <span className="bebas" style={{ fontSize:size+4, letterSpacing:1, color:TEXT }}>SPARTSHUB</span>
+    <div style={{ display:"flex", alignItems:"center", gap:size*0.28 }}>
+      <svg width={size} height={size} viewBox="0 0 36 36" fill="none">
+        <rect width="36" height="36" rx="8" fill="#E8320A"/>
+        <text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white" letterSpacing="1">S</text>
+        <circle cx="26" cy="10" r="4" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"/>
+        <circle cx="26" cy="10" r="1.5" fill="rgba(255,255,255,0.9)"/>
+      </svg>
+      <span style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:size*0.6, letterSpacing:size*0.04, color:"#E8ECF1", lineHeight:1 }}>
+        SPARTSHUB
+      </span>
     </div>
   );
 }
+function Logo({ size=16 }) { return <SpartsLogo size={size===16?36:size+20}/>; }
 
 /* ── Spinner ────────────────────────────────────────────────── */
 function Spin({ size=22 }) {
@@ -145,14 +151,14 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
 
       <div style={{ position:"relative", flex:1, display:"flex", flexDirection:"column", padding:28, paddingTop:80 }}>
         <div style={{ display:"flex", gap:8, marginBottom:16 }}>
-          {["P2P","INDUSTRIAL","CHILE"].map(t=><span key={t} className="tag t-dim" style={{ fontSize:9 }}>{t}</span>)}
+          {["P2P","INDUSTRIAL","GLOBAL"].map(t=><span key={t} className="tag t-dim" style={{ fontSize:9 }}>{t}</span>)}
         </div>
-        <Logo size={18}/>
+        <SpartsLogo size={38}/>
         <div style={{ marginTop:32, marginBottom:8 }}>
           <p className="bebas" style={{ fontSize:36, color:TEXT, lineHeight:1.1, marginBottom:8 }}>
             Conectamos personas,<br/><span style={{ color:RED }}>no repuestos.</span>
           </p>
-          <p style={{ fontSize:15, color:SUB, marginBottom:32, lineHeight:1.6 }}>El marketplace industrial de Chile.</p>
+          <p style={{ fontSize:15, color:SUB, marginBottom:32, lineHeight:1.6 }}>El marketplace industrial global.</p>
           <div style={{ display:"flex", gap:8, marginBottom:40, flexWrap:"wrap" }}>
             {["✓ Verificado","0% Comisión","Trade IA"].map(t=>(
               <span key={t} className="tag t-dim">{t}</span>
@@ -176,7 +182,7 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
       <style>{CSS_BASE}</style>
       <div style={{ padding:"56px 20px 20px", display:"flex", alignItems:"center", gap:12 }}>
         <button className="btn-ghost" onClick={()=>setStep(0)}><Ic n="chevL" s={22} c={TEXT}/></button>
-        <Logo/>
+        <SpartsLogo size={36}/>
       </div>
 
       <div style={{ flex:1, padding:"0 24px 40px", display:"flex", flexDirection:"column", gap:14 }}>
@@ -1138,7 +1144,7 @@ function ProfilePage({ user, profile, onLogout }) {
               ))}
             </div>
             <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,display:"flex",flexDirection:"column",gap:14 }}>
-              {[["Nombre completo","name","Ej: Carlos Muñoz"],["RUT","rut","12.345.678-9"],["Empresa / Negocio","biz","Ej: Minera Los Andes"],["WhatsApp / Teléfono","phone","+56 9 1234 5678"],["Dirección","address","Ej: Av. Libertador 1234"],["Ciudad y País","location","Santiago, Chile"]].map(([label,key,ph])=>(
+              {[["Nombre completo","name","Ej: Carlos García"],["RUT","rut","RUT / ID fiscal"],["Empresa / Negocio","biz","Ej: Mining Corp S.A."],["WhatsApp / Teléfono","phone","+1 555 1234 / +56 9 1234"],["Dirección","address","Ej: Av. Principal 1234"],["Ciudad y País","location","Ciudad, País"]].map(([label,key,ph])=>(
                 <div key={key}>
                   <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>{label}</p>
                   {editMode
@@ -1449,7 +1455,7 @@ function SupportPanel({ onClose }) {
       <div style={{ background:CARD,borderRadius:16,width:400,maxHeight:"80vh",display:"flex",flexDirection:"column",border:`1px solid ${BORDER2}`,boxShadow:"0 20px 60px rgba(0,0,0,.5)",overflow:"hidden" }} onClick={e=>e.stopPropagation()}>
         <div style={{ background:RED,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <div>
-            <p className="bebas" style={{ fontSize:18,color:"#fff",letterSpacing:.5 }}>SOPORTE SPARTSHUB</p>
+            <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:2 }}><svg width={22} height={22} viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.2)"/><text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white">S</text></svg><p className="bebas" style={{ fontSize:18,color:"#fff",letterSpacing:.5 }}>SOPORTE</p></div>
             <p style={{ fontSize:12,color:"rgba(255,255,255,.7)",marginTop:2 }}>Respuesta inmediata · IA + Humano</p>
           </div>
           <button onClick={onClose} style={{ color:"rgba(255,255,255,.8)",background:"none",border:"none",cursor:"pointer",fontSize:20 }}>✕</button>
@@ -1524,7 +1530,7 @@ function AlertasPage({ user, profile }) {
           ))}
         </div>
         {alertForm.notifType==="whatsapp"&&(
-          <input className="inp" placeholder="+56 9 1234 5678" value={alertForm.wa||""} onChange={e=>setAlertForm(f=>({...f,wa:e.target.value}))}/>
+          <input className="inp" placeholder="+1 555 1234 / +56 9 1234" value={alertForm.wa||""} onChange={e=>setAlertForm(f=>({...f,wa:e.target.value}))}/>
         )}
         {saved&&<p style={{ color:GREEN,fontSize:13,fontWeight:700 }}>✓ Alerta guardada — te avisaremos cuando haya coincidencias</p>}
         <button className="btn-red" onClick={saveAlert} style={{ padding:"13px" }}>
@@ -1790,7 +1796,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 </div>
                 <div>
                   <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>WhatsApp</p>
-                  <input style={{ ...INP }} placeholder="+56 9 1234 5678" value={f.phone} onChange={e=>upd("phone",e.target.value)}/>
+                  <input style={{ ...INP }} placeholder="+1 555 1234 / +56 9 1234" value={f.phone} onChange={e=>upd("phone",e.target.value)}/>
                 </div>
               </div>
 
@@ -1852,7 +1858,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
       {/* GLOBAL HEADER */}
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 32px" }}>
         <div style={{ display:"flex", alignItems:"center", height:58, gap:24 }}>
-          <Logo/>
+          <SpartsLogo size={36}/>
           <div style={{ width:1, height:28, background:BORDER }}/>
           <nav style={{ display:"flex", gap:4, flex:1 }}>
             {[{id:"home",label:"Inicio"},{id:"search",label:"Buscar"},{id:"profile",label:"Mi Perfil"},{id:"soporte",label:"Soporte"}].map((n,i)=>(
@@ -1969,7 +1975,7 @@ export default function SpartsHub() {
   if (!authReady) return (
     <div style={{ minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16 }}>
       <style>{CSS_BASE}</style>
-      <Logo/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
+      <SpartsLogo size={36}/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
     </div>
   );
 
