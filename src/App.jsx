@@ -802,24 +802,43 @@ function ListingDetail({ l, onClose, onChat }) {
    PUBLISH SHEET
 ══════════════════════════════════════════════════════════════ */
 function PublishSheet({ user, profile, onClose, onDone }) {
-  const [step, setStep]   = useState(0);
-  const [type, setType]   = useState("producto");
-  const [f, setF]         = useState({ title:"",brand:"",model:"",serial_number:"",part_number:"",engine_number:"",chassis_number:"",hours:"",cat:"min",condition:"Nuevo",operation:"Venta",price:"",currency:"USD",stock:"1",location:profile?.location||"",phone:profile?.phone||"",biz:profile?.biz||"",description:"" });
-  const [loading, setLoading] = useState(false);
-  const [err, setErr]     = useState("");
+  const [step,          setStep]          = useState(0);
+  const [type,          setType]          = useState("producto");
+  const [loading,       setLoading]       = useState(false);
+  const [err,           setErr]           = useState("");
+  const [matchCount,    setMatchCount]    = useState(0);
+  const [showMatchAlert,setShowMatchAlert]= useState(false);
+  const [f, setF] = useState({
+    title:"", brand:"", model:"", serial_number:"", part_number:"",
+    engine_number:"", chassis_number:"", hours:"", cat:"mineria",
+    condition:"Nuevo", price:"", currency:"USD", stock:"1",
+    location:profile?.location||"", phone:profile?.phone||"",
+    biz:profile?.biz||"", description:""
+  });
   const upd = (k,v) => setF(p=>({...p,[k]:v}));
 
   const submit = async () => {
-    if (!f.title||!f.price) { setErr("Título y precio requeridos."); return; }
-    setLoading(true);
-    const { error } = await sb.from("listings").insert({
-      user_id:user.id, title:f.title, brand:f.brand, model:f.model, cat:f.cat,
-      condition:f.condition, operation:f.operation, price:Number(f.price), currency:f.currency,
-      stock:Number(f.stock)||1, location:f.location, phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
+    if (!f.title || !f.price) { setErr("Título y precio requeridos."); return; }
+    setLoading(true); setErr("");
+    const { data:inserted, error } = await sb.from("listings").insert({
+      user_id:user.id, title:f.title, brand:f.brand||null, model:f.model||null,
+      serial_number:f.serial_number||null, part_number:f.part_number||null,
+      engine_number:f.engine_number||null, chassis_number:f.chassis_number||null,
+      hours:f.hours?Number(f.hours):null,
+      cat:f.cat, condition:f.condition, operation:"Venta",
+      price:Number(f.price), currency:f.currency,
+      stock:Number(f.stock)||1, location:f.location,
+      phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
       description:f.description, emoji:"📦", verified:false,
-    });
+    }).select().single();
     setLoading(false);
     if (error) { setErr(error.message); return; }
+    if (inserted) {
+      runMatchEngine(inserted, "listing", user, profile).then(async matches => {
+        for (const match of matches) await notifyMatch(match, inserted, "listing", user, profile);
+        if (matches.length > 0) { setMatchCount(matches.length); setShowMatchAlert(true); }
+      });
+    }
     onDone();
   };
 
@@ -839,7 +858,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
         <div style={{ padding:"8px 20px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
             {step===1&&<button className="btn-ghost" style={{ padding:"6px 8px" }} onClick={()=>setStep(0)}><Ic n="chevL" s={20} c={TEXT}/></button>}
-            <h3 className="bebas" style={{ fontSize:22,color:TEXT }}>{step===0?"Nueva publicación":type==="producto"?"Producto":"Publicar"}</h3>
+            <h3 className="bebas" style={{ fontSize:22,color:TEXT }}>{step===0?"Nueva publicación":type==="producto"?"Publicar producto":"Publicar"}</h3>
           </div>
           <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
         </div>
@@ -847,7 +866,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
         <div style={{ overflowY:"auto",flex:1,padding:"0 20px 40px" }}>
           {step===0 && (
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-              <p style={{ fontSize:13,color:MUTED,marginBottom:4 }}>¿Qué quieres publicar?</p>
+              <p style={{ fontSize:13,color:MUTED,marginBottom:4 }}>¿Qué querés publicar?</p>
               {TYPES.map(t=>(
                 <div key={t.id} onClick={()=>{ setType(t.id); setStep(1); }}
                   style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${t.highlight?RED:BORDER}`,background:t.highlight?"rgba(232,50,10,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
@@ -866,11 +885,11 @@ function PublishSheet({ user, profile, onClose, onDone }) {
 
           {step===1&&type==="producto"&&(
             <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
-              {/* Photos */}
               <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
                 <input type="file" accept="image/*" multiple style={{ display:"none" }} id="photo-upload-input"/>
                 {[0,1,2,3].map(i=>(
-                  <div key={i} onClick={()=>document.getElementById("photo-upload-input").click()} style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`1.5px dashed ${i===0?RED:BORDER}`,cursor:"pointer",transition:"border-color .15s" }}
+                  <div key={i} onClick={()=>document.getElementById("photo-upload-input").click()}
+                    style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`1.5px dashed ${i===0?RED:BORDER}`,cursor:"pointer",transition:"border-color .15s" }}
                     onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
                     onMouseLeave={e=>e.currentTarget.style.borderColor=i===0?RED:BORDER}>
                     <Ic n="camera" s={i===0?22:18} c={i===0?RED:MUTED}/>
@@ -878,14 +897,14 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                   </div>
                 ))}
               </div>
-              <p style={{ fontSize:11,color:MUTED,marginTop:-8 }}>Hasta 8 fotos. La primera es la principal.</p>
 
               {err&&<div style={{ background:"rgba(232,50,10,.1)",borderRadius:8,padding:"10px 14px",fontSize:13,color:RED }}>{err}</div>}
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Título</p>
-                <input className="inp" placeholder="Ej. Motor CAT 3406E reacondicionado" value={f.title} onChange={e=>upd("title",e.target.value)}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Título *</p>
+                <input className="inp" placeholder="Ej: Motor CAT 3406E reacondicionado" value={f.title} onChange={e=>upd("title",e.target.value)}/>
               </div>
+
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
                 <div>
                   <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Industria</p>
@@ -899,39 +918,38 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 </div>
               </div>
 
-              {/* Modelo + números técnicos */}
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Modelo <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Modelo <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <input className="inp" placeholder="Ej: 3406E, A10V, 6205-2RS…" value={f.model} onChange={e=>upd("model",e.target.value)}/>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Serie <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Serie <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <input className="inp" placeholder="Nº serie del equipo" value={f.serial_number} onChange={e=>upd("serial_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Parte <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Parte <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <input className="inp" placeholder="Part number" value={f.part_number} onChange={e=>upd("part_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Motor <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Motor <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <input className="inp" placeholder="Nº motor" value={f.engine_number} onChange={e=>upd("engine_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Chasis <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Chasis <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <input className="inp" placeholder="Nº chasis" value={f.chassis_number} onChange={e=>upd("chassis_number",e.target.value)}/>
+              </div>
+              <div>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Horas de uso <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <input className="inp" type="number" placeholder="Ej: 4500" value={f.hours} onChange={e=>upd("hours",e.target.value)}/>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Horas de uso <span style={{ color:MUTED,fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <input className="inp" type="number" placeholder="Ej: 4500" value={f.hours} onChange={e=>upd("hours",e.target.value)}/>
-              </div>
-              <div>
                 <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Estado</p>
                 <div style={{ display:"flex",gap:8 }}>
-                  {["Nuevo","Usado"].map(c=>(
+                  {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                     <button key={c} onClick={()=>upd("condition",c)}
-                      style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(232,50,10,.1)":CARD,fontWeight:700,fontSize:13,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>
+                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(232,50,10,.1)":CARD,fontWeight:700,fontSize:11,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
                       {c}
                     </button>
                   ))}
@@ -939,26 +957,30 @@ function PublishSheet({ user, profile, onClose, onDone }) {
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Precio</p>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Precio *</p>
                 <div style={{ display:"flex",gap:8 }}>
                   <div style={{ position:"relative",flex:1 }}>
                     <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
                     <input className="inp" type="number" placeholder="0" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }}/>
                   </div>
                   <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
-                    {CURRENCIES.map(c=><option key={c}>{c}</option>)}
+                    {["USD","CLP","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
+
               <div>
                 <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Descripción</p>
                 <textarea className="inp" rows={3} placeholder="Detalles, compatibilidad, estado actual…" value={f.description} onChange={e=>upd("description",e.target.value)} style={{ resize:"none" }}/>
               </div>
+
               <div>
                 <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Ubicación</p>
                 <input className="inp" placeholder="Ciudad, País" value={f.location} onChange={e=>upd("location",e.target.value)}/>
               </div>
-              <button className="btn-red" onClick={submit} disabled={loading||!f.title||!f.price} style={{ marginTop:8,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:15 }}>
+
+              <button className="btn-red" onClick={submit} disabled={loading||!f.title||!f.price}
+                style={{ marginTop:8,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:15 }}>
                 {loading?<Spin/>:"Publicar gratis"}
               </button>
             </div>
@@ -975,7 +997,6 @@ function PublishSheet({ user, profile, onClose, onDone }) {
         </div>
       </div>
 
-      {/* Match alert */}
       {showMatchAlert&&(
         <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={()=>setShowMatchAlert(false)}>
           <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(232,50,10,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
@@ -984,9 +1005,6 @@ function PublishSheet({ user, profile, onClose, onDone }) {
             <p style={{ fontSize:15,color:TEXT,lineHeight:1.7,marginBottom:20 }}>
               Tu publicación coincide con {matchCount} solicitud{matchCount>1?"es":""} activa{matchCount>1?"s":""}. Ya enviamos un mensaje automático a los interesados.
             </p>
-            <div style={{ background:"rgba(74,222,128,.08)",border:"1px solid rgba(74,222,128,.2)",borderRadius:10,padding:"12px 16px",marginBottom:20 }}>
-              <p style={{ fontSize:13,color:GREEN }}>✓ Mensaje de contacto enviado automáticamente</p>
-            </div>
             <button className="btn-red" style={{ width:"100%",padding:"13px" }} onClick={()=>setShowMatchAlert(false)}>Ver mis mensajes →</button>
           </div>
         </div>
@@ -994,7 +1012,6 @@ function PublishSheet({ user, profile, onClose, onDone }) {
     </div>
   );
 }
-
 /* ══════════════════════════════════════════════════════════════
    MESSAGES PAGE
 ══════════════════════════════════════════════════════════════ */
