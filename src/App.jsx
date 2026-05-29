@@ -1,7 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
+import { sb } from "./supabase.js";
+import LandingPage from "./LandingPage.jsx";
+import { T, CSS_BASE } from "./theme.js";
+
+const { RED, RED2, GOLD, BLUE, GREEN, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
+
+/* ── Mobile detection hook ──────────────────────────────────── */
 function useIsMobile() {
-  const [mobile, setMobile] = useState(window.innerWidth < 768);
+  const [mobile, setMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   useEffect(()=>{
     const fn = () => setMobile(window.innerWidth < 768);
     window.addEventListener('resize', fn);
@@ -9,11 +16,6 @@ function useIsMobile() {
   },[]);
   return mobile;
 }
-import { sb } from "./supabase.js";
-import LandingPage from "./LandingPage.jsx";
-import { T, CSS_BASE } from "./theme.js";
-
-const { RED, RED2, GOLD, BLUE, GREEN, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
 
 /* ══════════════════════════════════════════════════════════════
    MATCH ENGINE — IA analiza similitud entre publicación y solicitud
