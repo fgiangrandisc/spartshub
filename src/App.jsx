@@ -1,4 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(window.innerWidth < 768);
+  useEffect(()=>{
+    const fn = () => setMobile(window.innerWidth < 768);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  },[]);
+  return mobile;
+}
 import { sb } from "./supabase.js";
 import LandingPage from "./LandingPage.jsx";
 import { T, CSS_BASE } from "./theme.js";
@@ -480,11 +490,13 @@ function SearchPage({ user, onSelect }) {
 
   const INP = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
 
+  const isMobile = useIsMobile();
+
   return (
-    <div style={{ display:"flex", gap:24, alignItems:"flex-start" }}>
+    <div style={{ display:isMobile?"block":"flex", gap:24, alignItems:"flex-start" }}>
 
       {/* ── Sidebar de filtros ── */}
-      <div style={{ width:220, flexShrink:0, background:BG3, borderRadius:12, border:`1px solid ${BORDER}`, padding:"20px 16px", position:"sticky", top:0 }}>
+      <div style={{ width:isMobile?"100%":220, flexShrink:0, background:BG3, borderRadius:12, border:`1px solid ${BORDER}`, padding:"20px 16px", position:isMobile?"relative":"sticky", top:0, marginBottom:isMobile?16:0 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
           <p className="bebas" style={{ fontSize:18, color:TEXT, letterSpacing:.5 }}>Filtros</p>
           {activeFilters > 0 && (
@@ -1215,10 +1227,11 @@ function ProfilePage({ user, profile, onLogout }) {
     </div>
   );
 
+  const isMobile = useIsMobile();
   return (
-    <div style={{ display:"flex", height:"100%", background:BG }}>
+    <div style={{ display:"flex", height:"100%", background:BG, flexDirection:isMobile?"column":"row" }}>
       {/* Sidebar */}
-      <div style={{ width:200,background:BG3,borderRight:`1px solid ${BORDER}`,padding:"20px 0",flexShrink:0,display:"flex",flexDirection:"column" }}>
+      <div style={{ width:isMobile?"100%":200,background:BG3,borderRight:isMobile?"none":`1px solid ${BORDER}`,borderBottom:isMobile?`1px solid ${BORDER}`:'none',padding:"12px 0",flexShrink:0,display:"flex",flexDirection:isMobile?"row":"column",flexWrap:isMobile?"wrap":"nowrap",overflowX:isMobile?"auto":"visible" }}>
         <div style={{ padding:"0 16px 20px",borderBottom:`1px solid ${BORDER}`,marginBottom:8 }}>
           <Avatar name={profile?.name||"U"} size={48}/>
           <p style={{ fontSize:14,fontWeight:700,color:TEXT,marginTop:10 }}>{profile?.name||"Usuario"}</p>
@@ -2074,6 +2087,84 @@ function AppFooter() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   MOBILE TAB BAR
+══════════════════════════════════════════════════════════════ */
+function MobileTabBar({ tab, setTab, onPublish }) {
+  const TABS = [
+    { id:"home",    icon:"home",  label:"Inicio" },
+    { id:"search",  icon:"search",label:"Buscar" },
+    { id:"publish", icon:"plus",  label:"Publicar", accent:true },
+    { id:"messages",icon:"msg",   label:"Chat" },
+    { id:"profile", icon:"user",  label:"Perfil" },
+  ];
+  return (
+    <div style={{ position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(20px)",borderTop:`1px solid ${BORDER}`,display:"flex",alignItems:"center",padding:"8px 0 20px" }}>
+      {TABS.map(t=>(
+        <button key={t.id} onClick={()=>{ if(t.id==="publish"){onPublish();return;} setTab(t.id); }}
+          style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 0",background:"none",border:"none",cursor:"pointer" }}>
+          <div style={{ width:36,height:36,borderRadius:t.accent?12:10,background:t.accent?RED:tab===t.id?"rgba(232,50,10,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
+            <Ic n={t.icon} s={20} c={t.accent?"#fff":tab===t.id?RED:MUTED}/>
+          </div>
+          <span style={{ fontSize:10,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:t.accent?RED:tab===t.id?RED:MUTED,textTransform:"uppercase" }}>{t.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE LAYOUT
+══════════════════════════════════════════════════════════════ */
+function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout }) {
+  const [showPublish,   setShowPublish]   = useState(false);
+  const [showSupport,   setShowSupport]   = useState(false);
+  const [showSolicitud, setShowSolicitud] = useState(false);
+
+  return (
+    <div style={{ background:BG, minHeight:"100vh", color:TEXT }}>
+      <style>{CSS_BASE}</style>
+
+      {/* Mobile header */}
+      <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+        <SpartsLogo size={28}/>
+        <div style={{ display:"flex",gap:4 }}>
+          <button className="btn-ghost" style={{ padding:"6px" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={20} c={MUTED}/></button>
+          <button className="btn-ghost" style={{ position:"relative",padding:"6px" }}>
+            <Ic n="bell" s={20} c={MUTED}/>
+          </button>
+        </div>
+      </div>
+
+      {/* Page content */}
+      <div style={{ paddingTop:56, paddingBottom:90 }}>
+        {tab==="home"    &&<HomePage    user={session.user} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
+        {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected}/>}
+        {tab==="messages"&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
+        {tab==="alertas" &&<AlertasPage  user={session.user} profile={profile}/>}
+        {tab==="profile" &&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
+        {tab==="mispubs" &&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
+      </div>
+
+      {/* Bottom tab bar */}
+      <MobileTabBar tab={tab} setTab={setTab} onPublish={()=>setShowPublish(true)}/>
+
+      {/* Floating solicitud button — above tab bar */}
+      {!showSolicitud&&!showPublish&&(
+        <button onClick={()=>setShowSolicitud(true)}
+          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(232,50,10,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
+          <Ic n="search" s={16} c="#fff"/>Busco un repuesto
+        </button>
+      )}
+
+      {selected&&<ListingDetail l={selected} onClose={()=>setSelected(null)} onChat={openChat}/>}
+      {showPublish&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
+      {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
+      {showSolicitud&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    DESKTOP LAYOUT
 ══════════════════════════════════════════════════════════════ */
 function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout }) {
@@ -2228,6 +2319,17 @@ export default function SpartsHub() {
     );
     return <AuthScreen initialMode={showAuthMode==="register"?"register":"login"} onAuth={()=>sb.auth.getSession().then(({ data })=>setSession(data.session))} onBack={()=>setShowAuthMode("landing")}/>;
   }
+
+  const isMobile = useIsMobile();
+
+  if (isMobile) return (
+    <MobileLayout
+      tab={tab} setTab={setTab} session={session} profile={profile}
+      selected={selected} setSelected={setSelected}
+      chatListing={chatListing} setChatListing={setChatListing}
+      openChat={openChat} logout={logout}
+    />
+  );
 
   return (
     <DesktopLayout

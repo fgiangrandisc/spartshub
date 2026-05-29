@@ -266,8 +266,8 @@ function GuestModal({ slots, onClose, onReg }) {
         </div>
         <div style={{ background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:8,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,marginBottom:20,justifyContent:"center" }}>
           <span>⚡</span>
-          <span className="bc" style={{ fontSize:14,fontWeight:700,color:GOLD }}>Plan gratis de por vida</span>
-          <span style={{ color:SUB,fontSize:13 }}>— Solo <strong style={{ color:TEXT }}>{slots}</strong> cupos</span>
+          <span className="bc" style={{ fontSize:14,fontWeight:700,color:GOLD }}>Registro 100% gratuito</span>
+          <span style={{ color:SUB,fontSize:13 }}>— Sin tarjeta de crédito</span>
         </div>
         <button className="btn-red" style={{ width:"100%",justifyContent:"center",fontSize:16,padding:15 }} onClick={onReg}>Crear cuenta gratis →</button>
         <button onClick={onClose} style={{ width:"100%",marginTop:10,background:"none",border:"none",color:MUTED,fontSize:14,cursor:"pointer",padding:8 }}>Seguir explorando como invitado</button>
@@ -295,15 +295,15 @@ function Toast({ term, onClose, onReg }) {
    MAIN LANDING
 ══════════════════════════════════════════════════════════════ */
 export default function LandingPage({ onGoRegister, onGoLogin }) {
-  const [slots, setSlots]         = useState(247);
+
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [authModal, setAuthModal] = useState(null); // 'login' | 'register' | null
   const [toast, setToast]         = useState(null);
   const [searchQ, setSearchQ]     = useState("");
-  const [listings, setListings]   = useState(DEMO);
+  const [listings, setListings]   = useState([]);
 
   useEffect(()=>{
-    sb.from("profiles").select("id",{count:"exact",head:true}).then(({count})=>{ if(count) setSlots(Math.max(300-count,0)); });
+
     sb.from("listings").select("*").order("created_at",{ascending:false}).limit(5).then(({data})=>{
       if(data&&data.length>=3) setListings(data.map(l=>({...l,type:"venta",ini:(l.biz||"U").slice(0,2).toUpperCase(),badge:"DISPONIBLE",bt:"red"})));
     });
@@ -315,6 +315,20 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT }}>
       <style>{CSS_BASE}</style>
+      <style>{`
+        @media(max-width:768px){
+          .wrap{padding:0 16px!important}
+          .hero-grid{flex-direction:column!important}
+          .hero-right{display:none!important}
+          .how-grid{grid-template-columns:1fr!important}
+          .dual-grid{grid-template-columns:1fr!important}
+          .why-grid{grid-template-columns:1fr 1fr!important}
+          .footer-grid{grid-template-columns:1fr!important;gap:32px!important}
+          .nav-links{gap:8px!important}
+          .nav-link span{display:none}
+          .btn-publish{font-size:11px!important;padding:5px 10px!important}
+        }
+      `}</style>
 
       {/* NAV */}
       <nav style={{ position:"fixed",top:0,left:0,right:0,zIndex:60,background:"rgba(20,22,24,.92)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"13px 0" }}>
@@ -341,7 +355,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
         <div style={{ position:"absolute",top:"15%",left:"-8%",width:600,height:600,background:`radial-gradient(circle,rgba(232,50,10,.1) 0%,transparent 65%)`,pointerEvents:"none" }}/>
 
         <div className="wrap" style={{ position:"relative",zIndex:2,width:"100%" }}>
-          <div style={{ display:"flex",gap:64,alignItems:"center" }}>
+          <div className="hero-grid" style={{ display:"flex",gap:64,alignItems:"center" }}>
             {/* Left */}
             <div style={{ flex:1,minWidth:0 }}>
 
@@ -355,8 +369,8 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               </p>
               <div className="fu" style={{ display:"inline-flex",alignItems:"center",gap:10,background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:8,padding:"11px 18px",marginBottom:28,animationDelay:".18s" }}>
                 <span style={{ fontSize:18 }}>⚡</span>
-                <span className="bc" style={{ fontWeight:700,fontSize:14,color:GOLD }}>Plan gratis de por vida</span>
-                <span className="mono" style={{ fontSize:13,color:TEXT }}>— Solo <span style={{ color:RED,fontWeight:700 }}>{slots}</span> cupos</span>
+                <span className="bc" style={{ fontWeight:700,fontSize:14,color:GOLD }}>Registro gratuito</span>
+                <span className="mono" style={{ fontSize:13,color:TEXT }}>— Sin comisiones</span>
               </div>
               <div className="fu" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:32,animationDelay:".22s" }}>
                 <button className="btn-red" style={{ fontSize:16,padding:"15px 34px" }} onClick={()=>setAuthModal("register")}>Comenzar gratis hoy →</button>
@@ -372,7 +386,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
             </div>
 
             {/* Right — industries list */}
-            <div style={{ width:320,flexShrink:0,display:"none" }} className="cat-panel-hide">
+            <div className="hero-right cat-panel-hide" style={{ width:320,flexShrink:0,display:"none" }}>
               <style>{`@media(min-width:960px){.cat-panel-hide{display:block!important}}`}</style>
               <div style={{ background:"rgba(255,255,255,.03)",border:`1px solid rgba(255,255,255,.08)`,borderRadius:16,overflow:"hidden" }}>
                 <div style={{ padding:"14px 18px",borderBottom:"1px solid rgba(255,255,255,.07)" }}>
@@ -409,7 +423,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               <span style={{ color:RED }}>SIN COMPLICACIONES.</span>
             </h2>
           </div>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:28 }}>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:28 }} className="how-grid">
             {[
               { n:"01",e:"📢",t:"Publica lo que vendes o lo que buscas",d:"¿Tienes stock parado en bodega? Publícalo. ¿Necesitas un repuesto urgente? Pídelo. Los proveedores llegan a ti." },
               { n:"02",e:"🤖",t:"La IA conecta oferta y demanda",       d:"Nuestro motor de Trade IA analiza tu necesidad y encuentra los matches más relevantes del catálogo industrial." },
@@ -457,7 +471,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               </h3>
               <p style={{ color:SUB,fontSize:15,lineHeight:1.8,marginBottom:24 }}>Repuestos parados son capital congelado. Publica tu inventario en minutos.</p>
               <ul style={{ listStyle:"none",marginBottom:32,display:"flex",flexDirection:"column",gap:12 }}>
-                {["0% de comisión — lo que vendes, es 100% tuyo","Tu catálogo visible para la industria global","Plan gratis de por vida para los primeros 300"].map((b,i)=>(
+                {["0% de comisión — lo que vendes, es 100% tuyo","Tu catálogo visible para la industria global","Registro gratuito · Sin comisiones"].map((b,i)=>(
                   <li key={i} style={{ display:"flex",gap:10,fontSize:14,color:SUB }}><span style={{ color:GOLD,flexShrink:0,fontWeight:700 }}>→</span>{b}</li>
                 ))}
               </ul>
@@ -529,12 +543,12 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
                 </div>
               );
             })}
-            <div onClick={openModal} style={{ border:"1.5px dashed rgba(232,50,10,.18)",borderRadius:12,padding:32,textAlign:"center",cursor:"pointer",transition:"all .2s" }}
+            <div onClick={()=>setAuthModal("register")} style={{ border:"1.5px dashed rgba(232,50,10,.18)",borderRadius:12,padding:32,textAlign:"center",cursor:"pointer",transition:"all .2s" }}
               onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
               onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(232,50,10,.18)"}>
-              <p className="bebas" style={{ fontSize:36,color:RED,marginBottom:8 }}>+2.400 PUBLICACIONES ACTIVAS HOY</p>
-              <p style={{ color:MUTED,fontSize:15,marginBottom:20 }}>Repuestos, máquinas, servicios y solicitudes de la industria global.</p>
-              <button className="btn-red" style={{ fontSize:14 }}>Ver todas las publicaciones →</button>
+              <p className="bebas" style={{ fontSize:28,color:RED,marginBottom:8 }}>¿TENÉS UN REPUESTO O EQUIPO PARA VENDER?</p>
+              <p style={{ color:MUTED,fontSize:15,marginBottom:20 }}>Registrate gratis y publicá en minutos. Sin comisiones.</p>
+              <button className="btn-red" style={{ fontSize:14 }}>Publicar ahora →</button>
             </div>
           </div>
         </div>
@@ -575,20 +589,25 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
         <BpGrid/>
         <div style={{ position:"absolute",inset:0,background:`radial-gradient(ellipse at center,rgba(232,50,10,.07) 0%,transparent 60%)`,pointerEvents:"none" }}/>
         <div className="wrap" style={{ position:"relative",zIndex:1,textAlign:"center",maxWidth:640,margin:"0 auto" }}>
-          <span className="tag t-gold" style={{ marginBottom:20,display:"inline-flex" }}>⭐ OFERTA FUNDADORES</span>
+          <span className="tag t-gold" style={{ marginBottom:20,display:"inline-flex" }}>⭐ REGISTRO GRATUITO</span>
           <h2 className="bebas" style={{ fontSize:"clamp(48px,7vw,86px)",lineHeight:.9,marginBottom:18 }}>
             <span style={{ color:"rgba(255,255,255,.18)" }}>ÚNETE HOY.</span><br/><span style={{ color:RED }}>GRATIS PARA SIEMPRE.</span>
           </h2>
-          <p style={{ color:SUB,fontSize:17,lineHeight:1.7,marginBottom:36 }}>Aprovecha el plan fundador antes de que se agoten los cupos.<br/>Sin tarjeta de crédito. Sin letra chica.</p>
+          <p style={{ color:SUB,fontSize:17,lineHeight:1.7,marginBottom:36 }}>Registrate gratis y empezá a conectar con compradores y vendedores de todo el mundo. Sin tarjeta de crédito. Sin comisiones.</p>
           <div style={{ display:"inline-flex",alignItems:"center",gap:28,background:BG3,border:`1px solid ${BORDER2}`,borderRadius:12,padding:"18px 36px",marginBottom:36 }}>
             <div style={{ textAlign:"center" }}>
-              <p className="bebas" style={{ fontSize:48,color:RED,lineHeight:1 }}>{slots}</p>
-              <p className="mono" style={{ fontSize:10,color:MUTED,letterSpacing:1 }}>CUPOS DISPONIBLES</p>
+              <p className="bebas" style={{ fontSize:36,color:RED,lineHeight:1 }}>0%</p>
+              <p className="mono" style={{ fontSize:10,color:MUTED,letterSpacing:1 }}>COMISIÓN</p>
             </div>
             <div style={{ width:1,height:52,background:BORDER }}/>
             <div style={{ textAlign:"center" }}>
-              <p className="bebas" style={{ fontSize:48,color:"rgba(255,255,255,.12)",lineHeight:1 }}>300</p>
-              <p className="mono" style={{ fontSize:10,color:MUTED,letterSpacing:1 }}>TOTAL FUNDADORES</p>
+              <p className="bebas" style={{ fontSize:36,color:GOLD,lineHeight:1 }}>P2P</p>
+              <p className="mono" style={{ fontSize:10,color:MUTED,letterSpacing:1 }}>CONTACTO DIRECTO</p>
+            </div>
+            <div style={{ width:1,height:52,background:BORDER }}/>
+            <div style={{ textAlign:"center" }}>
+              <p className="bebas" style={{ fontSize:36,color:GREEN,lineHeight:1 }}>✓</p>
+              <p className="mono" style={{ fontSize:10,color:MUTED,letterSpacing:1 }}>GRATIS</p>
             </div>
           </div>
           <div style={{ display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:20 }}>
@@ -617,7 +636,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
               <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Empresa</p>
-              {["Quiénes somos","Cómo funciona","Industrias","Casos de éxito","Blog","Prensa"].map(l=><a key={l} href="#" style={{ fontSize:13,color:SUB,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>)}
+              {["Cómo funciona","Industrias que cubrimos","Publicar un producto","Dejar una solicitud"].map(l=><a key={l} href="#" style={{ fontSize:13,color:SUB,textDecoration:"none",transition:"color .15s" }} onMouseEnter={e=>e.currentTarget.style.color=RED} onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>)}
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
               <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Políticas</p>
@@ -625,9 +644,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
               <p style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 }}>Contacto</p>
-              {[["Email general","contacto@spartshub.com"],["Soporte","soporte@spartshub.com"],["Partnerships","partners@spartshub.com"]].map(([label,val])=>(
-                <div key={label}><p style={{ fontSize:11,color:MUTED,marginBottom:2 }}>{label}</p><a href={`mailto:${val}`} style={{ fontSize:13,color:TEXT,textDecoration:"none" }}>{val}</a></div>
-              ))}
+              <div><p style={{ fontSize:11,color:MUTED,marginBottom:2 }}>Email</p><a href="mailto:fgiangrandisc@gmail.com" style={{ fontSize:13,color:TEXT,textDecoration:"none" }}>fgiangrandisc@gmail.com</a></div>
               <div><p style={{ fontSize:11,color:MUTED,marginBottom:2 }}>WhatsApp</p><a href="https://wa.me/56932689914" target="_blank" style={{ fontSize:13,color:TEXT,textDecoration:"none" }}>+56 9 3268 9914</a></div>
             </div>
           </div>
