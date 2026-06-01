@@ -20,11 +20,54 @@ function useIsMobile() {
 /* ══════════════════════════════════════════════════════════════
    MATCH ENGINE — IA analiza similitud entre publicación y solicitud
 ══════════════════════════════════════════════════════════════ */
+async function analyzeImage(base64Data, mediaType) {
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 600,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: mediaType, data: base64Data }
+            },
+            {
+              type: "text",
+              text: `Eres un experto en repuestos y equipos industriales. Analiza esta imagen e identifica el componente.
+Responde SOLO con JSON válido (sin markdown):
+{
+  "title": "nombre descriptivo del repuesto o equipo",
+  "brand": "marca si es visible, sino null",
+  "model": "modelo o referencia si es visible, sino null",
+  "part_number": "número de parte si es visible, sino null",
+  "cat": "una de: min(minería) for(forestal) const(construcción) ene(energía) trans(transporte) fae(faenas) rut(rutas) san(sanitarias) serv(servicios)",
+  "condition": "una de: Nuevo | Usado – Bueno | Usado – Regular | Reacondicionado",
+  "description": "descripción técnica breve en español, máx 120 caracteres",
+  "emoji": "un emoji que represente el componente",
+  "confidence": "alta | media | baja"
+}`
+            }
+          ]
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '{}';
+    return JSON.parse(text.replace(/```json|```/g, "").trim());
+  } catch(e) {
+    return null;
+  }
+}
+
 async function analyzeMatch(listingText, requestText) {
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 100,
@@ -809,12 +852,17 @@ function PublishSheet({ user, profile, onClose, onDone }) {
   const [err,           setErr]           = useState("");
   const [matchCount,    setMatchCount]    = useState(0);
   const [showMatchAlert,setShowMatchAlert]= useState(false);
+  const [aiFile,        setAiFile]        = useState(null);
+  const [aiPreview,     setAiPreview]     = useState(null);
+  const [aiLoading,     setAiLoading]     = useState(false);
+  const [aiError,       setAiError]       = useState("");
+  const [aiResult,      setAiResult]      = useState(null);
   const [f, setF] = useState({
     title:"", brand:"", model:"", serial_number:"", part_number:"",
-    engine_number:"", chassis_number:"", hours:"", cat:"mineria",
+    engine_number:"", chassis_number:"", hours:"", cat:"min",
     condition:"Nuevo", price:"", currency:"USD", stock:"1",
     location:profile?.location||"", phone:profile?.phone||"",
-    biz:profile?.biz||"", description:""
+    biz:profile?.biz||"", description:"", emoji:"📦"
   });
   const upd = (k,v) => setF(p=>({...p,[k]:v}));
 
@@ -830,7 +878,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
       price:Number(f.price), currency:f.currency,
       stock:Number(f.stock)||1, location:f.location,
       phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
-      description:f.description, emoji:"📦", verified:false,
+      description:f.description, emoji:f.emoji||"📦", verified:false,
     }).select().single();
     setLoading(false);
     if (error) { setErr(error.message); return; }
@@ -987,7 +1035,147 @@ function PublishSheet({ user, profile, onClose, onDone }) {
             </div>
           )}
 
-          {step===1&&type!=="producto"&&(
+          {step===1&&type==="ai"&&(
+            <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
+              {!aiFile ? (
+                <label htmlFor="ai-photo-input" style={{ display:"block",cursor:"pointer" }}>
+                  <input id="ai-photo-input" type="file" accept="image/*" capture="environment" style={{ display:"none" }}
+                    onChange={e=>{
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      setAiFile(file);
+                      setAiResult(null);
+                      setAiError("");
+                      setAiPreview(URL.createObjectURL(file));
+                    }}/>
+                  <div style={{ border:`2px dashed rgba(232,50,10,.4)`,borderRadius:16,padding:"48px 24px",textAlign:"center",background:"rgba(232,50,10,.04)",transition:"all .2s" }}
+                    onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(232,50,10,.4)"}>
+                    <div style={{ width:72,height:72,background:"rgba(232,50,10,.12)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>
+                      <Ic n="camera" s={32} c={RED}/>
+                    </div>
+                    <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>Tomar foto o subir imagen</p>
+                    <p style={{ fontSize:13,color:MUTED,lineHeight:1.6 }}>La IA identificará el repuesto o equipo y completará el formulario automáticamente</p>
+                    <div style={{ display:"flex",gap:8,justifyContent:"center",marginTop:16,flexWrap:"wrap" }}>
+                      {["Rodamientos","Bombas","Motores","Filtros","Válvulas"].map(t=>(
+                        <span key={t} className="tag t-dim" style={{ fontSize:10 }}>{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                </label>
+              ) : (
+                <div>
+                  <div style={{ position:"relative",borderRadius:16,overflow:"hidden",marginBottom:16,maxHeight:280,display:"flex",alignItems:"center",justifyContent:"center",background:BG2 }}>
+                    <img src={aiPreview} alt="preview" style={{ maxWidth:"100%",maxHeight:280,objectFit:"contain",display:"block" }}/>
+                    {!aiLoading&&!aiResult&&(
+                      <button onClick={()=>{ setAiFile(null); setAiPreview(null); setAiError(""); }}
+                        style={{ position:"absolute",top:10,right:10,background:"rgba(0,0,0,.6)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                        <Ic n="x" s={16} c="#fff"/>
+                      </button>
+                    )}
+                  </div>
+
+                  {aiLoading&&(
+                    <div style={{ textAlign:"center",padding:"24px 0" }}>
+                      <Spin size={32}/>
+                      <p style={{ fontSize:15,color:SUB,marginTop:14,fontWeight:600 }}>Analizando imagen con IA…</p>
+                      <p style={{ fontSize:13,color:MUTED,marginTop:4 }}>Identificando marca, modelo y número de parte</p>
+                    </div>
+                  )}
+
+                  {aiError&&!aiLoading&&(
+                    <div style={{ background:"rgba(232,50,10,.1)",border:"1px solid rgba(232,50,10,.25)",borderRadius:10,padding:"14px 16px",marginBottom:12 }}>
+                      <p style={{ fontSize:14,color:RED,fontWeight:600,marginBottom:4 }}>No se pudo identificar el componente</p>
+                      <p style={{ fontSize:13,color:MUTED }}>{aiError}</p>
+                    </div>
+                  )}
+
+                  {aiResult&&!aiLoading&&(
+                    <div>
+                      <div style={{ background:"rgba(74,222,128,.06)",border:"1px solid rgba(74,222,128,.25)",borderRadius:12,padding:20,marginBottom:16 }}>
+                        <div style={{ display:"flex",gap:10,alignItems:"center",marginBottom:14 }}>
+                          <div style={{ width:40,height:40,background:"rgba(74,222,128,.15)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0 }}>
+                            {aiResult.emoji||"📦"}
+                          </div>
+                          <div>
+                            <p style={{ fontSize:16,fontWeight:700,color:TEXT,lineHeight:1.2 }}>{aiResult.title}</p>
+                            <p style={{ fontSize:12,color:GREEN,fontWeight:600,marginTop:3 }}>
+                              ✓ Identificado · Confianza {aiResult.confidence||"media"}
+                            </p>
+                          </div>
+                        </div>
+                        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+                          {[["Marca",aiResult.brand],["Modelo",aiResult.model],["N° Parte",aiResult.part_number],["Condición",aiResult.condition]].map(([k,v])=>v&&(
+                            <div key={k} style={{ background:BG2,borderRadius:8,padding:"10px 12px",border:`1px solid ${BORDER}` }}>
+                              <p style={{ fontSize:10,color:MUTED,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3 }}>{k}</p>
+                              <p style={{ fontSize:13,fontWeight:600,color:TEXT }}>{v}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {aiResult.description&&(
+                          <p style={{ fontSize:13,color:SUB,marginTop:12,lineHeight:1.6 }}>{aiResult.description}</p>
+                        )}
+                      </div>
+                      <button className="btn-red" style={{ width:"100%",padding:"14px",fontSize:15 }}
+                        onClick={()=>{
+                          upd("title",      aiResult.title||"");
+                          upd("brand",      aiResult.brand||"");
+                          upd("model",      aiResult.model||"");
+                          upd("part_number",aiResult.part_number||"");
+                          upd("description",aiResult.description||"");
+                          upd("condition",  aiResult.condition||"Nuevo");
+                          upd("cat",        aiResult.cat||"serv");
+                          upd("emoji",      aiResult.emoji||"📦");
+                          setType("producto");
+                        }}>
+                        Usar estos datos y completar publicación →
+                      </button>
+                      <button className="btn-ghost" style={{ width:"100%",marginTop:8,justifyContent:"center",fontSize:13 }}
+                        onClick={()=>{ setAiFile(null); setAiPreview(null); setAiResult(null); setAiError(""); }}>
+                        Intentar con otra foto
+                      </button>
+                    </div>
+                  )}
+
+                  {!aiLoading&&!aiResult&&(
+                    <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+                      <button className="btn-red" style={{ width:"100%",padding:"14px",fontSize:15 }}
+                        onClick={async()=>{
+                          setAiLoading(true); setAiError(""); setAiResult(null);
+                          try {
+                            const reader = new FileReader();
+                            reader.onload = async e => {
+                              const dataUrl = e.target.result;
+                              const base64 = dataUrl.split(",")[1];
+                              const mediaType = aiFile.type || "image/jpeg";
+                              const result = await analyzeImage(base64, mediaType);
+                              if (!result || !result.title) {
+                                setAiError("No se pudo identificar el componente. Intenta con una imagen más clara o con mejor iluminación.");
+                              } else {
+                                setAiResult(result);
+                              }
+                              setAiLoading(false);
+                            };
+                            reader.readAsDataURL(aiFile);
+                          } catch {
+                            setAiError("Error al procesar la imagen. Intenta de nuevo.");
+                            setAiLoading(false);
+                          }
+                        }}>
+                        Identificar con IA
+                      </button>
+                      <button className="btn-ghost" style={{ justifyContent:"center",fontSize:13 }}
+                        onClick={()=>{ setAiFile(null); setAiPreview(null); }}>
+                        Cambiar foto
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {step===1&&type!=="producto"&&type!=="ai"&&(
             <div style={{ paddingTop:40,textAlign:"center" }}>
               <div style={{ fontSize:64,marginBottom:16 }}>🚧</div>
               <p className="bebas" style={{ fontSize:28,marginBottom:8 }}>Próximamente</p>

@@ -458,9 +458,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
                   <p className="bc" style={{ fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.2,textTransform:"uppercase" }}>Industrias que cubrimos</p>
                 </div>
                 {CATS.map((c,i)=>(
-                  <div key={i} style={{ display:"flex",alignItems:"center",gap:14,padding:"11px 18px",borderBottom:i<CATS.length-1?"1px solid rgba(255,255,255,.05)":"none",transition:"background .15s",cursor:"pointer" }}
-                    onMouseEnter={e=>e.currentTarget.style.background="rgba(232,50,10,.06)"}
-                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                  <div key={i} style={{ display:"flex",alignItems:"center",gap:14,padding:"11px 18px",borderBottom:i<CATS.length-1?"1px solid rgba(255,255,255,.05)":"none" }}>
                     <div style={{ width:32,height:32,borderRadius:8,background:"rgba(232,50,10,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                       <IndustryIcon id={c.id} size={18} color="#E8320A"/>
                     </div>
