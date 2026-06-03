@@ -4,7 +4,7 @@ import { sb } from "./supabase.js";
 import LandingPage from "./LandingPage.jsx";
 import { T, CSS_BASE } from "./theme.js";
 
-const { RED, RED2, GOLD, BLUE, GREEN, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
+const { RED, RED2, GOLD, BLUE, GREEN, DANGER, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
 
 /* ── Mobile detection hook ──────────────────────────────────── */
 function useIsMobile() {
@@ -196,12 +196,12 @@ function SpartsLogo({ size=36 }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:size*0.28 }}>
       <svg width={size} height={size} viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="8" fill="#E8320A"/>
+        <rect width="36" height="36" rx="8" fill="#F04423"/>
         <text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white" letterSpacing="1">S</text>
         <circle cx="26" cy="10" r="4" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"/>
         <circle cx="26" cy="10" r="1.5" fill="rgba(255,255,255,0.9)"/>
       </svg>
-      <span style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:size*0.6, letterSpacing:size*0.04, color:"#E8ECF1", lineHeight:1 }}>
+      <span style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:size*0.6, letterSpacing:size*0.04, color:"#F2F5F7", lineHeight:1 }}>
         SPARTSHUB
       </span>
     </div>
@@ -218,7 +218,7 @@ function Spin({ size=22 }) {
 function Avatar({ name, size=40, color=RED }) {
   const initials = (name||"U").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   return (
-    <div style={{ width:size, height:size, borderRadius:"50%", background:`rgba(232,50,10,.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+    <div style={{ width:size, height:size, borderRadius:"50%", background:`rgba(240,68,35,.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
       <span style={{ color:RED, fontWeight:700, fontSize:size*0.38, fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
     </div>
   );
@@ -350,7 +350,7 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
           ))}
         </div>
 
-        {err && <div style={{ background:"rgba(232,50,10,.1)",border:"1px solid rgba(232,50,10,.25)",borderRadius:8,padding:"12px 16px",fontSize:13,color:RED }}>{err}</div>}
+        {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.3)",borderRadius:8,padding:"12px 16px",fontSize:13,color:DANGER }}>{err}</div>}
 
         {mode === "register" && (
           <>
@@ -485,7 +485,6 @@ function SearchPage({ user, onSelect }) {
   const [nSerie,     setNSerie]     = useState("");
   const [nParte,     setNParte]     = useState("");
   const [nMotor,     setNMotor]     = useState("");
-  const [nChasis,    setNChasis]    = useState("");
   const [horasMin,   setHorasMin]   = useState("");
   const [horasMax,   setHorasMax]   = useState("");
   const [ciudad,     setCiudad]     = useState("");
@@ -515,7 +514,6 @@ function SearchPage({ user, onSelect }) {
     if (nSerie)         query = query.ilike("serial_number", `%${nSerie}%`);
     if (nParte)         query = query.ilike("part_number", `%${nParte}%`);
     if (nMotor)         query = query.ilike("engine_number", `%${nMotor}%`);
-    if (nChasis)        query = query.ilike("chassis_number", `%${nChasis}%`);
     if (horasMin)       query = query.gte("hours", Number(horasMin));
     if (horasMax)       query = query.lte("hours", Number(horasMax));
     if (ciudad)         query = query.ilike("location", `%${ciudad}%`);
@@ -526,13 +524,13 @@ function SearchPage({ user, onSelect }) {
     const { data } = await query;
     setListings(data||[]);
     setLoading(false);
-  }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, nChasis, horasMin, horasMax, ciudad, priceMin, priceMax, priceCur, sortBy, verified]);
+  }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, horasMin, horasMax, ciudad, priceMin, priceMax, priceCur, sortBy, verified]);
 
   useEffect(()=>{ load(); },[load]);
 
-  const activeFilters = [condition,marca,modelo,nSerie,nParte,nMotor,nChasis,horasMin,horasMax,ciudad,priceMin,priceMax,verified?'verificado':''].filter(Boolean).length;
+  const activeFilters = [condition,marca,modelo,nSerie,nParte,nMotor,horasMin,horasMax,ciudad,priceMin,priceMax,verified?'verificado':''].filter(Boolean).length;
 
-  const resetFilters = () => { setCondition(""); setMarca(""); setModelo(""); setNSerie(""); setNParte(""); setNMotor(""); setNChasis(""); setHorasMin(""); setHorasMax(""); setCiudad(""); setPriceMin(""); setPriceMax(""); setPriceCur("CLP"); setVerified(false); setSortBy("newest"); };
+  const resetFilters = () => { setCondition(""); setMarca(""); setModelo(""); setNSerie(""); setNParte(""); setNMotor(""); setHorasMin(""); setHorasMax(""); setCiudad(""); setPriceMin(""); setPriceMax(""); setPriceCur("CLP"); setVerified(false); setSortBy("newest"); };
 
   const INP = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
 
@@ -609,13 +607,6 @@ function SearchPage({ user, onSelect }) {
         <div style={{ marginBottom:14 }}>
           <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Motor</p>
           <input value={nMotor} onChange={e=>setNMotor(e.target.value)} placeholder="Nº motor" style={{ ...INP }}/>
-        </div>
-
-        <div style={{ height:1, background:BORDER, marginBottom:14 }}/>
-
-        <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Chasis</p>
-          <input value={nChasis} onChange={e=>setNChasis(e.target.value)} placeholder="Nº chasis" style={{ ...INP }}/>
         </div>
 
         <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
@@ -704,7 +695,6 @@ function SearchPage({ user, onSelect }) {
             {nSerie    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNSerie("")}>Serie: {nSerie} ✕</span>}
             {nParte    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNParte("")}>Parte: {nParte} ✕</span>}
             {nMotor    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNMotor("")}>Motor: {nMotor} ✕</span>}
-            {nChasis   && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNChasis("")}>Chasis: {nChasis} ✕</span>}
             {horasMin  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setHorasMin("")}>Hrs desde {horasMin} ✕</span>}
             {horasMax  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setHorasMax("")}>Hrs hasta {horasMax} ✕</span>}
             {ciudad    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setCiudad("")}>{ciudad} ✕</span>}
@@ -859,7 +849,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
   const [aiResult,      setAiResult]      = useState(null);
   const [f, setF] = useState({
     title:"", brand:"", model:"", serial_number:"", part_number:"",
-    engine_number:"", chassis_number:"", hours:"", cat:"min",
+    engine_number:"", hours:"", cat:"min",
     condition:"Nuevo", price:"", currency:"USD", stock:"1",
     location:profile?.location||"", phone:profile?.phone||"",
     biz:profile?.biz||"", description:"", emoji:"📦"
@@ -872,7 +862,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
     const { data:inserted, error } = await sb.from("listings").insert({
       user_id:user.id, title:f.title, brand:f.brand||null, model:f.model||null,
       serial_number:f.serial_number||null, part_number:f.part_number||null,
-      engine_number:f.engine_number||null, chassis_number:f.chassis_number||null,
+      engine_number:f.engine_number||null,
       hours:f.hours?Number(f.hours):null,
       cat:f.cat, condition:f.condition, operation:"Venta",
       price:Number(f.price), currency:f.currency,
@@ -918,7 +908,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
               <p style={{ fontSize:13,color:MUTED,marginBottom:4 }}>¿Qué querés publicar?</p>
               {TYPES.map(t=>(
                 <div key={t.id} onClick={()=>{ setType(t.id); setStep(1); }}
-                  style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${t.highlight?RED:BORDER}`,background:t.highlight?"rgba(232,50,10,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
+                  style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${t.highlight?RED:BORDER}`,background:t.highlight?"rgba(240,68,35,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
                   <div style={{ width:44,height:44,background:t.highlight?RED:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                     <Ic n={t.icon} s={20} c={t.highlight?"#fff":SUB}/>
                   </div>
@@ -947,7 +937,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 ))}
               </div>
 
-              {err&&<div style={{ background:"rgba(232,50,10,.1)",borderRadius:8,padding:"10px 14px",fontSize:13,color:RED }}>{err}</div>}
+              {err&&<div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:DANGER }}>{err}</div>}
 
               <div>
                 <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Título *</p>
@@ -985,10 +975,6 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 <input className="inp" placeholder="Nº motor" value={f.engine_number} onChange={e=>upd("engine_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Chasis <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <input className="inp" placeholder="Nº chasis" value={f.chassis_number} onChange={e=>upd("chassis_number",e.target.value)}/>
-              </div>
-              <div>
                 <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Horas de uso <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <input className="inp" type="number" placeholder="Ej: 4500" value={f.hours} onChange={e=>upd("hours",e.target.value)}/>
               </div>
@@ -998,7 +984,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",gap:8 }}>
                   {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                     <button key={c} onClick={()=>upd("condition",c)}
-                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(232,50,10,.1)":CARD,fontWeight:700,fontSize:11,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(240,68,35,.1)":CARD,fontWeight:700,fontSize:11,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
                       {c}
                     </button>
                   ))}
@@ -1048,10 +1034,10 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                       setAiError("");
                       setAiPreview(URL.createObjectURL(file));
                     }}/>
-                  <div style={{ border:`2px dashed rgba(232,50,10,.4)`,borderRadius:16,padding:"48px 24px",textAlign:"center",background:"rgba(232,50,10,.04)",transition:"all .2s" }}
+                  <div style={{ border:`2px dashed rgba(240,68,35,.4)`,borderRadius:16,padding:"48px 24px",textAlign:"center",background:"rgba(240,68,35,.04)",transition:"all .2s" }}
                     onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
-                    onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(232,50,10,.4)"}>
-                    <div style={{ width:72,height:72,background:"rgba(232,50,10,.12)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>
+                    onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(240,68,35,.4)"}>
+                    <div style={{ width:72,height:72,background:"rgba(240,68,35,.12)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>
                       <Ic n="camera" s={32} c={RED}/>
                     </div>
                     <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>Tomar foto o subir imagen</p>
@@ -1084,17 +1070,17 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                   )}
 
                   {aiError&&!aiLoading&&(
-                    <div style={{ background:"rgba(232,50,10,.1)",border:"1px solid rgba(232,50,10,.25)",borderRadius:10,padding:"14px 16px",marginBottom:12 }}>
-                      <p style={{ fontSize:14,color:RED,fontWeight:600,marginBottom:4 }}>No se pudo identificar el componente</p>
+                    <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:10,padding:"14px 16px",marginBottom:12 }}>
+                      <p style={{ fontSize:14,color:DANGER,fontWeight:600,marginBottom:4 }}>No se pudo identificar el componente</p>
                       <p style={{ fontSize:13,color:MUTED }}>{aiError}</p>
                     </div>
                   )}
 
                   {aiResult&&!aiLoading&&(
                     <div>
-                      <div style={{ background:"rgba(74,222,128,.06)",border:"1px solid rgba(74,222,128,.25)",borderRadius:12,padding:20,marginBottom:16 }}>
+                      <div style={{ background:"rgba(34,197,94,.06)",border:"1px solid rgba(34,197,94,.25)",borderRadius:12,padding:20,marginBottom:16 }}>
                         <div style={{ display:"flex",gap:10,alignItems:"center",marginBottom:14 }}>
-                          <div style={{ width:40,height:40,background:"rgba(74,222,128,.15)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0 }}>
+                          <div style={{ width:40,height:40,background:"rgba(34,197,94,.15)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0 }}>
                             {aiResult.emoji||"📦"}
                           </div>
                           <div>
@@ -1188,7 +1174,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
 
       {showMatchAlert&&(
         <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={()=>setShowMatchAlert(false)}>
-          <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(232,50,10,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(240,68,35,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
             <div style={{ fontSize:56,marginBottom:12 }}>🤝</div>
             <p className="bebas" style={{ fontSize:32,color:RED,marginBottom:8 }}>¡{matchCount} MATCH{matchCount>1?"ES":""} ENCONTRADO{matchCount>1?"S":""}!</p>
             <p style={{ fontSize:15,color:TEXT,lineHeight:1.7,marginBottom:20 }}>
@@ -1526,7 +1512,7 @@ function ProfilePage({ user, profile, onLogout }) {
               <div style={{ display:"flex",gap:8 }}>
                 {[["email","Email"],["whatsapp","WhatsApp"]].map(([val,lbl])=>(
                   <div key={val} onClick={()=>setAlertForm(f=>({...f,notifType:val}))}
-                    style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(232,50,10,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
+                    style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(240,68,35,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
                     <p style={{ fontSize:13,fontWeight:700,color:alertForm.notifType===val?RED:SUB,fontFamily:"Barlow Condensed,sans-serif" }}>{lbl}</p>
                   </div>
                 ))}
@@ -1558,7 +1544,7 @@ function ProfilePage({ user, profile, onLogout }) {
           <div style={{ maxWidth:"100%" }}>
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Carga Masiva de Publicaciones</h2>
             <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Sube hasta 500 publicaciones de una sola vez usando un archivo Excel o CSV.</p>
-            <div style={{ background:"rgba(232,50,10,.06)",border:"1px solid rgba(232,50,10,.2)",borderRadius:12,padding:20,marginBottom:24,display:"flex",gap:16,alignItems:"center" }}>
+            <div style={{ background:"rgba(240,68,35,.06)",border:"1px solid rgba(240,68,35,.2)",borderRadius:12,padding:20,marginBottom:24,display:"flex",gap:16,alignItems:"center" }}>
               <div style={{ width:44,height:44,background:RED,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                 <Ic n="box" s={20} c="#fff"/>
               </div>
@@ -1584,7 +1570,7 @@ function ProfilePage({ user, profile, onLogout }) {
             ) : (
               <div>
                 <div style={{ background:CARD,borderRadius:10,padding:16,border:`1px solid ${BORDER}`,marginBottom:16,display:"flex",alignItems:"center",gap:12 }}>
-                  <div style={{ width:40,height:40,background:"rgba(74,222,128,.1)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                  <div style={{ width:40,height:40,background:"rgba(34,197,94,.1)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center" }}>
                     <Ic n="check" s={18} c={GREEN}/>
                   </div>
                   <div style={{ flex:1 }}>
@@ -1625,7 +1611,7 @@ function ProfilePage({ user, profile, onLogout }) {
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Soporte</h2>
             <p style={{ color:MUTED,fontSize:14,marginBottom:28 }}>Estamos aquí para ayudarte. Elige cómo quieres contactarnos.</p>
 
-            <div style={{ background:"rgba(232,50,10,.06)",border:"1px solid rgba(232,50,10,.2)",borderRadius:12,padding:24,marginBottom:16 }}>
+            <div style={{ background:"rgba(240,68,35,.06)",border:"1px solid rgba(240,68,35,.2)",borderRadius:12,padding:24,marginBottom:16 }}>
               <div style={{ display:"flex",gap:14,alignItems:"flex-start",marginBottom:16 }}>
                 <div style={{ width:44,height:44,background:RED,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                   <span style={{ color:"#fff",fontSize:20 }}>⚡</span>
@@ -1730,7 +1716,7 @@ function ProfilePage({ user, profile, onLogout }) {
               </div>
             </div>
 
-            <div style={{ background:"rgba(232,50,10,.06)",border:"1px solid rgba(232,50,10,.2)",borderRadius:12,padding:24 }}>
+            <div style={{ background:"rgba(240,68,35,.06)",border:"1px solid rgba(240,68,35,.2)",borderRadius:12,padding:24 }}>
               <p style={{ fontSize:11,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Zona de peligro</p>
               {!showDeleteConfirm ? (
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
@@ -1857,7 +1843,7 @@ function AlertasPage({ user, profile }) {
         <div style={{ display:"flex",gap:8 }}>
           {[["email","Email"],["whatsapp","WhatsApp"]].map(([val,lbl])=>(
             <div key={val} onClick={()=>setAlertForm(f=>({...f,notifType:val}))}
-              style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(232,50,10,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
+              style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(240,68,35,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
               <p style={{ fontSize:13,fontWeight:700,color:alertForm.notifType===val?RED:SUB,fontFamily:"Barlow Condensed,sans-serif" }}>{lbl}</p>
             </div>
           ))}
@@ -1976,7 +1962,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
   const submit = async () => {
     if (!f.title) { setErr("El título es obligatorio."); return; }
     setLoading(true); setErr("");
-    const { data:inserted, error } = await sb.from("requests").insert({
+    const { data:inserted } = await sb.from("requests").insert({
       user_id:     user.id,
       title:       f.title,
       brand:       f.brand||null,
@@ -1985,7 +1971,6 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
       serial_number:  f.serial_number||null,
       part_number:    f.part_number||null,
       engine_number:  f.engine_number||null,
-      chassis_number: f.chassis_number||null,
       hours:       f.hours ? Number(f.hours) : null,
       condition:   f.condition||null,
       description: f.description||null,
@@ -1999,9 +1984,8 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
       notif_whatsapp:  notif.whatsapp,
       notif_inapp:     notif.inapp,
       biz:         profile?.biz||null,
-    }).select().single();
+    }).select().single().catch(()=>({ data:null }));
     setLoading(false);
-    if (error) { setErr(error.message); return; }
 
     // Run match engine in background
     if (inserted) {
@@ -2022,10 +2006,10 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#1A1D21",borderRadius:20,width:"100%",maxWidth:580,maxHeight:"92vh",display:"flex",flexDirection:"column",border:`1px solid rgba(232,50,10,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(232,50,10,.15)",overflow:"hidden",animation:"slideUp .3s ease" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:20,width:"100%",maxWidth:580,maxHeight:"92vh",display:"flex",flexDirection:"column",border:`1px solid rgba(240,68,35,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(240,68,35,.15)",overflow:"hidden",animation:"slideUp .3s ease" }}>
 
         {/* Header */}
-        <div style={{ background:`linear-gradient(135deg,${RED},#C42800)`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
+        <div style={{ background:`linear-gradient(135deg,${RED},#C03320)`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
           <div>
             <p className="bebas" style={{ fontSize:24,color:"#fff",letterSpacing:.5 }}>Solicita un repuesto</p>
             <p style={{ fontSize:13,color:"rgba(255,255,255,.75)",marginTop:2 }}>Te avisamos cuando alguien lo publique</p>
@@ -2035,12 +2019,12 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
         {done ? (
           <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:48,textAlign:"center" }}>
-            <div style={{ width:72,height:72,background:"rgba(74,222,128,.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${GREEN}` }}>
+            <div style={{ width:72,height:72,background:"rgba(34,197,94,.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${GREEN}` }}>
               <Ic n="check" s={32} c={GREEN}/>
             </div>
             <p className="bebas" style={{ fontSize:28,color:TEXT }}>¡Solicitud enviada!</p>
             {solicitudMatches > 0 ? (
-              <div style={{ background:"rgba(232,50,10,.1)",border:"1px solid rgba(232,50,10,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
+              <div style={{ background:"rgba(240,68,35,.1)",border:"1px solid rgba(240,68,35,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
                 <p className="bebas" style={{ fontSize:22,color:RED,marginBottom:6 }}>🤝 {solicitudMatches} MATCH{solicitudMatches>1?"ES":""} ENCONTRADO{solicitudMatches>1?"S":""}</p>
                 <p style={{ fontSize:14,color:TEXT,lineHeight:1.6 }}>¡Hay publicaciones que coinciden con tu búsqueda! Revisá tus mensajes para ver los contactos automáticos.</p>
               </div>
@@ -2052,14 +2036,14 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
           </div>
         ) : (
           <div style={{ overflowY:"auto",flex:1,padding:"24px" }}>
-            {err && <div style={{ background:"rgba(232,50,10,.1)",border:"1px solid rgba(232,50,10,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:RED,marginBottom:16 }}>{err}</div>}
+            {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:DANGER,marginBottom:16 }}>{err}</div>}
 
             <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
 
               {/* Título */}
               <div>
                 <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>¿Qué estás buscando? *</p>
-                <input style={{ ...INP,borderColor:f.title?"rgba(232,50,10,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} onChange={e=>upd("title",e.target.value)}/>
+                <input style={{ ...INP,borderColor:f.title?"rgba(240,68,35,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} onChange={e=>upd("title",e.target.value)}/>
               </div>
 
               {/* Industria + Marca */}
@@ -2134,7 +2118,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
                   {URGENCY.map(([val,label])=>(
                     <div key={val} onClick={()=>upd("urgency",val)}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"232,50,10":val==="urgente"?"245,200,66":"59,158,255"},.15)`:"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"240,68,35":val==="urgente"?"245,158,11":"59,130,246"},.15)`:"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <div style={{ width:10,height:10,borderRadius:"50%",background:URGENCY_C[val],flexShrink:0 }}/>
                       <p style={{ fontSize:13,fontWeight:f.urgency===val?700:400,color:f.urgency===val?TEXT:SUB }}>{label}</p>
                       {f.urgency===val&&<span style={{ marginLeft:"auto",fontSize:11,color:URGENCY_C[val] }}>✓</span>}
@@ -2161,7 +2145,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                   {[["email","📧","Email",user?.email||""],["whatsapp","💬","WhatsApp",f.phone||"Agrega tu número arriba"],["inapp","🔔","Notificación en la app","Cuando estés conectado"]].map(([key,icon,label,sub])=>(
                     <div key={key} onClick={()=>toggleNotif(key)}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(232,50,10,.2)":"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(240,68,35,.2)":"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <span style={{ fontSize:18,flexShrink:0 }}>{icon}</span>
                       <div style={{ flex:1 }}>
                         <p style={{ fontSize:13,fontWeight:notif[key]?700:400,color:notif[key]?TEXT:SUB }}>{label}</p>
@@ -2304,7 +2288,7 @@ function MobileTabBar({ tab, setTab, onPublish }) {
       {TABS.map(t=>(
         <button key={t.id} onClick={()=>{ if(t.id==="publish"){onPublish();return;} setTab(t.id); }}
           style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 0",background:"none",border:"none",cursor:"pointer" }}>
-          <div style={{ width:36,height:36,borderRadius:t.accent?12:10,background:t.accent?RED:tab===t.id?"rgba(232,50,10,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
+          <div style={{ width:36,height:36,borderRadius:t.accent?12:10,background:t.accent?RED:tab===t.id?"rgba(240,68,35,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
             <Ic n={t.icon} s={20} c={t.accent?"#fff":tab===t.id?RED:MUTED}/>
           </div>
           <span style={{ fontSize:10,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:t.accent?RED:tab===t.id?RED:MUTED,textTransform:"uppercase" }}>{t.label}</span>
@@ -2367,7 +2351,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Floating solicitud button — above tab bar */}
       {!showSolicitud&&!showPublish&&(
         <button onClick={()=>setShowSolicitud(true)}
-          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(232,50,10,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
+          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(240,68,35,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
           <Ic n="search" s={16} c="#fff"/>Solicita un repuesto
         </button>
       )}
@@ -2394,8 +2378,8 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
   return (
     <div style={{ position:"relative" }}>
       <button onClick={e=>{ e.stopPropagation(); setOpen(v=>!v); }}
-        style={{ display:"flex",alignItems:"center",gap:8,background:open?"rgba(232,50,10,.1)":CARD,border:`1px solid ${open?RED:BORDER}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",transition:"all .15s" }}>
-        <div style={{ width:28,height:28,borderRadius:"50%",background:"rgba(232,50,10,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+        style={{ display:"flex",alignItems:"center",gap:8,background:open?"rgba(240,68,35,.1)":CARD,border:`1px solid ${open?RED:BORDER}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",transition:"all .15s" }}>
+        <div style={{ width:28,height:28,borderRadius:"50%",background:"rgba(240,68,35,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
           <span style={{ fontSize:11,fontWeight:700,color:RED,fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
         </div>
         <span style={{ fontSize:12,fontWeight:700,color:TEXT,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"Barlow Condensed,sans-serif" }}>{profile?.biz||profile?.name||"Mi cuenta"}</span>
@@ -2423,7 +2407,7 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
           <div style={{ height:1,background:BORDER,margin:"4px 0" }}/>
           <button onClick={()=>{ setOpen(false); onLogout(); }}
             style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:13,color:RED,fontFamily:"inherit",transition:"all .15s" }}
-            onMouseEnter={e=>e.currentTarget.style.background="rgba(232,50,10,.08)"}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(240,68,35,.08)"}
             onMouseLeave={e=>e.currentTarget.style.background="none"}>
             <Ic n="logout" s={15} c={RED}/>Cerrar sesión
           </button>
@@ -2490,7 +2474,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
             <button onClick={()=>setShowSolicitud(true)}
               style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 16px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase",transition:"all .15s" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(232,50,10,.1)"; }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(240,68,35,.1)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
               <Ic n="search" s={14} c={RED}/>Solicita un repuesto
             </button>
@@ -2524,7 +2508,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   setTab(n.id);
                   if (n.id!=="messages") setChatListing(null);
                 }}
-                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C42800)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(232,50,10,.35)" } : undefined}>
+                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C03320)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(240,68,35,.35)" } : undefined}>
                 <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{n.label}
                 {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:10,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
               </button>

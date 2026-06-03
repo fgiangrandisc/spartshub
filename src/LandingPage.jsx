@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { sb } from "./supabase.js";
 import { T, CSS_BASE } from "./theme.js";
 
-const { RED, RED2, GOLD, BLUE, GREEN, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
+const { RED, RED2, GOLD, BLUE, GREEN, DANGER, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
 
 
 /* ── SpartsHub Logo component ─────────────────────────────── */
@@ -11,12 +11,12 @@ function SpartsLogo({ size=36 }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:size*0.28 }}>
       <svg width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="36" height="36" rx="8" fill="#E8320A"/>
+        <rect width="36" height="36" rx="8" fill="#F04423"/>
         <text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white" letterSpacing="1">S</text>
         <circle cx="26" cy="10" r="4" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"/>
         <circle cx="26" cy="10" r="1.5" fill="rgba(255,255,255,0.9)"/>
       </svg>
-      <span style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:size*0.6, letterSpacing:size*0.04, color:"#E8ECF1", lineHeight:1 }}>
+      <span style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:size*0.6, letterSpacing:size*0.04, color:"#F2F5F7", lineHeight:1 }}>
         SPARTSHUB
       </span>
     </div>
@@ -121,7 +121,7 @@ function Ticker() {
 }
 
 /* ── Data ───────────────────────────────────────────────────── */
-const IndustryIcon = ({ id, size=28, color="#E8320A" }) => {
+const IndustryIcon = ({ id, size=28, color="#F04423" }) => {
   const s = { fill:"none", stroke:color, strokeWidth:1.6, strokeLinecap:"round", strokeLinejoin:"round" };
   const icons = {
     mineria: <svg width={size} height={size} viewBox="0 0 24 24" {...s}>
@@ -211,8 +211,8 @@ const DEMO = [
 ];
 
 const BC = {
-  red:  { bg:"rgba(232,50,10,.15)",  c:RED,  b:"rgba(232,50,10,.3)"  },
-  gold: { bg:"rgba(245,200,66,.12)", c:GOLD, b:"rgba(245,200,66,.3)" },
+  red:  { bg:"rgba(240,68,35,.15)",  c:RED,  b:"rgba(240,68,35,.3)"  },
+  gold: { bg:"rgba(245,158,11,.12)", c:GOLD, b:"rgba(245,158,11,.3)" },
   pur:  { bg:"rgba(168,85,247,.12)", c:PUR,  b:"rgba(168,85,247,.3)" },
 };
 
@@ -261,13 +261,18 @@ function AuthModal({ mode, onClose, onSuccess }) {
 
   const doRecovery = async () => {
     if (!email) { setErr("Ingresa tu email primero."); return; }
+    setErr(""); setOk("");
     setLoading(true);
-    await sb.auth.resetPasswordForEmail(email, { redirectTo:"https://spartshub.com" });
-    setOk("Email enviado. Revisa tu bandeja de entrada.");
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo:"https://spartshub.com" });
     setLoading(false);
+    if (error) {
+      setErr("No encontramos una cuenta con ese email.");
+    } else {
+      setOk("Email enviado. Revisa tu bandeja de entrada.");
+    }
   };
 
-  const INP = { background:"rgba(255,255,255,.08)", border:"1.5px solid rgba(255,255,255,.15)", borderRadius:8, padding:"12px 14px", fontSize:14, color:"#E8ECF1", width:"100%", outline:"none", fontFamily:"inherit" };
+  const INP = { background:"rgba(255,255,255,.08)", border:"1.5px solid rgba(255,255,255,.15)", borderRadius:8, padding:"12px 14px", fontSize:14, color:"#F2F5F7", width:"100%", outline:"none", fontFamily:"inherit" };
 
   return (
     <div className="modal-bg fi" onClick={onClose} role="dialog" aria-modal="true">
@@ -286,8 +291,8 @@ function AuthModal({ mode, onClose, onSuccess }) {
           ))}
         </div>
 
-        {err && <div style={{ background:"rgba(232,50,10,.1)",border:"1px solid rgba(232,50,10,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:RED,marginBottom:14 }}>{err}</div>}
-        {ok  && <div style={{ background:"rgba(74,222,128,.1)",border:"1px solid rgba(74,222,128,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:GREEN,marginBottom:14 }}>{ok}</div>}
+        {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:DANGER,marginBottom:14 }}>{err}</div>}
+        {ok  && <div style={{ background:"rgba(34,197,94,.1)",border:"1px solid rgba(34,197,94,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:GREEN,marginBottom:14 }}>{ok}</div>}
 
         <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
           {tab === "register" && <>
@@ -329,7 +334,7 @@ function GuestModal({ slots, onClose, onReg }) {
           <h3 className="bebas" style={{ fontSize:30,marginBottom:8 }}>Regístrate para contactar</h3>
           <p style={{ color:SUB,fontSize:15,lineHeight:1.65 }}>Accede a miles de publicaciones y conecta directo con vendedores verificados.</p>
         </div>
-        <div style={{ background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:8,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,marginBottom:20,justifyContent:"center" }}>
+        <div style={{ background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.2)",borderRadius:8,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,marginBottom:20,justifyContent:"center" }}>
           <span>⚡</span>
           <span className="bc" style={{ fontSize:14,fontWeight:700,color:GOLD }}>Registro 100% gratuito</span>
           <span style={{ color:SUB,fontSize:13 }}>— Sin tarjeta de crédito</span>
@@ -417,7 +422,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
         <div style={{ position:"absolute",right:"3%",top:"6%",opacity:.06,animation:"float 7s ease-in-out infinite",pointerEvents:"none" }}><BpGear size={320}/></div>
         <div style={{ position:"absolute",right:"26%",bottom:"4%",opacity:.04,animation:"float 9s ease-in-out infinite 2s",pointerEvents:"none" }}><BpBearing size={200}/></div>
         <div style={{ position:"absolute",left:"-1%",bottom:"8%",opacity:.035,animation:"float 11s ease-in-out infinite 1s",pointerEvents:"none" }}><BpPump size={240}/></div>
-        <div style={{ position:"absolute",top:"15%",left:"-8%",width:600,height:600,background:`radial-gradient(circle,rgba(232,50,10,.1) 0%,transparent 65%)`,pointerEvents:"none" }}/>
+        <div style={{ position:"absolute",top:"15%",left:"-8%",width:600,height:600,background:`radial-gradient(circle,rgba(240,68,35,.1) 0%,transparent 65%)`,pointerEvents:"none" }}/>
 
         <div className="wrap" style={{ position:"relative",zIndex:2,width:"100%" }}>
           <div className="hero-grid" style={{ display:"flex",gap:64,alignItems:"center" }}>
@@ -432,7 +437,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               <p className="fu" style={{ fontSize:17,color:SUB,lineHeight:1.8,marginBottom:28,maxWidth:500,animationDelay:".15s" }}>
                 Que tu operación no deje de producir, encuentra tus equipos, partes y repuestos en Spartshub.
               </p>
-              <div className="fu" style={{ display:"inline-flex",alignItems:"center",gap:10,background:"rgba(245,200,66,.06)",border:"1px solid rgba(245,200,66,.2)",borderRadius:8,padding:"11px 18px",marginBottom:28,animationDelay:".18s" }}>
+              <div className="fu" style={{ display:"inline-flex",alignItems:"center",gap:10,background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.2)",borderRadius:8,padding:"11px 18px",marginBottom:28,animationDelay:".18s" }}>
                 <span style={{ fontSize:18 }}>⚡</span>
                 <span className="bc" style={{ fontWeight:700,fontSize:14,color:GOLD }}>Registro gratuito</span>
                 <span className="mono" style={{ fontSize:13,color:TEXT }}>— Sin comisiones</span>
@@ -459,14 +464,14 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
                 </div>
                 {CATS.map((c,i)=>(
                   <div key={i} style={{ display:"flex",alignItems:"center",gap:14,padding:"11px 18px",borderBottom:i<CATS.length-1?"1px solid rgba(255,255,255,.05)":"none" }}>
-                    <div style={{ width:32,height:32,borderRadius:8,background:"rgba(232,50,10,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                      <IndustryIcon id={c.id} size={18} color="#E8320A"/>
+                    <div style={{ width:32,height:32,borderRadius:8,background:"rgba(240,68,35,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                      <IndustryIcon id={c.id} size={18} color="#F04423"/>
                     </div>
                     <div style={{ flex:1 }}>
                       <p style={{ fontSize:13,fontWeight:700,color:TEXT,marginBottom:1 }}>{c.n}</p>
                       <p style={{ fontSize:11,color:MUTED,lineHeight:1.3 }}>{c.s}</p>
                     </div>
-                    <span style={{ color:"rgba(232,50,10,.5)",fontSize:16,flexShrink:0 }}>›</span>
+                    <span style={{ color:"rgba(240,68,35,.5)",fontSize:16,flexShrink:0 }}>›</span>
                   </div>
                 ))}
               </div>
@@ -497,7 +502,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
             ].map((s,i)=>(
               <div key={i} className="card" style={{ padding:28,display:"flex",gap:20 }}>
                 <div style={{ flexShrink:0 }}>
-                  <span className="bebas" style={{ fontSize:48,color:"rgba(232,50,10,.14)",lineHeight:1,display:"block" }}>{s.n}</span>
+                  <span className="bebas" style={{ fontSize:48,color:"rgba(240,68,35,.14)",lineHeight:1,display:"block" }}>{s.n}</span>
                   <div style={{ fontSize:26 }}>{s.e}</div>
                 </div>
                 <div>
@@ -516,7 +521,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
       <section style={{ padding:"88px 0",position:"relative",overflow:"hidden" }}>
         <div className="wrap" style={{ position:"relative",zIndex:1 }}>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:28 }}>
-            <div style={{ background:"linear-gradient(135deg,rgba(232,50,10,.07),rgba(232,50,10,.02))",border:"1px solid rgba(232,50,10,.18)",borderRadius:16,padding:36 }}>
+            <div style={{ background:"linear-gradient(135deg,rgba(240,68,35,.07),rgba(240,68,35,.02))",border:"1px solid rgba(240,68,35,.18)",borderRadius:16,padding:36 }}>
               <span className="tag t-red" style={{ marginBottom:20,display:"inline-flex" }}>• PARA QUIENES BUSCAN</span>
               <h3 className="bebas" style={{ fontSize:"clamp(28px,3.5vw,42px)",lineHeight:.95,marginBottom:18 }}>
                 <span style={{ color:"rgba(255,255,255,.22)" }}>NO DEJES QUE TU FAENA</span><br/><span style={{ color:RED }}>FRENE LA OPERACIÓN.</span>
@@ -529,7 +534,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               </ul>
               <button className="btn-red" onClick={()=>setAuthModal("register")}>Buscar repuesto ahora →</button>
             </div>
-            <div style={{ background:"linear-gradient(135deg,rgba(245,200,66,.06),rgba(245,200,66,.02))",border:"1px solid rgba(245,200,66,.15)",borderRadius:16,padding:36 }}>
+            <div style={{ background:"linear-gradient(135deg,rgba(245,158,11,.06),rgba(245,158,11,.02))",border:"1px solid rgba(245,158,11,.15)",borderRadius:16,padding:36 }}>
               <span className="tag t-gold" style={{ marginBottom:20,display:"inline-flex" }}>• PARA QUIENES VENDEN</span>
               <h3 className="bebas" style={{ fontSize:"clamp(28px,3.5vw,42px)",lineHeight:.95,marginBottom:18 }}>
                 <span style={{ color:"rgba(255,255,255,.22)" }}>NO DEJES QUE ESE STOCK</span><br/><span style={{ color:GOLD }}>SIGA PERDIENDO VALOR.</span>
@@ -573,7 +578,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
               const isSol=l.type==="solicito";
               return (
                 <div key={l.id} style={{ background:CARD,border:`1px solid ${isSol?"rgba(168,85,247,.15)":BORDER}`,borderRadius:12,overflow:"hidden",cursor:"pointer",transition:"all .22s" }}
-                  onMouseEnter={e=>e.currentTarget.style.borderColor=isSol?"rgba(168,85,247,.4)":"rgba(232,50,10,.35)"}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor=isSol?"rgba(168,85,247,.4)":"rgba(240,68,35,.35)"}
                   onMouseLeave={e=>e.currentTarget.style.borderColor=isSol?"rgba(168,85,247,.15)":BORDER}>
                   <div style={{ display:"flex" }}>
                     <div style={{ width:90,minHeight:108,background:BG2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,flexShrink:0,position:"relative",borderRight:`1px solid ${BORDER}` }}>
@@ -598,7 +603,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
                       </div>
                       <div style={{ height:"0.5px",background:BORDER,margin:"10px 0" }}/>
                       <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-                        <div style={{ width:26,height:26,borderRadius:"50%",background:"rgba(232,50,10,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:RED,flexShrink:0 }}>{l.ini}</div>
+                        <div style={{ width:26,height:26,borderRadius:"50%",background:"rgba(240,68,35,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:RED,flexShrink:0 }}>{l.ini}</div>
                         <p style={{ fontSize:13,fontWeight:600 }}>{l.biz}</p>
                         {l.ok&&<span style={{ fontSize:11,color:GREEN }}>✓ Verificado</span>}
                         {l.s>0&&<span style={{ fontSize:11,color:MUTED }}>· {l.s} ventas</span>}
@@ -608,9 +613,9 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
                 </div>
               );
             })}
-            <div onClick={()=>setAuthModal("register")} style={{ border:"1.5px dashed rgba(232,50,10,.18)",borderRadius:12,padding:32,textAlign:"center",cursor:"pointer",transition:"all .2s" }}
+            <div onClick={()=>setAuthModal("register")} style={{ border:"1.5px dashed rgba(240,68,35,.18)",borderRadius:12,padding:32,textAlign:"center",cursor:"pointer",transition:"all .2s" }}
               onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
-              onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(232,50,10,.18)"}>
+              onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(240,68,35,.18)"}>
               <p className="bebas" style={{ fontSize:28,color:RED,marginBottom:8 }}>¿TENÉS UN REPUESTO O EQUIPO PARA VENDER?</p>
               <p style={{ color:MUTED,fontSize:15,marginBottom:20 }}>Registrate gratis y publicá en minutos. Sin comisiones.</p>
               <button className="btn-red" style={{ fontSize:14 }}>Publicar ahora →</button>
@@ -652,7 +657,7 @@ export default function LandingPage({ onGoRegister, onGoLogin }) {
       {/* CTA FINAL */}
       <section style={{ padding:"88px 0",position:"relative",overflow:"hidden",background:BG2 }} id="registro">
         <BpGrid/>
-        <div style={{ position:"absolute",inset:0,background:`radial-gradient(ellipse at center,rgba(232,50,10,.07) 0%,transparent 60%)`,pointerEvents:"none" }}/>
+        <div style={{ position:"absolute",inset:0,background:`radial-gradient(ellipse at center,rgba(240,68,35,.07) 0%,transparent 60%)`,pointerEvents:"none" }}/>
         <div className="wrap" style={{ position:"relative",zIndex:1,textAlign:"center",maxWidth:640,margin:"0 auto" }}>
           <span className="tag t-gold" style={{ marginBottom:20,display:"inline-flex" }}>⭐ REGISTRO GRATUITO</span>
           <h2 className="bebas" style={{ fontSize:"clamp(48px,7vw,86px)",lineHeight:.9,marginBottom:18 }}>
