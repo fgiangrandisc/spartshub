@@ -843,28 +843,99 @@ function SearchPage({ user, onSelect, region }) {
 ══════════════════════════════════════════════════════════════ */
 function PhotoCarousel({ photos }) {
   const [idx, setIdx] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
+
   return (
-    <div style={{ position:"relative", height:"100%", width:"100%" }}>
-      <img src={photos[idx]} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
-      {photos.length > 1 && (
-        <>
-          <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
-            style={{ position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <Ic n="chevL" s={16} c="#fff"/>
-          </button>
-          <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
-            style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <Ic n="chevR" s={16} c="#fff"/>
-          </button>
-          <div style={{ position:"absolute",bottom:8,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5 }}>
-            {photos.map((_,i)=>(
+    <>
+      {/* Main gallery */}
+      <div style={{ display:"flex", flexDirection:"column", width:"100%", background:"#0a0a0a", borderRadius:"0 0 0 0" }}>
+
+        {/* Primary photo */}
+        <div style={{ position:"relative", width:"100%", aspectRatio:"16/9", overflow:"hidden", cursor:"zoom-in" }}
+          onClick={e=>{ e.stopPropagation(); setLightbox(true); }}>
+          <img
+            src={photos[idx]} alt=""
+            style={{ width:"100%", height:"100%", objectFit:"contain", display:"block", background:"#0a0a0a" }}
+          />
+          {/* Counter badge */}
+          {photos.length > 1 && (
+            <div style={{ position:"absolute", top:12, right:12, background:"rgba(0,0,0,.65)", backdropFilter:"blur(6px)", borderRadius:20, padding:"4px 10px", fontSize:12, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
+              {idx+1} / {photos.length}
+            </div>
+          )}
+          {/* Zoom hint */}
+          <div style={{ position:"absolute", bottom:12, right:12, background:"rgba(0,0,0,.55)", backdropFilter:"blur(4px)", borderRadius:8, padding:"4px 8px", fontSize:10, color:"rgba(255,255,255,.7)", fontFamily:"Barlow Condensed,sans-serif", display:"flex", alignItems:"center", gap:4 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+            VER
+          </div>
+          {/* Nav arrows */}
+          {photos.length > 1 && (
+            <>
+              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
+                style={{ position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"50%",width:36,height:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
+                <Ic n="chevL" s={16} c="#fff"/>
+              </button>
+              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
+                style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"50%",width:36,height:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
+                <Ic n="chevR" s={16} c="#fff"/>
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Thumbnail strip */}
+        {photos.length > 1 && (
+          <div style={{ display:"flex", gap:4, padding:"6px 8px", background:"#0a0a0a", overflowX:"auto" }}>
+            {photos.map((url,i)=>(
               <div key={i} onClick={e=>{ e.stopPropagation(); setIdx(i); }}
-                style={{ width:6,height:6,borderRadius:"50%",background:i===idx?"#fff":"rgba(255,255,255,.4)",cursor:"pointer",transition:"background .15s" }}/>
+                style={{ position:"relative", flexShrink:0, width:64, height:64, borderRadius:8, overflow:"hidden",
+                  border: i===idx ? "2px solid #F04423" : "2px solid rgba(255,255,255,.08)",
+                  cursor:"pointer", transition:"all .15s", opacity: i===idx ? 1 : 0.55 }}>
+                <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+              </div>
             ))}
           </div>
-        </>
+        )}
+      </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div onClick={()=>setLightbox(false)}
+          style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.95)", zIndex:200, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+          <button onClick={()=>setLightbox(false)}
+            style={{ position:"absolute", top:16, right:16, background:"rgba(255,255,255,.1)", border:"none", borderRadius:"50%", width:40, height:40, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <Ic n="x" s={20} c="#fff"/>
+          </button>
+          <img src={photos[idx]} alt=""
+            onClick={e=>e.stopPropagation()}
+            style={{ maxWidth:"92vw", maxHeight:"80vh", objectFit:"contain", borderRadius:12, boxShadow:"0 24px 80px rgba(0,0,0,.8)" }}
+          />
+          {photos.length > 1 && (
+            <div style={{ display:"flex", gap:8, marginTop:16 }}>
+              {photos.map((url,i)=>(
+                <img key={i} src={url} alt="" onClick={e=>{ e.stopPropagation(); setIdx(i); }}
+                  style={{ width:52, height:52, borderRadius:8, objectFit:"cover", cursor:"pointer",
+                    border: i===idx ? "2px solid #F04423" : "2px solid rgba(255,255,255,.15)",
+                    opacity: i===idx ? 1 : 0.5, transition:"all .15s" }}
+                />
+              ))}
+            </div>
+          )}
+          {photos.length > 1 && (
+            <>
+              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
+                style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", background:"rgba(255,255,255,.1)", border:"none", borderRadius:"50%", width:44, height:44, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <Ic n="chevL" s={20} c="#fff"/>
+              </button>
+              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
+                style={{ position:"absolute", right:16, top:"50%", transform:"translateY(-50%)", background:"rgba(255,255,255,.1)", border:"none", borderRadius:"50%", width:44, height:44, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <Ic n="chevR" s={20} c="#fff"/>
+              </button>
+            </>
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -897,11 +968,9 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
           <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
         </div>
         <div style={{ overflowY:"auto",flex:1,paddingBottom:40 }}>
-          {/* Photo header — carousel if multiple, emoji fallback */}
+          {/* Photo gallery */}
           {l.photos?.length > 0 ? (
-            <div style={{ position:"relative",height:240,background:BG2,overflow:"hidden" }}>
-              <PhotoCarousel photos={l.photos}/>
-            </div>
+            <PhotoCarousel photos={l.photos}/>
           ) : (
             <div style={{ height:240,background:BG2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80 }}>
               {l.emoji||"📦"}
