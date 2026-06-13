@@ -802,7 +802,20 @@ function PhotoCarousel({ photos }) {
   );
 }
 
-function ListingDetail({ l, onClose, onChat }) {
+function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
+  const [showEdit,    setShowEdit]    = useState(false);
+  const [confirmDel,  setConfirmDel]  = useState(false);
+  const [deleting,    setDeleting]    = useState(false);
+  const isOwner = user && l.user_id === user.id;
+
+  const deleteListing = async () => {
+    setDeleting(true);
+    await sb.from("listings").delete().eq("id", l.id);
+    setDeleting(false);
+    if (onDeleted) onDeleted(l.id);
+    onClose();
+  };
+
   const wa = () => {
     const msg = encodeURIComponent(`Hola! Vi tu publicación en SpartsHub: *${l.title}*. Me interesa, ¿puedes darme más detalles?`);
     window.open(`https://wa.me/${(l.phone||"").replace(/\D/g,"")}?text=${msg}`, "_blank");
@@ -870,12 +883,40 @@ function ListingDetail({ l, onClose, onChat }) {
             </div>
 
             <div style={{ display:"flex",flexDirection:"column",gap:12,padding:"0 0 20px" }}>
-              <button onClick={l.phone ? wa : ()=>alert("Este vendedor no publicó su WhatsApp. Usa el chat interno.")} style={{ background:"#25D366",color:"#fff",borderRadius:10,padding:"15px",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:"none",cursor:"pointer",opacity:l.phone?1:.7 }}>
-                <Ic n="wa" s={20} c="#fff"/>{l.phone?"Contactar por WhatsApp":"WhatsApp no disponible"}
-              </button>
-              <button className="btn-ol" style={{ padding:14 }} onClick={()=>{ onClose(); onChat(l); }}>
-                <Ic n="msg" s={18} c={RED}/><span style={{ color:RED,fontWeight:700 }}>Mensaje en SpartsHub</span>
-              </button>
+              {isOwner ? (
+                <>
+                  <button onClick={()=>setShowEdit(true)}
+                    style={{ background:BG2,color:TEXT,borderRadius:10,padding:"14px",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${BORDER}`,cursor:"pointer" }}>
+                    <Ic n="settings" s={18} c={TEXT}/>Editar publicación
+                  </button>
+                  {confirmDel ? (
+                    <div style={{ display:"flex",gap:10 }}>
+                      <button onClick={()=>setConfirmDel(false)}
+                        style={{ flex:1,padding:"14px",borderRadius:10,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:14,cursor:"pointer",fontWeight:600 }}>
+                        Cancelar
+                      </button>
+                      <button onClick={deleteListing} disabled={deleting}
+                        style={{ flex:1,padding:"14px",borderRadius:10,border:"none",background:DANGER,color:"#fff",fontSize:14,cursor:"pointer",fontWeight:700 }}>
+                        {deleting?<Spin/>:"Sí, eliminar"}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={()=>setConfirmDel(true)}
+                      style={{ background:"rgba(220,38,38,.08)",color:DANGER,borderRadius:10,padding:"14px",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid rgba(220,38,38,.25)`,cursor:"pointer" }}>
+                      <Ic n="trash" s={18} c={DANGER}/>Eliminar publicación
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button onClick={l.phone ? wa : ()=>alert("Este vendedor no publicó su WhatsApp. Usa el chat interno.")} style={{ background:"#25D366",color:"#fff",borderRadius:10,padding:"15px",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:"none",cursor:"pointer",opacity:l.phone?1:.7 }}>
+                    <Ic n="wa" s={20} c="#fff"/>{l.phone?"Contactar por WhatsApp":"WhatsApp no disponible"}
+                  </button>
+                  <button className="btn-ol" style={{ padding:14 }} onClick={()=>{ onClose(); onChat(l); }}>
+                    <Ic n="msg" s={18} c={RED}/><span style={{ color:RED,fontWeight:700 }}>Mensaje en SpartsHub</span>
+                  </button>
+                </>
+              )}
               <button className="btn-ghost" style={{ justifyContent:"center",padding:12 }} onClick={()=>{
                 const url = window.location.href;
                 if (navigator.share) { navigator.share({ title:l.title, text:`${l.title} — ${l.currency} ${Number(l.price).toLocaleString()}`, url }); }
@@ -887,6 +928,14 @@ function ListingDetail({ l, onClose, onChat }) {
           </div>
         </div>
       </div>
+      {showEdit && (
+        <EditListingSheet
+          user={user}
+          listing={l}
+          onClose={()=>setShowEdit(false)}
+          onSaved={updated=>{ setShowEdit(false); if (onEdited) onEdited(updated); }}
+        />
+      )}
     </div>
   );
 }
@@ -2032,14 +2081,257 @@ function AlertasPage({ user, profile }) {
 /* ══════════════════════════════════════════════════════════════
    MIS PUBLICACIONES PAGE
 ══════════════════════════════════════════════════════════════ */
-function MisPublicaciones({ user, onSelect }) {
-  const [listings, setListings] = useState([]);
-  const [loading,  setLoading]  = useState(true);
+/* ══════════════════════════════════════════════════════════════
+   EDIT LISTING SHEET
+══════════════════════════════════════════════════════════════ */
+function EditListingSheet({ user, listing, onClose, onSaved }) {
+  const { t } = useLang();
+  const [loading, setLoading]   = useState(false);
+  const [err,     setErr]       = useState("");
+  const photoInputRef           = useRef();
 
-  useEffect(()=>{
+  // Existing remote photos (URLs already saved)
+  const [existingPhotos, setExistingPhotos] = useState(listing.photos || []);
+  // New local files to upload
+  const [newFiles,  setNewFiles]  = useState([]);
+  const [newPreviews, setNewPreviews] = useState([]);
+
+  const [f, setF] = useState({
+    title:         listing.title        || "",
+    brand:         listing.brand        || "",
+    model:         listing.model        || "",
+    serial_number: listing.serial_number|| "",
+    part_number:   listing.part_number  || "",
+    engine_number: listing.engine_number|| "",
+    hours:         listing.hours != null ? String(listing.hours) : "",
+    cat:           listing.cat          || "min",
+    condition:     listing.condition    || "Nuevo",
+    price:         listing.price != null ? String(listing.price) : "",
+    currency:      listing.currency     || "USD",
+    stock:         listing.stock != null ? String(listing.stock) : "1",
+    location:      listing.location     || "",
+    phone:         listing.phone        || "",
+    biz:           listing.biz          || "",
+    description:   listing.description  || "",
+    emoji:         listing.emoji        || "📦",
+  });
+  const upd = (k, v) => setF(p => ({ ...p, [k]: v }));
+
+  const handleNewPhotos = e => {
+    const files = Array.from(e.target.files || []);
+    const ALLOWED = ["image/jpeg","image/png","image/webp","image/gif"];
+    const valid = files.filter(file => {
+      if (!ALLOWED.includes(file.type)) { setErr(t("ai_only_images")); return false; }
+      if (file.size > 10 * 1024 * 1024) { setErr("Cada foto debe pesar menos de 10 MB."); return false; }
+      return true;
+    });
+    if (!valid.length) return;
+    setErr("");
+    const combined = [...newFiles, ...valid].slice(0, Math.max(0, 4 - existingPhotos.length));
+    setNewFiles(combined);
+    setNewPreviews(combined.map(f => URL.createObjectURL(f)));
+    e.target.value = "";
+  };
+
+  const removeExisting = idx => setExistingPhotos(p => p.filter((_,i) => i !== idx));
+  const removeNew      = idx => {
+    const nf = newFiles.filter((_,i) => i !== idx);
+    setNewFiles(nf);
+    setNewPreviews(nf.map(f => URL.createObjectURL(f)));
+  };
+
+  const uploadNewPhotos = async () => {
+    const urls = [];
+    for (const file of newFiles) {
+      const ext = file.name.split(".").pop().toLowerCase() || "jpg";
+      const path = `${user.id}/${listing.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await sb.storage.from("listing-photos").upload(path, file, {
+        contentType: file.type, cacheControl: "3600", upsert: false,
+      });
+      if (!upErr) {
+        const { data } = sb.storage.from("listing-photos").getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+    }
+    return urls;
+  };
+
+  const save = async () => {
+    if (!f.title || !f.price) { setErr(t("pub_error_required")); return; }
+    setLoading(true); setErr("");
+    const uploadedUrls = await uploadNewPhotos();
+    const allPhotos = [...existingPhotos, ...uploadedUrls];
+    const { data: updated, error } = await sb.from("listings").update({
+      title:          f.title,
+      brand:          f.brand   || null,
+      model:          f.model   || null,
+      serial_number:  f.serial_number || null,
+      part_number:    f.part_number   || null,
+      engine_number:  f.engine_number || null,
+      hours:          f.hours   ? Number(f.hours)  : null,
+      cat:            f.cat,
+      condition:      f.condition,
+      price:          Number(f.price),
+      currency:       f.currency,
+      stock:          Number(f.stock) || 1,
+      location:       f.location,
+      phone:          f.phone   || null,
+      biz:            f.biz     || null,
+      description:    f.description || null,
+      emoji:          f.emoji   || "📦",
+      photos:         allPhotos,
+    }).eq("id", listing.id).select().single();
+    setLoading(false);
+    if (error) { setErr(error.message); return; }
+    onSaved(updated || { ...listing, ...f, photos: allPhotos });
+  };
+
+  const totalSlots = existingPhotos.length + newPreviews.length;
+
+  return (
+    <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:90,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
+      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px" }}>
+          <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
+        </div>
+        <div style={{ padding:"8px 20px 12px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+          <h3 className="bebas" style={{ fontSize:22,color:TEXT }}>Editar publicación</h3>
+          <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
+        </div>
+
+        <div style={{ overflowY:"auto",flex:1,padding:"0 20px 40px",display:"flex",flexDirection:"column",gap:14 }}>
+          {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:DANGER }}>{err}</div>}
+
+          {/* Photos */}
+          <div>
+            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Fotos</p>
+            <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
+              <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple style={{ display:"none" }} onChange={handleNewPhotos}/>
+              {existingPhotos.map((url,i)=>(
+                <div key={"ex"+i} style={{ position:"relative",flexShrink:0 }}>
+                  <img src={url} alt="" style={{ width:80,height:80,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${BORDER}` }}/>
+                  <button onClick={()=>removeExisting(i)} style={{ position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                    <Ic n="x" s={10} c="#fff"/>
+                  </button>
+                </div>
+              ))}
+              {newPreviews.map((url,i)=>(
+                <div key={"nw"+i} style={{ position:"relative",flexShrink:0 }}>
+                  <img src={url} alt="" style={{ width:80,height:80,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${RED}`,opacity:.9 }}/>
+                  <button onClick={()=>removeNew(i)} style={{ position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                    <Ic n="x" s={10} c="#fff"/>
+                  </button>
+                </div>
+              ))}
+              {totalSlots < 4 && (
+                <div onClick={()=>photoInputRef.current?.click()}
+                  style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`1.5px dashed ${totalSlots===0?RED:BORDER}`,cursor:"pointer" }}>
+                  <Ic n="camera" s={20} c={totalSlots===0?RED:MUTED}/>
+                  <span style={{ fontSize:10,color:totalSlots===0?RED:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>{totalSlots===0?"FOTO":"+ FOTO"}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Title */}
+          <div>
+            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_title")}</p>
+            <input className="inp" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)} placeholder={t("pub_title_ph")}/>
+          </div>
+
+          {/* Industry + Brand */}
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+            <div>
+              <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
+              <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
+                {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_brand")}</p>
+              <input className="inp" value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)} placeholder={t("pub_brand_ph")}/>
+            </div>
+          </div>
+
+          {/* Model */}
+          <div>
+            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_model")}</p>
+            <input className="inp" value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)} placeholder={t("pub_model_ph")}/>
+          </div>
+
+          {/* Condition */}
+          <div>
+            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
+            <div style={{ display:"flex",gap:8 }}>
+              {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
+                <button key={c} onClick={()=>upd("condition",c)}
+                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(240,68,35,.1)":CARD,fontWeight:700,fontSize:10,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Price */}
+          <div>
+            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
+            <div style={{ display:"flex",gap:8 }}>
+              <div style={{ position:"relative",flex:1 }}>
+                <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
+                <input className="inp" type="number" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }} placeholder="0"/>
+              </div>
+              <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
+                {["USD","CLP","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_description")}</p>
+            <textarea className="inp" rows={3} value={f.description} maxLength={1000} onChange={e=>upd("description",e.target.value)} placeholder={t("pub_desc_ph")} style={{ resize:"none" }}/>
+          </div>
+
+          {/* Location */}
+          <div>
+            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_location")}</p>
+            <input className="inp" value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)} placeholder={t("pub_location_ph")}/>
+          </div>
+
+          <button className="btn-red" onClick={save} disabled={loading||!f.title||!f.price}
+            style={{ marginTop:4,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:15 }}>
+            {loading?<Spin/>:"Guardar cambios"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MIS PUBLICACIONES
+══════════════════════════════════════════════════════════════ */
+function MisPublicaciones({ user, onSelect }) {
+  const [listings,    setListings]    = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [editListing, setEditListing] = useState(null);   // listing being edited
+  const [confirmDel,  setConfirmDel]  = useState(null);   // id being confirmed for delete
+  const [deleting,    setDeleting]    = useState(false);
+
+  const reload = () => {
     sb.from("listings").select("*").eq("user_id",user.id).order("created_at",{ascending:false})
       .then(({ data })=>{ setListings(data||[]); setLoading(false); });
-  },[user.id]);
+  };
+
+  useEffect(()=>{ reload(); },[user.id]);
+
+  const deleteListing = async id => {
+    setDeleting(true);
+    await sb.from("listings").delete().eq("id", id);
+    setListings(prev => prev.filter(l => l.id !== id));
+    setConfirmDel(null);
+    setDeleting(false);
+  };
 
   if (loading) return <div style={{ display:"flex",justifyContent:"center",paddingTop:60 }}><Spin size={30}/></div>;
 
@@ -2059,20 +2351,60 @@ function MisPublicaciones({ user, onSelect }) {
       ) : (
         <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12 }}>
           {listings.map(l=>(
-            <div key={l.id} onClick={()=>onSelect(l)} className="photo-card card">
-              <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={120}/>
-              <div style={{ padding:"12px 14px 16px" }}>
+            <div key={l.id} className="photo-card card" style={{ cursor:"default" }}>
+              {/* Photo — clickable to open detail */}
+              <div onClick={()=>onSelect(l)}>
+                <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={120}/>
+              </div>
+              <div style={{ padding:"12px 14px 14px" }}>
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
                   <span className="tag t-dim" style={{ fontSize:9 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
                   <span className="tag t-green" style={{ fontSize:9 }}>Activo</span>
                 </div>
                 <p style={{ fontWeight:700,fontSize:14,color:TEXT,marginBottom:3,lineHeight:1.3 }}>{l.title}</p>
                 <p style={{ fontSize:11,color:MUTED,marginBottom:8 }}>{l.location} · {fmtTs(l.created_at)}</p>
-                <p className="bebas" style={{ fontSize:18,color:RED }}>{fmtPrice(l.price,l.currency)}</p>
+                <p className="bebas" style={{ fontSize:18,color:RED,marginBottom:10 }}>{fmtPrice(l.price,l.currency)}</p>
+
+                {/* Edit / Delete buttons */}
+                {confirmDel===l.id ? (
+                  <div style={{ display:"flex",gap:6 }}>
+                    <button onClick={()=>setConfirmDel(null)}
+                      style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:12,cursor:"pointer",fontWeight:600 }}>
+                      Cancelar
+                    </button>
+                    <button onClick={()=>deleteListing(l.id)} disabled={deleting}
+                      style={{ flex:1,padding:"7px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:12,cursor:"pointer",fontWeight:700 }}>
+                      {deleting?"…":"Confirmar"}
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display:"flex",gap:6 }}>
+                    <button onClick={()=>setEditListing(l)}
+                      style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:TEXT,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
+                      <Ic n="settings" s={13} c={MUTED}/>Editar
+                    </button>
+                    <button onClick={()=>setConfirmDel(l.id)}
+                      style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
+                      <Ic n="trash" s={13} c={DANGER}/>Eliminar
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {editListing && (
+        <EditListingSheet
+          user={user}
+          listing={editListing}
+          onClose={()=>setEditListing(null)}
+          onSaved={updated=>{
+            setListings(prev => prev.map(l => l.id===updated.id ? updated : l));
+            setEditListing(null);
+          }}
+        />
       )}
     </div>
   );
@@ -2531,7 +2863,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
         </button>
       )}
 
-      {selected&&<ListingDetail l={selected} onClose={()=>setSelected(null)} onChat={openChat}/>}
+      {selected&&<ListingDetail l={selected} user={session.user} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
       {showPublish&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
@@ -2743,7 +3075,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
         </div>
       </div>
 
-      {selected&&<ListingDetail l={selected} onClose={()=>setSelected(null)} onChat={openChat}/>}
+      {selected&&<ListingDetail l={selected} user={session.user} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
       {showPublish&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
