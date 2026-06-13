@@ -2498,6 +2498,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
       serial_number:  f.serial_number||null,
       part_number:    f.part_number||null,
       engine_number:  f.engine_number||null,
+      chassis_number: f.chassis_number||null,
       hours:       f.hours ? Number(f.hours) : null,
       condition:   f.condition||null,
       description: f.description||null,
