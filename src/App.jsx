@@ -825,25 +825,41 @@ function SearchPage({ user, onSelect, region }) {
 function PhotoCarousel({ photos }) {
   const [idx, setIdx] = useState(0);
   return (
-    <div style={{ position:"relative", height:"100%", width:"100%" }}>
-      <img src={photos[idx]} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+    <div style={{ display:"flex", flexDirection:"column", width:"100%" }}>
+      {/* Main image — contain so full photo is always visible */}
+      <div style={{ position:"relative", width:"100%", background:"#0B0F14", display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <img
+          src={photos[idx]}
+          alt=""
+          style={{ width:"100%", maxHeight:360, objectFit:"contain", display:"block" }}
+        />
+        {photos.length > 1 && (
+          <>
+            <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
+              style={{ position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",border:"none",borderRadius:"50%",width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+              <Ic n="chevL" s={16} c="#fff"/>
+            </button>
+            <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
+              style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",border:"none",borderRadius:"50%",width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+              <Ic n="chevR" s={16} c="#fff"/>
+            </button>
+          </>
+        )}
+      </div>
+      {/* Thumbnail strip — only if more than 1 photo */}
       {photos.length > 1 && (
-        <>
-          <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
-            style={{ position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <Ic n="chevL" s={16} c="#fff"/>
-          </button>
-          <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
-            style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <Ic n="chevR" s={16} c="#fff"/>
-          </button>
-          <div style={{ position:"absolute",bottom:8,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5 }}>
-            {photos.map((_,i)=>(
-              <div key={i} onClick={e=>{ e.stopPropagation(); setIdx(i); }}
-                style={{ width:6,height:6,borderRadius:"50%",background:i===idx?"#fff":"rgba(255,255,255,.4)",cursor:"pointer",transition:"background .15s" }}/>
-            ))}
-          </div>
-        </>
+        <div style={{ display:"flex", gap:6, padding:"8px 12px", background:"#0B0F14", overflowX:"auto" }}>
+          {photos.map((url,i)=>(
+            <img
+              key={i}
+              src={url}
+              alt=""
+              onClick={e=>{ e.stopPropagation(); setIdx(i); }}
+              style={{ width:56, height:56, borderRadius:8, objectFit:"cover", cursor:"pointer", flexShrink:0,
+                border: i===idx ? "2px solid #F04423" : "2px solid transparent", opacity: i===idx ? 1 : 0.55, transition:"all .15s" }}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -878,9 +894,9 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
           <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
         </div>
         <div style={{ overflowY:"auto",flex:1,paddingBottom:40 }}>
-          {/* Photo header — carousel if multiple, emoji fallback */}
+          {/* Photo header — gallery if photos exist, emoji fallback */}
           {l.photos?.length > 0 ? (
-            <div style={{ position:"relative",height:240,background:BG2,overflow:"hidden" }}>
+            <div style={{ width:"100%" }}>
               <PhotoCarousel photos={l.photos}/>
             </div>
           ) : (
