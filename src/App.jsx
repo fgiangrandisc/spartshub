@@ -851,7 +851,7 @@ function PhotoCarousel({ photos }) {
       <div style={{ display:"flex", flexDirection:"column", width:"100%", background:"#0a0a0a", borderRadius:"0 0 0 0" }}>
 
         {/* Primary photo */}
-        <div style={{ position:"relative", width:"100%", aspectRatio:"16/9", overflow:"hidden", cursor:"zoom-in" }}
+        <div style={{ position:"relative", width:"100%", height:120, overflow:"hidden", cursor:"zoom-in" }}
           onClick={e=>{ e.stopPropagation(); setLightbox(true); }}>
           <img
             src={photos[idx]} alt=""
