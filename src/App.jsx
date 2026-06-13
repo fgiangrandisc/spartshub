@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { sb } from "./supabase.js";
 import LandingPage from "./LandingPage.jsx";
 import { T, CSS_BASE } from "./theme.js";
+import { LangCtx, useLang, REGIONS, makeT } from "./i18n.js";
 
 const { RED, RED2, GOLD, BLUE, GREEN, DANGER, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
 
@@ -135,7 +136,7 @@ async function notifyMatch(match, newItem, type, user, profile) {
     score,
     reason,
     notified_at: new Date().toISOString(),
-  }).catch(()=>{}); // graceful if table doesn't exist yet
+  }).then(()=>{}, ()=>{}); // graceful if table doesn't exist yet
 
   // Crear mensaje automático en chat
   const otherUserId = candidate.user_id;
@@ -150,7 +151,7 @@ async function notifyMatch(match, newItem, type, user, profile) {
     body: autoMsg,
     listing_id: isListing ? newItem.id : candidate.id,
     read: false,
-  }).catch(()=>{});
+  }).then(()=>{}, ()=>{});
 
   return { otherUserId, autoMsg, candidate };
 }
@@ -249,7 +250,12 @@ const fmtTs = ts => {
 const fmtPrice = (p, cur) => `${cur} ${Number(p)>=1000?(Number(p)/1000).toFixed(0)+"k":Number(p).toLocaleString()}`;
 
 /* ── Photo placeholder ──────────────────────────────────────── */
-function PhotoPlaceholder({ emoji="📦", h=160 }) {
+function PhotoPlaceholder({ emoji="📦", h=160, url }) {
+  if (url) return (
+    <div style={{ width:"100%", height:h, background:BG2, overflow:"hidden" }}>
+      <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+    </div>
+  );
   return (
     <div style={{ width:"100%", height:h, background:BG2, display:"flex", alignItems:"center", justifyContent:"center", fontSize:44 }}>
       {emoji}
@@ -264,6 +270,7 @@ function PhotoPlaceholder({ emoji="📦", h=160 }) {
    AUTH SCREEN
 ══════════════════════════════════════════════════════════════ */
 function AuthScreen({ initialMode="login", onAuth, onBack }) {
+  const { t, lang } = useLang();
   const [mode, setMode]     = useState(initialMode);
   const [step, setStep]     = useState(0);
   const [f, setF]           = useState({ email:"", pass:"", name:"", biz:"", phone:"", location:"" });
@@ -302,7 +309,7 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
 
       <div style={{ position:"relative", flex:1, display:"flex", flexDirection:"column", padding:28, paddingTop:80 }}>
         <div style={{ display:"flex", gap:8, marginBottom:16 }}>
-          {["P2P","INDUSTRIAL","GLOBAL"].map(t=><span key={t} className="tag t-dim" style={{ fontSize:9 }}>{t}</span>)}
+          {["P2P","INDUSTRIAL","GLOBAL"].map(tag=><span key={tag} className="tag t-dim" style={{ fontSize:9 }}>{tag}</span>)}
         </div>
         <SpartsLogo size={38}/>
         <div style={{ marginTop:32, marginBottom:8 }}>
@@ -311,8 +318,8 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
           </p>
           <p style={{ fontSize:15, color:SUB, marginBottom:32, lineHeight:1.6 }}>El marketplace industrial global.</p>
           <div style={{ display:"flex", gap:8, marginBottom:40, flexWrap:"wrap" }}>
-            {["✓ Verificado","0% Comisión","Trade IA"].map(t=>(
-              <span key={t} className="tag t-dim">{t}</span>
+            {["✓ Verificado","0% Comisión","Trade IA"].map(tag=>(
+              <span key={tag} className="tag t-dim">{tag}</span>
             ))}
           </div>
         </div>
@@ -345,36 +352,38 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
         </p>
 
         <div className="seg" style={{ marginBottom:4 }}>
-          {[["login","Iniciar sesión"],["register","Registrarse"]].map(([m,l])=>(
+          {[["login",t("auth_login")],["register",t("auth_register")]].map(([m,l])=>(
             <div key={m} className={`seg-btn${mode===m?" active":""}`} onClick={()=>{ setMode(m); setErr(""); }}>{l}</div>
           ))}
         </div>
 
-        {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.3)",borderRadius:8,padding:"12px 16px",fontSize:13,color:DANGER }}>{err}</div>}
+        {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.3)",borderRadius:8,padding:"12px 16px",fontSize:13,color:DANGER }}>
+          {err === "Invalid login credentials" ? (lang==="en"?"Invalid email or password.":"Email o contraseña incorrectos.") : err}
+        </div>}
 
         {mode === "register" && (
           <>
-            <input className="inp" placeholder="Nombre completo" value={f.name} onChange={e=>upd("name",e.target.value)}/>
-            <input className="inp" placeholder="Empresa o nombre comercial" value={f.biz} onChange={e=>upd("biz",e.target.value)}/>
-            <input className="inp" placeholder="WhatsApp (con código país)" value={f.phone} onChange={e=>upd("phone",e.target.value)}/>
-            <input className="inp" placeholder="Ubicación (Ciudad, País)" value={f.location} onChange={e=>upd("location",e.target.value)}/>
+            <input className="inp" placeholder={t("auth_name")} maxLength={100} value={f.name} onChange={e=>upd("name",e.target.value)}/>
+            <input className="inp" placeholder={t("auth_company")} maxLength={150} value={f.biz} onChange={e=>upd("biz",e.target.value)}/>
+            <input className="inp" placeholder={t("auth_whatsapp")} maxLength={25} value={f.phone} onChange={e=>upd("phone",e.target.value)}/>
+            <input className="inp" placeholder={t("pub_location_ph")} maxLength={100} value={f.location} onChange={e=>upd("location",e.target.value)}/>
           </>
         )}
 
-        <input className="inp" type="email" placeholder="Email" value={f.email} onChange={e=>upd("email",e.target.value)}/>
+        <input className="inp" type="email" placeholder={t("auth_email")} value={f.email} onChange={e=>upd("email",e.target.value)}/>
         <div style={{ position:"relative" }}>
-          <input className="inp" type={showPass?"text":"password"} placeholder="Contraseña" value={f.pass} onChange={e=>upd("pass",e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} style={{ paddingRight:44 }}/>
+          <input className="inp" type={showPass?"text":"password"} placeholder={t("auth_password")} value={f.pass} onChange={e=>upd("pass",e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} style={{ paddingRight:44 }}/>
           <button onClick={()=>setShowPass(v=>!v)} style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:MUTED,fontSize:14,padding:0 }}>
             {showPass?"🙈":"👁️"}
           </button>
         </div>
 
         <button className="btn-red" onClick={submit} disabled={loading} style={{ marginTop:4, opacity:loading?.6:1, padding:"15px" }}>
-          {loading ? <Spin/> : mode==="login" ? "Ingresar" : "Crear cuenta"}
+          {loading ? <Spin/> : mode==="login" ? t("auth_enter") : t("auth_create")}
         </button>
 
         <p style={{ textAlign:"center", fontSize:12, color:MUTED, marginTop:4 }}>
-          100% gratuito · Sin comisiones · Conexión directa
+          {t("auth_tagline")}
         </p>
       </div>
     </div>
@@ -385,6 +394,7 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
    HOME PAGE
 ══════════════════════════════════════════════════════════════ */
 function HomePage({ user, onSelect, onGoSearch }) {
+  const { t } = useLang();
   const [listings, setListings] = useState([]);
   const [loading,  setLoading]  = useState(true);
 
@@ -397,7 +407,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
     <div>
       {/* Top stats bar */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:24 }}>
-        {[[listings.length||"—","Publicaciones activas"],["0%","Comisión"],["P2P","Contacto directo"],["✓","Usuarios verificados"]].map(([v,l])=>(
+        {[[listings.length||"—",t("home_active")],["0%",t("home_commission")],["P2P",t("home_p2p")],["✓",t("home_verified")]].map(([v,l])=>(
           <div key={l} style={{ background:CARD,borderRadius:10,padding:"16px 20px",border:`1px solid ${BORDER}`,display:"flex",alignItems:"center",gap:14 }}>
             <p className="bebas" style={{ fontSize:28,color:RED,lineHeight:1 }}>{v}</p>
             <p style={{ fontSize:12,color:MUTED,lineHeight:1.4 }}>{l}</p>
@@ -421,8 +431,8 @@ function HomePage({ user, onSelect, onGoSearch }) {
 
       {/* Featured grid — 4 columns */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-        <span className="bebas" style={{ fontSize:22,color:TEXT }}>⭐ Mejor calificados</span>
-        <span style={{ fontSize:13,fontWeight:700,color:RED,cursor:"pointer" }} onClick={onGoSearch}>Ver todo →</span>
+        <span className="bebas" style={{ fontSize:22,color:TEXT }}>{t("home_top")}</span>
+        <span style={{ fontSize:13,fontWeight:700,color:RED,cursor:"pointer" }} onClick={onGoSearch}>{t("home_see_all")}</span>
       </div>
       {loading ? (
         <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24 }}>
@@ -432,7 +442,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
         <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24 }}>
           {listings.slice(0,8).map(l=>(
             <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
-              <PhotoPlaceholder emoji={l.emoji||"📦"} h={130}/>
+              <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
               <div style={{ padding:"10px 12px 14px" }}>
                 <span className="tag t-dim" style={{ fontSize:9,marginBottom:6,display:"inline-flex" }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
                 <p style={{ fontSize:13,fontWeight:700,lineHeight:1.3,marginBottom:4,color:TEXT }}>{l.title}</p>
@@ -476,7 +486,8 @@ function MiniCard({ l, onClick }) {
 /* ══════════════════════════════════════════════════════════════
    SEARCH PAGE
 ══════════════════════════════════════════════════════════════ */
-function SearchPage({ user, onSelect }) {
+function SearchPage({ user, onSelect, region }) {
+  const { t, lang } = useLang();
   const [q,          setQ]          = useState("");
   const [cat,        setCat]        = useState("all");
   const [condition,  setCondition]  = useState("");
@@ -517,6 +528,10 @@ function SearchPage({ user, onSelect }) {
     if (horasMin)       query = query.gte("hours", Number(horasMin));
     if (horasMax)       query = query.lte("hours", Number(horasMax));
     if (ciudad)         query = query.ilike("location", `%${ciudad}%`);
+    else if (region && region !== "all" && region !== "intl") {
+      const rObj = REGIONS.find(r => r.id === region);
+      if (rObj?.q)      query = query.ilike("location", `%${rObj.q}%`);
+    }
     if (priceMin)       query = query.gte("price", Number(priceMin));
     if (priceMax)       query = query.lte("price", Number(priceMax));
     if (priceMin||priceMax) query = query.eq("currency", priceCur);
@@ -524,7 +539,7 @@ function SearchPage({ user, onSelect }) {
     const { data } = await query;
     setListings(data||[]);
     setLoading(false);
-  }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, horasMin, horasMax, ciudad, priceMin, priceMax, priceCur, sortBy, verified]);
+  }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, horasMin, horasMax, ciudad, priceMin, priceMax, priceCur, sortBy, verified, region]);
 
   useEffect(()=>{ load(); },[load]);
 
@@ -542,17 +557,27 @@ function SearchPage({ user, onSelect }) {
       {/* ── Sidebar de filtros ── */}
       <div style={{ width:isMobile?"100%":220, flexShrink:0, background:BG3, borderRadius:12, border:`1px solid ${BORDER}`, padding:"20px 16px", position:isMobile?"relative":"sticky", top:0, marginBottom:isMobile?16:0 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
-          <p className="bebas" style={{ fontSize:18, color:TEXT, letterSpacing:.5 }}>Filtros</p>
+          <p className="bebas" style={{ fontSize:18, color:TEXT, letterSpacing:.5 }}>{t("search_filters")}</p>
           {activeFilters > 0 && (
             <button onClick={resetFilters} style={{ fontSize:11, color:RED, background:"none", border:"none", cursor:"pointer", fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
-              Limpiar ({activeFilters})
+              {t("search_clear")} ({activeFilters})
             </button>
           )}
         </div>
 
+        {/* Region active badge */}
+        {region && region !== "all" && (
+          <div style={{ marginBottom:14,padding:"6px 10px",background:"rgba(240,68,35,.08)",borderRadius:7,border:"1px solid rgba(240,68,35,.2)",display:"flex",alignItems:"center",gap:6 }}>
+            <Ic n="map" s={12} c={RED}/>
+            <span style={{ fontSize:11,color:RED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>
+              {t("search_region_filter")} {lang==="en"?REGIONS.find(r=>r.id===region)?.label_en:REGIONS.find(r=>r.id===region)?.label_es}
+            </span>
+          </div>
+        )}
+
         {/* Categoría */}
         <div style={{ marginBottom:20 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Categoría</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_category")}</p>
           <select value={cat} onChange={e=>setCat(e.target.value)}
             style={{ background:SURF, border:`1px solid ${cat!=="all"?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:cat!=="all"?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:cat!=="all"?700:400, transition:"border-color .2s" }}>
             {CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
@@ -563,10 +588,10 @@ function SearchPage({ user, onSelect }) {
 
         {/* Condición */}
         <div style={{ marginBottom:18 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Condición</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_condition")}</p>
           <select value={condition} onChange={e=>setCondition(e.target.value)}
             style={{ background:SURF, border:`1px solid ${condition?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:condition?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:condition?700:400, transition:"border-color .2s" }}>
-            <option value="">Todas</option>
+            <option value="">{t("search_all_cond")}</option>
             {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=><option key={c} value={c}>{c}</option>)}
           </select>
         </div>
@@ -575,15 +600,15 @@ function SearchPage({ user, onSelect }) {
 
         {/* Marca */}
         <div style={{ marginBottom:18 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Marca</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_brand")}</p>
           <select value={marca} onChange={e=>setMarca(e.target.value)} style={{ ...INP }}>
-            {MARCAS.map(m=><option key={m} value={m}>{m||"Todas las marcas"}</option>)}
+            {MARCAS.map(m=><option key={m} value={m}>{m||(lang==="en"?"All brands":"Todas las marcas")}</option>)}
           </select>
         </div>
 
         {/* Modelo */}
         <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Modelo</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_model")}</p>
           <input value={modelo} onChange={e=>setModelo(e.target.value)} placeholder="Ej: 3406E, A10V, 6205…" style={{ background:SURF, border:`1px solid ${modelo?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:modelo?RED:TEXT, width:"100%", outline:"none", fontFamily:"inherit", fontWeight:modelo?700:400, transition:"border-color .2s" }}/>
         </div>
 
@@ -591,21 +616,21 @@ function SearchPage({ user, onSelect }) {
 
         {/* Números técnicos */}
         <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Serie</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_serial")}</p>
           <input value={nSerie} onChange={e=>setNSerie(e.target.value)} placeholder="Nº serie del equipo" style={{ ...INP }}/>
         </div>
 
         <div style={{ height:1, background:BORDER, marginBottom:14 }}/>
 
         <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Parte</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_part")}</p>
           <input value={nParte} onChange={e=>setNParte(e.target.value)} placeholder="Part number" style={{ ...INP }}/>
         </div>
 
         <div style={{ height:1, background:BORDER, marginBottom:14 }}/>
 
         <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>N° de Motor</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_engine")}</p>
           <input value={nMotor} onChange={e=>setNMotor(e.target.value)} placeholder="Nº motor" style={{ ...INP }}/>
         </div>
 
@@ -613,7 +638,7 @@ function SearchPage({ user, onSelect }) {
 
         {/* Horas de uso */}
         <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Horas de uso</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("pub_hours")}</p>
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
             <input value={horasMin} onChange={e=>setHorasMin(e.target.value)} placeholder="Mín" type="number" style={{ ...INP, width:"50%" }}/>
             <span style={{ color:MUTED, fontSize:13 }}>–</span>
@@ -625,7 +650,7 @@ function SearchPage({ user, onSelect }) {
 
         {/* Ciudad */}
         <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>Ciudad / Región</p>
+          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_city")}</p>
           <input value={ciudad} onChange={e=>setCiudad(e.target.value)} placeholder="Ej: Santiago, Antofagasta…" style={{ ...INP }}/>
         </div>
 
@@ -634,7 +659,7 @@ function SearchPage({ user, onSelect }) {
         {/* Precio */}
         <div style={{ marginBottom:18 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-            <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", fontFamily:"Barlow Condensed,sans-serif" }}>Rango de precio</p>
+            <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_price")}</p>
             <div style={{ display:"flex", background:BG2, borderRadius:6, overflow:"hidden", border:`1px solid ${BORDER}` }}>
               {["CLP","USD"].map(c=>(
                 <button key={c} onClick={()=>setPriceCur(c)}
@@ -656,14 +681,14 @@ function SearchPage({ user, onSelect }) {
 
         {/* Solo verificados */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18, cursor:"pointer" }} onClick={()=>setVerified(v=>!v)}>
-          <p style={{ fontSize:13, color:verified?TEXT:SUB, fontWeight:verified?700:400 }}>Solo verificados ✓</p>
+          <p style={{ fontSize:13, color:verified?TEXT:SUB, fontWeight:verified?700:400 }}>{t("search_verified")} ✓</p>
           <div className="toggle" style={{ background:verified?RED:"rgba(255,255,255,.1)" }}>
             <div className="toggle-knob" style={{ left:verified?20:2 }}/>
           </div>
         </div>
 
         <button className="btn-red" onClick={load} style={{ width:"100%", padding:"11px", fontSize:13 }}>
-          Buscar
+          {t("nav_search")}
         </button>
       </div>
 
@@ -673,12 +698,12 @@ function SearchPage({ user, onSelect }) {
         <div style={{ display:"flex", gap:10, marginBottom:14, alignItems:"center" }}>
           <div className="search-bar" style={{ flex:1 }}>
             <Ic n="search" s={16} c={MUTED}/>
-            <input placeholder="Buscar repuestos, equipos, marcas…" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} autoFocus/>
+            <input placeholder={t("search_placeholder")} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} autoFocus/>
             {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
           </div>
           <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
             style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:13, color:TEXT, outline:"none", cursor:"pointer", fontFamily:"inherit" }}>
-            {SORT_OPTS.map(([v,l])=><option key={v} value={v}>{l}</option>)}
+            {[["newest",t("search_newest")],["price_asc",t("search_price_asc")],["price_desc",t("search_price_desc")]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
           </select>
           <div style={{ display:"flex", gap:4 }}>
             <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="grid"?RED:MUTED }} onClick={()=>setViewMode("grid")}><Ic n="grid" s={18}/></button>
@@ -706,7 +731,7 @@ function SearchPage({ user, onSelect }) {
 
         {/* Count */}
         <p style={{ fontSize:13, color:MUTED, marginBottom:14 }}>
-          {loading ? "Buscando…" : `${listings.length} publicaciones encontradas`}
+          {loading ? t("search_searching") : `${listings.length} ${t("search_found")}`}
         </p>
 
         {loading ? (
@@ -722,7 +747,7 @@ function SearchPage({ user, onSelect }) {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:14 }}>
             {listings.map(l=>(
               <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
-                <PhotoPlaceholder emoji={l.emoji||"📦"} h={130}/>
+                <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
                 <div style={{ padding:"10px 12px 14px" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
                     <span className="tag t-dim" style={{ fontSize:9 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
@@ -750,6 +775,33 @@ function SearchPage({ user, onSelect }) {
 /* ══════════════════════════════════════════════════════════════
    LISTING DETAIL
 ══════════════════════════════════════════════════════════════ */
+function PhotoCarousel({ photos }) {
+  const [idx, setIdx] = useState(0);
+  return (
+    <div style={{ position:"relative", height:"100%", width:"100%" }}>
+      <img src={photos[idx]} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+      {photos.length > 1 && (
+        <>
+          <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
+            style={{ position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+            <Ic n="chevL" s={16} c="#fff"/>
+          </button>
+          <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
+            style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+            <Ic n="chevR" s={16} c="#fff"/>
+          </button>
+          <div style={{ position:"absolute",bottom:8,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5 }}>
+            {photos.map((_,i)=>(
+              <div key={i} onClick={e=>{ e.stopPropagation(); setIdx(i); }}
+                style={{ width:6,height:6,borderRadius:"50%",background:i===idx?"#fff":"rgba(255,255,255,.4)",cursor:"pointer",transition:"background .15s" }}/>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function ListingDetail({ l, onClose, onChat }) {
   const wa = () => {
     const msg = encodeURIComponent(`Hola! Vi tu publicación en SpartsHub: *${l.title}*. Me interesa, ¿puedes darme más detalles?`);
@@ -766,9 +818,16 @@ function ListingDetail({ l, onClose, onChat }) {
           <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
         </div>
         <div style={{ overflowY:"auto",flex:1,paddingBottom:40 }}>
-          <div style={{ height:220,background:BG2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80 }}>
-            {l.emoji||"📦"}
-          </div>
+          {/* Photo header — carousel if multiple, emoji fallback */}
+          {l.photos?.length > 0 ? (
+            <div style={{ position:"relative",height:240,background:BG2,overflow:"hidden" }}>
+              <PhotoCarousel photos={l.photos}/>
+            </div>
+          ) : (
+            <div style={{ height:240,background:BG2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80 }}>
+              {l.emoji||"📦"}
+            </div>
+          )}
           <div style={{ padding:"20px 20px 0" }}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:8 }}>
               <h2 style={{ fontSize:22,fontWeight:700,lineHeight:1.2,color:TEXT,flex:1 }}>{l.title}</h2>
@@ -836,6 +895,7 @@ function ListingDetail({ l, onClose, onChat }) {
    PUBLISH SHEET
 ══════════════════════════════════════════════════════════════ */
 function PublishSheet({ user, profile, onClose, onDone }) {
+  const { t } = useLang();
   const [step,          setStep]          = useState(0);
   const [type,          setType]          = useState("producto");
   const [loading,       setLoading]       = useState(false);
@@ -847,6 +907,9 @@ function PublishSheet({ user, profile, onClose, onDone }) {
   const [aiLoading,     setAiLoading]     = useState(false);
   const [aiError,       setAiError]       = useState("");
   const [aiResult,      setAiResult]      = useState(null);
+  const [photos,        setPhotos]        = useState([]);    // File[]
+  const [previews,      setPreviews]      = useState([]);    // object URL strings
+  const photoInputRef = useRef();
   const [f, setF] = useState({
     title:"", brand:"", model:"", serial_number:"", part_number:"",
     engine_number:"", hours:"", cat:"min",
@@ -856,8 +919,46 @@ function PublishSheet({ user, profile, onClose, onDone }) {
   });
   const upd = (k,v) => setF(p=>({...p,[k]:v}));
 
+  const handlePhotoChange = e => {
+    const files = Array.from(e.target.files || []);
+    const ALLOWED = ["image/jpeg","image/png","image/webp","image/gif"];
+    const valid = files.filter(file => {
+      if (!ALLOWED.includes(file.type)) { setErr(t("ai_only_images")); return false; }
+      if (file.size > 10 * 1024 * 1024) { setErr("Cada foto debe pesar menos de 10 MB."); return false; }
+      return true;
+    });
+    if (!valid.length) return;
+    setErr("");
+    const combined = [...photos, ...valid].slice(0, 4);
+    setPhotos(combined);
+    setPreviews(combined.map(f => URL.createObjectURL(f)));
+    e.target.value = "";
+  };
+
+  const removePhoto = idx => {
+    const next = photos.filter((_,i)=>i!==idx);
+    setPhotos(next);
+    setPreviews(next.map(f=>URL.createObjectURL(f)));
+  };
+
+  const uploadPhotos = async listingId => {
+    const urls = [];
+    for (const file of photos) {
+      const ext = file.name.split(".").pop().toLowerCase() || "jpg";
+      const path = `${user.id}/${listingId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await sb.storage.from("listing-photos").upload(path, file, {
+        contentType: file.type, cacheControl: "3600", upsert: false,
+      });
+      if (!upErr) {
+        const { data } = sb.storage.from("listing-photos").getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+    }
+    return urls;
+  };
+
   const submit = async () => {
-    if (!f.title || !f.price) { setErr("Título y precio requeridos."); return; }
+    if (!f.title || !f.price) { setErr(t("pub_error_required")); return; }
     setLoading(true); setErr("");
     const { data:inserted, error } = await sb.from("listings").insert({
       user_id:user.id, title:f.title, brand:f.brand||null, model:f.model||null,
@@ -870,8 +971,15 @@ function PublishSheet({ user, profile, onClose, onDone }) {
       phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
       description:f.description, emoji:f.emoji||"📦", verified:false,
     }).select().single();
+    if (error) { setErr(error.message); setLoading(false); return; }
+    if (inserted && photos.length > 0) {
+      const photoUrls = await uploadPhotos(inserted.id);
+      if (photoUrls.length > 0) {
+        await sb.from("listings").update({ photos: photoUrls }).eq("id", inserted.id);
+        inserted.photos = photoUrls;
+      }
+    }
     setLoading(false);
-    if (error) { setErr(error.message); return; }
     if (inserted) {
       runMatchEngine(inserted, "listing", user, profile).then(async matches => {
         for (const match of matches) await notifyMatch(match, inserted, "listing", user, profile);
@@ -882,10 +990,10 @@ function PublishSheet({ user, profile, onClose, onDone }) {
   };
 
   const TYPES = [
-    { id:"producto", icon:"box",     title:"Producto",            sub:"Repuesto, equipo o accesorio" },
-    { id:"servicio", icon:"settings",title:"Servicio",            sub:"Taller, reparación, mantención" },
-    { id:"excel",    icon:"grid",    title:"Carga masiva (Excel)", sub:"Sube hasta 500 ítems desde Excel" },
-    { id:"ai",       icon:"camera",  title:"Identifica con IA",   sub:"Toma una foto y la IA lo identifica", highlight:true },
+    { id:"producto", icon:"box",     titleKey:"pub_product",  subKey:"pub_product_sub" },
+    { id:"servicio", icon:"settings",titleKey:"pub_service",  subKey:"pub_service_sub" },
+    { id:"excel",    icon:"grid",    titleKey:"pub_excel",    subKey:"pub_excel_sub" },
+    { id:"ai",       icon:"camera",  titleKey:"pub_ai",       subKey:"pub_ai_sub", highlight:true },
   ];
 
   return (
@@ -905,16 +1013,16 @@ function PublishSheet({ user, profile, onClose, onDone }) {
         <div style={{ overflowY:"auto",flex:1,padding:"0 20px 40px" }}>
           {step===0 && (
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-              <p style={{ fontSize:13,color:MUTED,marginBottom:4 }}>¿Qué querés publicar?</p>
-              {TYPES.map(t=>(
-                <div key={t.id} onClick={()=>{ setType(t.id); setStep(1); }}
-                  style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${t.highlight?RED:BORDER}`,background:t.highlight?"rgba(240,68,35,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
-                  <div style={{ width:44,height:44,background:t.highlight?RED:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                    <Ic n={t.icon} s={20} c={t.highlight?"#fff":SUB}/>
+              <p style={{ fontSize:13,color:MUTED,marginBottom:4 }}>{t("pub_what")}</p>
+              {TYPES.map(tp=>(
+                <div key={tp.id} onClick={()=>{ setType(tp.id); setStep(1); }}
+                  style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${tp.highlight?RED:BORDER}`,background:tp.highlight?"rgba(240,68,35,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
+                  <div style={{ width:44,height:44,background:tp.highlight?RED:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                    <Ic n={tp.icon} s={20} c={tp.highlight?"#fff":SUB}/>
                   </div>
                   <div style={{ flex:1 }}>
-                    <p style={{ fontSize:15,fontWeight:700,marginBottom:2,color:TEXT }}>{t.title}</p>
-                    <p style={{ fontSize:13,color:MUTED }}>{t.sub}</p>
+                    <p style={{ fontSize:15,fontWeight:700,marginBottom:2,color:TEXT }}>{t(tp.titleKey)}</p>
+                    <p style={{ fontSize:13,color:MUTED }}>{t(tp.subKey)}</p>
                   </div>
                   <Ic n="chevR" s={18} c={MUTED}/>
                 </div>
@@ -924,15 +1032,36 @@ function PublishSheet({ user, profile, onClose, onDone }) {
 
           {step===1&&type==="producto"&&(
             <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+              {/* Photo upload row */}
               <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
-                <input type="file" accept="image/*" multiple style={{ display:"none" }} id="photo-upload-input"/>
-                {[0,1,2,3].map(i=>(
-                  <div key={i} onClick={()=>document.getElementById("photo-upload-input").click()}
-                    style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`1.5px dashed ${i===0?RED:BORDER}`,cursor:"pointer",transition:"border-color .15s" }}
+                <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple style={{ display:"none" }} onChange={handlePhotoChange}/>
+                {/* Filled preview slots */}
+                {previews.map((url,i)=>(
+                  <div key={i} style={{ position:"relative",flexShrink:0 }}>
+                    <img src={url} alt="" style={{ width:80,height:80,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${BORDER}` }}/>
+                    <button onClick={()=>removePhoto(i)}
+                      style={{ position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,color:MUTED,fontSize:11,lineHeight:"20px",textAlign:"center",cursor:"pointer",padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                      <Ic n="x" s={10} c="#fff"/>
+                    </button>
+                  </div>
+                ))}
+                {/* Add slot — show if fewer than 4 photos */}
+                {previews.length < 4 && (
+                  <div onClick={()=>photoInputRef.current?.click()}
+                    style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`1.5px dashed ${previews.length===0?RED:BORDER}`,cursor:"pointer",transition:"border-color .15s" }}
                     onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
-                    onMouseLeave={e=>e.currentTarget.style.borderColor=i===0?RED:BORDER}>
-                    <Ic n="camera" s={i===0?22:18} c={i===0?RED:MUTED}/>
-                    {i===0&&<span style={{ fontSize:10,color:RED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>FOTO</span>}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor=previews.length===0?RED:BORDER}>
+                    <Ic n="camera" s={previews.length===0?22:18} c={previews.length===0?RED:MUTED}/>
+                    <span style={{ fontSize:10,color:previews.length===0?RED:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>
+                      {previews.length===0?"FOTO":"+ FOTO"}
+                    </span>
+                  </div>
+                )}
+                {/* Empty decorative slots */}
+                {Array.from({length:Math.max(0, 3-previews.length)}).map((_,i)=>(
+                  <div key={"e"+i} onClick={()=>photoInputRef.current?.click()}
+                    style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:`1.5px dashed ${BORDER}`,cursor:"pointer",opacity:.4 }}>
+                    <Ic n="img" s={16} c={MUTED}/>
                   </div>
                 ))}
               </div>
@@ -940,47 +1069,47 @@ function PublishSheet({ user, profile, onClose, onDone }) {
               {err&&<div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:DANGER }}>{err}</div>}
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Título *</p>
-                <input className="inp" placeholder="Ej: Motor CAT 3406E reacondicionado" value={f.title} onChange={e=>upd("title",e.target.value)}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_title")}</p>
+                <input className="inp" placeholder={t("pub_title_ph")} value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
               </div>
 
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
                 <div>
-                  <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Industria</p>
+                  <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
                   <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
                     {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Marca</p>
-                  <input className="inp" placeholder="Caterpillar, SKF, WEG…" value={f.brand} onChange={e=>upd("brand",e.target.value)}/>
+                  <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_brand")}</p>
+                  <input className="inp" placeholder={t("pub_brand_ph")} value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)}/>
                 </div>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Modelo <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <input className="inp" placeholder="Ej: 3406E, A10V, 6205-2RS…" value={f.model} onChange={e=>upd("model",e.target.value)}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_model")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" placeholder={t("pub_model_ph")} value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)}/>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Serie <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <input className="inp" placeholder="Nº serie del equipo" value={f.serial_number} onChange={e=>upd("serial_number",e.target.value)}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_serial")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" placeholder={t("pub_serial_ph")} value={f.serial_number} maxLength={100} onChange={e=>upd("serial_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Parte <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <input className="inp" placeholder="Part number" value={f.part_number} onChange={e=>upd("part_number",e.target.value)}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_part")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" placeholder={t("pub_part_ph")} value={f.part_number} maxLength={100} onChange={e=>upd("part_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Motor <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <input className="inp" placeholder="Nº motor" value={f.engine_number} onChange={e=>upd("engine_number",e.target.value)}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_engine")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" placeholder={t("pub_engine_ph")} value={f.engine_number} maxLength={100} onChange={e=>upd("engine_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Horas de uso <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <input className="inp" type="number" placeholder="Ej: 4500" value={f.hours} onChange={e=>upd("hours",e.target.value)}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_hours")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" type="number" placeholder={t("pub_hours_ph")} value={f.hours} onChange={e=>upd("hours",e.target.value)}/>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Estado</p>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
                 <div style={{ display:"flex",gap:8 }}>
                   {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                     <button key={c} onClick={()=>upd("condition",c)}
@@ -992,7 +1121,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Precio *</p>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
                 <div style={{ display:"flex",gap:8 }}>
                   <div style={{ position:"relative",flex:1 }}>
                     <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
@@ -1005,18 +1134,18 @@ function PublishSheet({ user, profile, onClose, onDone }) {
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Descripción</p>
-                <textarea className="inp" rows={3} placeholder="Detalles, compatibilidad, estado actual…" value={f.description} onChange={e=>upd("description",e.target.value)} style={{ resize:"none" }}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_description")}</p>
+                <textarea className="inp" rows={3} placeholder={t("pub_desc_ph")} value={f.description} maxLength={1000} onChange={e=>upd("description",e.target.value)} style={{ resize:"none" }}/>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Ubicación</p>
-                <input className="inp" placeholder="Ciudad, País" value={f.location} onChange={e=>upd("location",e.target.value)}/>
+                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_location")}</p>
+                <input className="inp" placeholder={t("pub_location_ph")} value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)}/>
               </div>
 
               <button className="btn-red" onClick={submit} disabled={loading||!f.title||!f.price}
                 style={{ marginTop:8,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:15 }}>
-                {loading?<Spin/>:"Publicar gratis"}
+                {loading?<Spin/>:t("pub_submit")}
               </button>
             </div>
           )}
@@ -1029,6 +1158,9 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                     onChange={e=>{
                       const file = e.target.files[0];
                       if (!file) return;
+                      const ALLOWED = ["image/jpeg","image/png","image/webp","image/gif"];
+                      if (!ALLOWED.includes(file.type)) { setAiError(t("ai_only_images")); e.target.value=""; return; }
+                      if (file.size > 5 * 1024 * 1024) { setAiError(t("ai_max_size")); e.target.value=""; return; }
                       setAiFile(file);
                       setAiResult(null);
                       setAiError("");
@@ -1040,11 +1172,11 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                     <div style={{ width:72,height:72,background:"rgba(240,68,35,.12)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>
                       <Ic n="camera" s={32} c={RED}/>
                     </div>
-                    <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>Tomar foto o subir imagen</p>
-                    <p style={{ fontSize:13,color:MUTED,lineHeight:1.6 }}>La IA identificará el repuesto o equipo y completará el formulario automáticamente</p>
+                    <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>{t("ai_take_photo")}</p>
+                    <p style={{ fontSize:13,color:MUTED,lineHeight:1.6 }}>{t("ai_desc")}</p>
                     <div style={{ display:"flex",gap:8,justifyContent:"center",marginTop:16,flexWrap:"wrap" }}>
-                      {["Rodamientos","Bombas","Motores","Filtros","Válvulas"].map(t=>(
-                        <span key={t} className="tag t-dim" style={{ fontSize:10 }}>{t}</span>
+                      {["Rodamientos","Bombas","Motores","Filtros","Válvulas"].map(tag=>(
+                        <span key={tag} className="tag t-dim" style={{ fontSize:10 }}>{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -1064,7 +1196,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                   {aiLoading&&(
                     <div style={{ textAlign:"center",padding:"24px 0" }}>
                       <Spin size={32}/>
-                      <p style={{ fontSize:15,color:SUB,marginTop:14,fontWeight:600 }}>Analizando imagen con IA…</p>
+                      <p style={{ fontSize:15,color:SUB,marginTop:14,fontWeight:600 }}>{t("ai_analyzing")}</p>
                       <p style={{ fontSize:13,color:MUTED,marginTop:4 }}>Identificando marca, modelo y número de parte</p>
                     </div>
                   )}
@@ -1118,7 +1250,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                       </button>
                       <button className="btn-ghost" style={{ width:"100%",marginTop:8,justifyContent:"center",fontSize:13 }}
                         onClick={()=>{ setAiFile(null); setAiPreview(null); setAiResult(null); setAiError(""); }}>
-                        Intentar con otra foto
+                        {t("ai_try_other")}
                       </button>
                     </div>
                   )}
@@ -1148,11 +1280,11 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                             setAiLoading(false);
                           }
                         }}>
-                        Identificar con IA
+                        {t("ai_identify")}
                       </button>
                       <button className="btn-ghost" style={{ justifyContent:"center",fontSize:13 }}
                         onClick={()=>{ setAiFile(null); setAiPreview(null); }}>
-                        Cambiar foto
+                        {t("ai_change")}
                       </button>
                     </div>
                   )}
@@ -1264,6 +1396,7 @@ function MessagesPage({ user, initListing, onClear }) {
 }
 
 function ChatView({ user, other, listing, onBack }) {
+  const { t } = useLang();
   const [msgs,    setMsgs]    = useState([]);
   const [inp,     setInp]     = useState("");
   const [loading, setLoading] = useState(true);
@@ -1286,7 +1419,7 @@ function ChatView({ user, other, listing, onBack }) {
   },[user.id,other.id,load]);
 
   const send = async ()=>{
-    const body = inp.trim(); if(!body) return;
+    const body = inp.trim(); if(!body || body.length > 2000) return;
     setInp("");
     await sb.from("messages").insert({ from_id:user.id,to_id:other.id,body,listing_id:listing?.id||null });
     load();
@@ -1336,7 +1469,7 @@ function ChatView({ user, other, listing, onBack }) {
         <div ref={endRef}/>
       </div>
       <div style={{ padding:"12px 16px 32px",borderTop:`0.5px solid ${BORDER}`,display:"flex",gap:10,flexShrink:0,background:BG3 }}>
-        <input className="inp" value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Escribe un mensaje…" style={{ flex:1,borderRadius:24,padding:"12px 18px" }}/>
+        <input className="inp" value={inp} maxLength={2000} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder={t("chat_write")} style={{ flex:1,borderRadius:24,padding:"12px 18px" }}/>
         <button onClick={send} style={{ width:44,height:44,background:RED,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"none",cursor:"pointer",flexShrink:0 }}>
           <Ic n="send" s={18} c="#fff"/>
         </button>
@@ -1349,6 +1482,7 @@ function ChatView({ user, other, listing, onBack }) {
    PROFILE PAGE
 ══════════════════════════════════════════════════════════════ */
 function ProfilePage({ user, profile, onLogout }) {
+  const { t } = useLang();
   const [section,          setSection]         = useState("perfil");
   const [listings,         setListings]         = useState([]);
   const [editMode,         setEditMode]         = useState(false);
@@ -1378,18 +1512,31 @@ function ProfilePage({ user, profile, onLogout }) {
   const sendSupport = ()=>{ if(!supportMsg.trim()) return; setSupportSent(true); setSupportMsg(""); setTimeout(()=>setSupportSent(false),4000); };
 
   const handleBulkFile = file => {
-    setBulkFile(file);
     if (!file) return;
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["csv","xlsx","xls"].includes(ext) && !file.type.includes("csv") && !file.type.includes("spreadsheet")) {
+      alert("Solo se permiten archivos CSV o Excel (.csv, .xlsx, .xls).");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) { alert("El archivo no puede superar 2 MB."); return; }
+    setBulkFile(file);
     const reader = new FileReader();
     reader.onload = e => {
       const text = e.target.result;
       const lines = text.split("\n").filter(Boolean);
       const headers = lines[0].split(",").map(h=>h.trim().toLowerCase().replace(/"/g,""));
-      const rows = lines.slice(1).map(line => {
-        const vals = line.split(",").map(v=>v.trim().replace(/"/g,""));
+      const VALID_CATS = ["min","for","const","ene","trans","fae","rut","san","serv"];
+      const VALID_CONDS = ["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"];
+      const rows = lines.slice(1, 501).map(line => {
+        const vals = line.split(",").map(v=>v.trim().replace(/"/g,"").replace(/^[=+\-@]/, ""));
         const obj = {};
         headers.forEach((h,i) => obj[h] = vals[i]||"");
-        return { title:obj.titulo||obj.title||"", cat:obj.categoria||obj.cat||"min", condition:obj.condicion||obj.condition||"Nuevo", price:obj.precio||obj.price||"0", currency:obj.moneda||obj.currency||"CLP" };
+        const title = (obj.titulo||obj.title||"").slice(0, 200);
+        const cat = VALID_CATS.includes(obj.categoria||obj.cat) ? (obj.categoria||obj.cat) : "min";
+        const condition = VALID_CONDS.includes(obj.condicion||obj.condition) ? (obj.condicion||obj.condition) : "Nuevo";
+        const price = Math.max(0, Number(obj.precio||obj.price)||0);
+        const currency = ["USD","CLP","EUR","COP","PEN","MXN"].includes(obj.moneda||obj.currency) ? (obj.moneda||obj.currency) : "CLP";
+        return { title, cat, condition, price: String(price), currency };
       }).filter(r=>r.title);
       setBulkRows(rows);
     };
@@ -1407,11 +1554,11 @@ function ProfilePage({ user, profile, onLogout }) {
   const initials = ((profile?.name||"U ").split(" ").map(w=>w[0]).join("")).slice(0,2).toUpperCase();
 
   const SECTIONS = [
-    { id:"perfil",   label:"Mi Perfil",     icn:"user" },
-    { id:"notif",    label:"Notificaciones", icn:"bell" },
-    { id:"bulk",     label:"Carga Masiva",  icn:"box" },
-    { id:"soporte",  label:"Soporte",       icn:"msg" },
-    { id:"settings", label:"Configuración", icn:"settings" },
+    { id:"perfil",   labelKey:"profile_title",   icn:"user" },
+    { id:"notif",    labelKey:"notif_title",      icn:"bell" },
+    { id:"bulk",     labelKey:"bulk_upload",      icn:"box" },
+    { id:"soporte",  labelKey:"support_title",    icn:"msg" },
+    { id:"settings", labelKey:"settings_title",   icn:"settings" },
   ];
 
   /* Toggle component */
@@ -1433,12 +1580,12 @@ function ProfilePage({ user, profile, onLogout }) {
         </div>
         {SECTIONS.map(s=>(
           <button key={s.id} className={`sidebar-btn${section===s.id?" active":""}`} onClick={()=>setSection(s.id)}>
-            <Ic n={s.icn} s={16} c={section===s.id?RED:MUTED}/>{s.label}
+            <Ic n={s.icn} s={16} c={section===s.id?RED:MUTED}/>{t(s.labelKey)}
           </button>
         ))}
         <div style={{ flex:1 }}/>
         <button onClick={onLogout} className="sidebar-btn" style={{ color:RED }}>
-          <Ic n="logout" s={16} c={RED}/>Cerrar sesión
+          <Ic n="logout" s={16} c={RED}/>{t("nav_logout")}
         </button>
       </div>
 
@@ -1451,7 +1598,7 @@ function ProfilePage({ user, profile, onLogout }) {
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24 }}>
               <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Mi Perfil</h2>
               <button className="btn-ol" style={{ padding:"8px 16px",fontSize:12 }} onClick={()=>setEditMode(e=>!e)}>
-                {editMode?"Cancelar":"Editar datos"}
+                {editMode?t("profile_cancel"):t("profile_edit")}
               </button>
             </div>
             <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:24 }}>
@@ -1467,7 +1614,7 @@ function ProfilePage({ user, profile, onLogout }) {
                 <div key={key}>
                   <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>{label}</p>
                   {editMode
-                    ? <input className="inp" value={editData[key]} onChange={e=>setEditData(d=>({...d,[key]:e.target.value}))} placeholder={ph}/>
+                    ? <input className="inp" value={editData[key]} maxLength={key==="name"?100:key==="rut"?30:key==="biz"?150:key==="phone"?25:key==="address"?200:100} onChange={e=>setEditData(d=>({...d,[key]:e.target.value}))} placeholder={ph}/>
                     : <p style={{ fontSize:15,color:editData[key]?TEXT:MUTED,padding:"10px 0",borderBottom:`1px solid ${BORDER}` }}>{editData[key]||"—"}</p>
                   }
                 </div>
@@ -1476,7 +1623,7 @@ function ProfilePage({ user, profile, onLogout }) {
                 <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Email</p>
                 <p style={{ fontSize:15,color:MUTED,padding:"10px 0" }}>{user.email}</p>
               </div>
-              {editMode&&<button className="btn-red" onClick={saveProfile} style={{ padding:"13px" }}>Guardar cambios</button>}
+              {editMode&&<button className="btn-red" onClick={saveProfile} style={{ padding:"13px" }}>{t("profile_save")}</button>}
             </div>
 
             <h3 className="bebas" style={{ fontSize:22,color:TEXT,marginTop:28,marginBottom:16 }}>Mis publicaciones</h3>
@@ -1762,7 +1909,7 @@ function SupportPanel({ onClose }) {
     if (!aiInput.trim()) return;
     const q = aiInput; setAiInput(""); setAiLoading(true);
     setTimeout(()=>{
-      const R = { publicar:"Para publicar, haz clic en 'Publicar aquí'. ¡Es gratis!", precio:"Puedes publicar en CLP, USD, EUR y más.", contactar:"Para contactar a un vendedor, necesitas estar registrado.", cuenta:"Escríbenos a fgiangrandisc@gmail.com o por WhatsApp." };
+      const R = { publicar:"Para publicar, haz clic en 'Publicar aquí'. ¡Es gratis!", precio:"Puedes publicar en CLP, USD, EUR y más.", contactar:"Para contactar a un vendedor, necesitas estar registrado.", cuenta:"Escríbenos por el formulario de soporte o por WhatsApp." };
       const key = Object.keys(R).find(k=>q.toLowerCase().includes(k));
       setAiResp(key?R[key]:"Entiendo tu consulta. Te recomiendo escribir al soporte humano o contactarnos por WhatsApp. Respondemos en menos de 24hrs.");
       setAiLoading(false);
@@ -1913,7 +2060,7 @@ function MisPublicaciones({ user, onSelect }) {
         <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12 }}>
           {listings.map(l=>(
             <div key={l.id} onClick={()=>onSelect(l)} className="photo-card card">
-              <PhotoPlaceholder emoji={l.emoji||"📦"} h={120}/>
+              <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={120}/>
               <div style={{ padding:"12px 14px 16px" }}>
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
                   <span className="tag t-dim" style={{ fontSize:9 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
@@ -1935,6 +2082,7 @@ function MisPublicaciones({ user, onSelect }) {
    SOLICITUD SHEET — Botón flotante
 ══════════════════════════════════════════════════════════════ */
 function SolicitudSheet({ user, profile, onClose, onDone }) {
+  const { t } = useLang();
   const [step,    setStep]    = useState(0);
   const [loading, setLoading] = useState(false);
   const [err,          setErr]          = useState("");
@@ -1956,11 +2104,11 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
   const upd = (k,v) => setF(p=>({...p,[k]:v}));
   const toggleNotif = k => setNotif(p=>({...p,[k]:!p[k]}));
 
-  const URGENCY = [["normal","Normal — dentro de 7 días"],["urgente","Urgente — dentro de 48hrs"],["critico","Crítico — necesito hoy"]];
+  const URGENCY = [["normal",t("sol_urgent_normal")],["urgente",t("sol_urgent_urgent")],["critico",t("sol_urgent_critical")]];
   const URGENCY_C = { normal:BLUE, urgente:GOLD, critico:RED };
 
   const submit = async () => {
-    if (!f.title) { setErr("El título es obligatorio."); return; }
+    if (!f.title) { setErr(t("sol_no_title")); return; }
     setLoading(true); setErr("");
     const { data:inserted } = await sb.from("requests").insert({
       user_id:     user.id,
@@ -1984,7 +2132,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
       notif_whatsapp:  notif.whatsapp,
       notif_inapp:     notif.inapp,
       biz:         profile?.biz||null,
-    }).select().single().catch(()=>({ data:null }));
+    }).select().single();
     setLoading(false);
 
     // Run match engine in background
@@ -2011,8 +2159,8 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
         {/* Header */}
         <div style={{ background:`linear-gradient(135deg,${RED},#C03320)`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
           <div>
-            <p className="bebas" style={{ fontSize:24,color:"#fff",letterSpacing:.5 }}>Solicita un repuesto</p>
-            <p style={{ fontSize:13,color:"rgba(255,255,255,.75)",marginTop:2 }}>Te avisamos cuando alguien lo publique</p>
+            <p className="bebas" style={{ fontSize:24,color:"#fff",letterSpacing:.5 }}>{t("sol_title")}</p>
+            <p style={{ fontSize:13,color:"rgba(255,255,255,.75)",marginTop:2 }}>{t("sol_subtitle")}</p>
           </div>
           <button onClick={onClose} style={{ background:"rgba(255,255,255,.15)",border:"none",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1,width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center" }}>✕</button>
         </div>
@@ -2043,7 +2191,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
               {/* Título */}
               <div>
                 <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>¿Qué estás buscando? *</p>
-                <input style={{ ...INP,borderColor:f.title?"rgba(240,68,35,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} onChange={e=>upd("title",e.target.value)}/>
+                <input style={{ ...INP,borderColor:f.title?"rgba(240,68,35,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
               </div>
 
               {/* Industria + Marca */}
@@ -2056,14 +2204,14 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 </div>
                 <div>
                   <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Marca <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                  <input style={{ ...INP }} placeholder="Caterpillar, SKF, WEG…" value={f.brand} onChange={e=>upd("brand",e.target.value)}/>
+                  <input style={{ ...INP }} placeholder="Caterpillar, SKF, WEG…" value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)}/>
                 </div>
               </div>
 
               {/* Modelo */}
               <div>
                 <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Modelo <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <input style={{ ...INP }} placeholder="Ej: 3406E, A10V, 6205-2RS…" value={f.model} onChange={e=>upd("model",e.target.value)}/>
+                <input style={{ ...INP }} placeholder="Ej: 3406E, A10V, 6205-2RS…" value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)}/>
               </div>
 
               {/* Números técnicos */}
@@ -2073,7 +2221,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                   {[["serial_number","N° de Serie","Nº serie del equipo"],["part_number","N° de Parte","Part number"],["engine_number","N° de Motor","Nº motor"],["chassis_number","N° de Chasis","Nº chasis"]].map(([key,label,ph])=>(
                     <div key={key} style={{ display:"grid",gridTemplateColumns:"120px 1fr",alignItems:"center",gap:10 }}>
                       <p style={{ fontSize:12,color:MUTED }}>{label}</p>
-                      <input style={{ ...INP,padding:"8px 12px" }} placeholder={ph} value={f[key]} onChange={e=>upd(key,e.target.value)}/>
+                      <input style={{ ...INP,padding:"8px 12px" }} placeholder={ph} value={f[key]} maxLength={100} onChange={e=>upd(key,e.target.value)}/>
                     </div>
                   ))}
                   <div style={{ display:"grid",gridTemplateColumns:"120px 1fr",alignItems:"center",gap:10 }}>
@@ -2095,7 +2243,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
               {/* Descripción */}
               <div>
                 <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Descripción adicional <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
-                <textarea style={{ ...INP,resize:"none" }} rows={3} placeholder="Compatibilidad, aplicación, urgencia, detalles técnicos…" value={f.description} onChange={e=>upd("description",e.target.value)}/>
+                <textarea style={{ ...INP,resize:"none" }} rows={3} placeholder="Compatibilidad, aplicación, urgencia, detalles técnicos…" value={f.description} maxLength={1000} onChange={e=>upd("description",e.target.value)}/>
               </div>
 
               {/* Presupuesto */}
@@ -2161,7 +2309,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
               {/* Submit */}
               <button className="btn-red" onClick={submit} disabled={loading||!f.title} style={{ padding:"15px",fontSize:15,opacity:(!f.title||loading)?.5:1,marginTop:4 }}>
-                {loading ? <Spin/> : "Enviar solicitud"}
+                {loading ? <Spin/> : t("sol_submit")}
               </button>
               <p style={{ textAlign:"center",fontSize:12,color:MUTED,marginTop:-8 }}>Te avisamos en cuanto alguien publique lo que buscás</p>
             </div>
@@ -2197,8 +2345,8 @@ function AppFooter() {
               El marketplace industrial P2P que conecta compradores y vendedores de equipos, partes y repuestos industriales a nivel global. Sin intermediarios. Sin comisiones.
             </p>
             <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
-              {["P2P","0% Comisión","Global","Verificado"].map(t=>(
-                <span key={t} className="tag t-dim" style={{ fontSize:9 }}>{t}</span>
+              {["P2P","0% Comisión","Global","Verificado"].map(tag=>(
+                <span key={tag} className="tag t-dim" style={{ fontSize:9 }}>{tag}</span>
               ))}
             </div>
           </div>
@@ -2276,22 +2424,23 @@ function AppFooter() {
    MOBILE TAB BAR
 ══════════════════════════════════════════════════════════════ */
 function MobileTabBar({ tab, setTab, onPublish }) {
+  const { t } = useLang();
   const TABS = [
-    { id:"home",    icon:"home",  label:"Inicio" },
-    { id:"search",  icon:"search",label:"Buscar" },
-    { id:"publish", icon:"plus",  label:"Publicar", accent:true },
-    { id:"messages",icon:"msg",   label:"Chat" },
-    { id:"profile", icon:"user",  label:"Perfil" },
+    { id:"home",    icon:"home",  key:"nav_home" },
+    { id:"search",  icon:"search",key:"nav_search" },
+    { id:"publish", icon:"plus",  key:"nav_publish", accent:true },
+    { id:"messages",icon:"msg",   key:"nav_messages" },
+    { id:"profile", icon:"user",  key:"nav_my_profile" },
   ];
   return (
     <div style={{ position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(20px)",borderTop:`1px solid ${BORDER}`,display:"flex",alignItems:"center",padding:"8px 0 20px" }}>
-      {TABS.map(t=>(
-        <button key={t.id} onClick={()=>{ if(t.id==="publish"){onPublish();return;} setTab(t.id); }}
+      {TABS.map(tb=>(
+        <button key={tb.id} onClick={()=>{ if(tb.id==="publish"){onPublish();return;} setTab(tb.id); }}
           style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 0",background:"none",border:"none",cursor:"pointer" }}>
-          <div style={{ width:36,height:36,borderRadius:t.accent?12:10,background:t.accent?RED:tab===t.id?"rgba(240,68,35,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
-            <Ic n={t.icon} s={20} c={t.accent?"#fff":tab===t.id?RED:MUTED}/>
+          <div style={{ width:36,height:36,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(240,68,35,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
+            <Ic n={tb.icon} s={20} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
           </div>
-          <span style={{ fontSize:10,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:t.accent?RED:tab===t.id?RED:MUTED,textTransform:"uppercase" }}>{t.label}</span>
+          <span style={{ fontSize:10,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase" }}>{t(tb.key)}</span>
         </button>
       ))}
     </div>
@@ -2301,17 +2450,30 @@ function MobileTabBar({ tab, setTab, onPublish }) {
 /* ══════════════════════════════════════════════════════════════
    MOBILE LAYOUT
 ══════════════════════════════════════════════════════════════ */
-function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout }) {
+function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion }) {
+  const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
   const [unreadCount,   setUnreadCount]   = useState(0);
 
   useEffect(()=>{
+    const onKey = e => {
+      if (e.key !== "Escape") return;
+      if (showPublish)   { setShowPublish(false);   return; }
+      if (showSolicitud) { setShowSolicitud(false); return; }
+      if (showSupport)   { setShowSupport(false);   return; }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showPublish, showSolicitud, showSupport]);
+
+  useEffect(()=>{
     if (!session?.user) return;
     const load = async () => {
-      const { count } = await sb.from("messages").select("*",{count:"exact",head:true}).eq("to_id",session.user.id).eq("read",false).catch(()=>({count:0}));
-      setUnreadCount(count||0);
+      let count = 0;
+      try { const r = await sb.from("messages").select("*",{count:"exact",head:true}).eq("to_id",session.user.id).eq("read",false); count = r.count||0; } catch(_) {}
+      setUnreadCount(count);
     };
     load();
     const ch = sb.channel("unread-"+session.user.id)
@@ -2325,20 +2487,33 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       <style>{CSS_BASE}</style>
 
       {/* Mobile header */}
-      <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-        <SpartsLogo size={28}/>
-        <div style={{ display:"flex",gap:4 }}>
-          <button className="btn-ghost" style={{ padding:"6px" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={20} c={MUTED}/></button>
-          <button className="btn-ghost" style={{ position:"relative",padding:"6px" }}>
-            <Ic n="bell" s={20} c={MUTED}/>
-          </button>
+      <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"8px 14px" }}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4 }}>
+          <SpartsLogo size={24}/>
+          <div style={{ display:"flex",gap:6,alignItems:"center" }}>
+            {/* Lang switcher */}
+            <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:11,fontWeight:700 }}>
+              {["es","en"].map(l=>(
+                <button key={l} onClick={()=>setLang(l)} style={{ padding:"3px 8px",background:lang===l?RED:"transparent",color:lang===l?"#fff":MUTED,border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>{l.toUpperCase()}</button>
+              ))}
+            </div>
+            <button className="btn-ghost" style={{ padding:"5px" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={18} c={MUTED}/></button>
+          </div>
+        </div>
+        {/* Region selector row */}
+        <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+          <Ic n="map" s={13} c={RED}/>
+          <select value={region} onChange={e=>setRegion(e.target.value)}
+            style={{ background:"transparent",border:"none",color:region!=="all"?RED:MUTED,fontSize:12,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,outline:"none",cursor:"pointer",flex:1,textTransform:"uppercase" }}>
+            {REGIONS.map(r=><option key={r.id} value={r.id} style={{ background:BG3,color:TEXT }}>{lang==="en"?r.label_en:r.label_es}</option>)}
+          </select>
         </div>
       </div>
 
       {/* Page content */}
-      <div style={{ paddingTop:56, paddingBottom:90 }}>
+      <div style={{ paddingTop:72, paddingBottom:90 }}>
         {tab==="home"    &&<HomePage    user={session.user} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
-        {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected}/>}
+        {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected} region={region}/>}
         {tab==="messages"&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
         {tab==="alertas" &&<AlertasPage  user={session.user} profile={profile} onSolicitud={()=>setShowSolicitud(true)}/>}
         {tab==="profile" &&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
@@ -2420,17 +2595,30 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
 /* ══════════════════════════════════════════════════════════════
    DESKTOP LAYOUT
 ══════════════════════════════════════════════════════════════ */
-function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout }) {
+function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion }) {
+  const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
   const [unreadCount,   setUnreadCount]   = useState(0);
 
   useEffect(()=>{
+    const onKey = e => {
+      if (e.key !== "Escape") return;
+      if (showPublish)   { setShowPublish(false);   return; }
+      if (showSolicitud) { setShowSolicitud(false); return; }
+      if (showSupport)   { setShowSupport(false);   return; }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showPublish, showSolicitud, showSupport]);
+
+  useEffect(()=>{
     if (!session?.user) return;
     const load = async () => {
-      const { count } = await sb.from("messages").select("*",{count:"exact",head:true}).eq("to_id",session.user.id).eq("read",false).catch(()=>({count:0}));
-      setUnreadCount(count||0);
+      let count = 0;
+      try { const r = await sb.from("messages").select("*",{count:"exact",head:true}).eq("to_id",session.user.id).eq("read",false); count = r.count||0; } catch(_) {}
+      setUnreadCount(count);
     };
     load();
     const ch = sb.channel("unread-"+session.user.id)
@@ -2440,13 +2628,13 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
   },[session?.user?.id]);
 
   const SIDEBAR = [
-    { id:"home",        icon:"home",    label:"Inicio" },
-    { id:"publish",     icon:"plus",    label:"Publicar",             accent:true },
-    { id:"solicitud",   icon:"search",  label:"Solicita un repuesto", solicitud:true, featured:true },
-    { id:"search",      icon:"search",  label:"Explorar" },
-    { id:"messages",    icon:"msg",     label:"Mensajes",  badge:true },
-    { id:"mispubs",     icon:"box",     label:"Mis publicaciones" },
-    { id:"profile",     icon:"user",    label:"Perfil" },
+    { id:"home",        icon:"home",    key:"nav_home" },
+    { id:"publish",     icon:"plus",    key:"nav_publish",  accent:true },
+    { id:"solicitud",   icon:"search",  key:"nav_request",  solicitud:true, featured:true },
+    { id:"search",      icon:"search",  key:"nav_explore" },
+    { id:"messages",    icon:"msg",     key:"nav_messages", badge:true },
+    { id:"mispubs",     icon:"box",     key:"nav_my_listings" },
+    { id:"profile",     icon:"user",    key:"nav_my_profile" },
   ];
 
   return (
@@ -2454,41 +2642,61 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
       <style>{CSS_BASE}</style>
 
       {/* GLOBAL HEADER */}
-      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 32px" }}>
-        <div style={{ display:"flex", alignItems:"center", height:70, gap:24 }}>
-          <div style={{ display:"flex",flexDirection:"column",gap:3 }}>
-            <SpartsLogo size={30}/>
-            <span style={{ fontSize:11,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>No vendemos repuestos, conectamos personas</span>
+      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 24px" }}>
+        <div style={{ display:"flex", alignItems:"center", height:70, gap:16 }}>
+          <div style={{ display:"flex",flexDirection:"column",gap:3,flexShrink:0 }}>
+            <SpartsLogo size={28}/>
+            <span style={{ fontSize:10,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
           </div>
           <div style={{ width:1, height:36, background:BORDER }}/>
-          <nav style={{ display:"flex", gap:4, flex:1 }}>
-            {[{id:"home",label:"Inicio"},{id:"search",label:"Buscar"},{id:"profile",label:"Mi Perfil"},{id:"soporte",label:"Soporte"}].map((n,i)=>(
+          <nav style={{ display:"flex", gap:2, flex:1 }}>
+            {[{id:"home",key:"nav_home"},{id:"search",key:"nav_search"},{id:"profile",key:"nav_my_profile"},{id:"soporte",key:"nav_support"}].map((n,i)=>(
               <button key={i} onClick={()=>{ if(n.id==="soporte"){setShowSupport(true);return;} setTab(n.id); }}
-                style={{ padding:"6px 14px",borderRadius:6,background:"none",border:"none",cursor:"pointer",fontSize:13,fontWeight:700,color:tab===n.id?RED:SUB,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}
+                style={{ padding:"6px 12px",borderRadius:6,background:"none",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,color:tab===n.id?RED:SUB,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}
                 onMouseEnter={e=>{ e.currentTarget.style.color=TEXT; }}
                 onMouseLeave={e=>{ e.currentTarget.style.color=tab===n.id?RED:SUB; }}>
-                {n.label}
+                {t(n.key)}
               </button>
             ))}
           </nav>
-          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+
+          {/* ── Region selector ── */}
+          <div style={{ display:"flex",alignItems:"center",gap:6,borderRadius:7,border:`1px solid ${BORDER}`,padding:"6px 10px",background:region!=="all"?"rgba(240,68,35,.08)":"transparent",transition:"all .15s",flexShrink:0 }}>
+            <Ic n="location" s={13} c={region!=="all"?RED:MUTED}/>
+            <select value={region} onChange={e=>setRegion(e.target.value)}
+              style={{ background:"transparent",border:"none",color:region!=="all"?RED:MUTED,fontSize:12,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.4,outline:"none",cursor:"pointer",textTransform:"uppercase",maxWidth:130 }}>
+              {REGIONS.map(r=><option key={r.id} value={r.id} style={{ background:BG3,color:TEXT }}>{lang==="en"?r.label_en:r.label_es}</option>)}
+            </select>
+          </div>
+
+          {/* ── Language switcher ── */}
+          <div style={{ display:"flex",borderRadius:7,overflow:"hidden",border:`1px solid ${BORDER}`,flexShrink:0 }}>
+            {["es","en"].map(l=>(
+              <button key={l} onClick={()=>setLang(l)}
+                style={{ padding:"6px 12px",background:lang===l?RED:"transparent",color:lang===l?"#fff":MUTED,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display:"flex", gap:6, alignItems:"center" }}>
             <button onClick={()=>setShowSolicitud(true)}
-              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 16px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase",transition:"all .15s" }}
+              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"7px 12px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(240,68,35,.1)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
-              <Ic n="search" s={14} c={RED}/>Solicita un repuesto
+              <Ic n="search" s={13} c={RED}/>{t("nav_request")}
             </button>
             <button onClick={()=>setShowPublish(true)}
-              style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"8px 18px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase",transition:"all .15s" }}
+              style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s" }}
               onMouseEnter={e=>e.currentTarget.style.background=RED2}
               onMouseLeave={e=>e.currentTarget.style.background=RED}>
-              <Ic n="plus" s={14} c="#fff"/>Publicar aquí
+              <Ic n="plus" s={13} c="#fff"/>{t("nav_publish_here")}
             </button>
             <button onClick={()=>setShowSupport(true)}
-              style={{ background:"none",color:SUB,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}
+              style={{ background:"none",color:SUB,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"7px 12px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}
               onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
               onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=SUB; }}>
-              <Ic n="msg" s={14} c="currentColor"/>Soporte
+              <Ic n="msg" s={13} c="currentColor"/>{t("nav_support")}
             </button>
           </div>
         </div>
@@ -2509,7 +2717,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   if (n.id!=="messages") setChatListing(null);
                 }}
                 style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C03320)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(240,68,35,.35)" } : undefined}>
-                <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{n.label}
+                <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{t(n.key)}
                 {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:10,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
               </button>
             ))}
@@ -2528,7 +2736,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
         {/* Main */}
         <div style={{ flex:1,minWidth:0,overflowY:"auto",padding:"24px 32px 60px" }}>
           {tab==="home"    &&<HomePage    user={session.user} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
-          {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected}/>}
+          {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected} region={region}/>}
           {tab==="messages"&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
           {tab==="profile" &&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
           {tab==="mispubs" &&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
@@ -2557,6 +2765,12 @@ export default function SpartsHub() {
   const [tab,          setTab]          = useState("home");
   const [selected,     setSelected]     = useState(null);
   const [chatListing,  setChatListing]  = useState(null);
+  const [lang,         setLangState]    = useState(()=>localStorage.getItem("sh_lang")||"es");
+  const [region,       setRegionState]  = useState(()=>localStorage.getItem("sh_region")||"all");
+
+  const setLang = v => { setLangState(v); localStorage.setItem("sh_lang", v); };
+  const setRegion = v => { setRegionState(v); localStorage.setItem("sh_region", v); };
+  const t = makeT(lang);
 
   useEffect(()=>{
     sb.auth.getSession().then(({ data })=>{ setSession(data.session); setAuthReady(true); });
@@ -2573,34 +2787,48 @@ export default function SpartsHub() {
   const openChat = l=>{ if(l.user_id===session?.user?.id) return; setChatListing(l); setTab("messages"); setSelected(null); };
 
   if (!authReady) return (
-    <div style={{ minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16 }}>
-      <style>{CSS_BASE}</style>
-      <SpartsLogo size={36}/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
-    </div>
+    <LangCtx.Provider value={{ lang, setLang, t }}>
+      <div style={{ minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16 }}>
+        <style>{CSS_BASE}</style>
+        <SpartsLogo size={36}/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
+      </div>
+    </LangCtx.Provider>
   );
 
   if (!session) {
     if (showAuthMode==="landing") return (
-      <LandingPage onGoRegister={()=>setShowAuthMode("register")} onGoLogin={()=>setShowAuthMode("login")}/>
+      <LangCtx.Provider value={{ lang, setLang, t }}>
+        <LandingPage onGoRegister={()=>setShowAuthMode("register")} onGoLogin={()=>setShowAuthMode("login")} lang={lang} setLang={setLang}/>
+      </LangCtx.Provider>
     );
-    return <AuthScreen initialMode={showAuthMode==="register"?"register":"login"} onAuth={()=>sb.auth.getSession().then(({ data })=>setSession(data.session))} onBack={()=>setShowAuthMode("landing")}/>;
+    return (
+      <LangCtx.Provider value={{ lang, setLang, t }}>
+        <AuthScreen initialMode={showAuthMode==="register"?"register":"login"} onAuth={()=>sb.auth.getSession().then(({ data })=>setSession(data.session))} onBack={()=>setShowAuthMode("landing")}/>
+      </LangCtx.Provider>
+    );
   }
 
   if (isMobile) return (
+    <LangCtx.Provider value={{ lang, setLang, t }}>
     <MobileLayout
       tab={tab} setTab={setTab} session={session} profile={profile}
       selected={selected} setSelected={setSelected}
       chatListing={chatListing} setChatListing={setChatListing}
       openChat={openChat} logout={logout}
+      region={region} setRegion={setRegion}
     />
+    </LangCtx.Provider>
   );
 
   return (
+    <LangCtx.Provider value={{ lang, setLang, t }}>
     <DesktopLayout
       tab={tab} setTab={setTab} session={session} profile={profile}
       selected={selected} setSelected={setSelected}
       chatListing={chatListing} setChatListing={setChatListing}
       openChat={openChat} logout={logout}
+      region={region} setRegion={setRegion}
     />
+    </LangCtx.Provider>
   );
 }
