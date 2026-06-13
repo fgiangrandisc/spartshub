@@ -845,82 +845,68 @@ function PhotoCarousel({ photos }) {
   const [idx, setIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
 
+  const openLightbox = (i, e) => { e.stopPropagation(); setIdx(i); setLightbox(true); };
+
   return (
     <>
-      {/* Main gallery */}
-      <div style={{ display:"flex", flexDirection:"column", width:"100%", background:"#0a0a0a", borderRadius:"0 0 0 0" }}>
-
-        {/* Primary photo */}
-        <div style={{ position:"relative", width:"100%", height:120, overflow:"hidden", cursor:"zoom-in" }}
-          onClick={e=>{ e.stopPropagation(); setLightbox(true); }}>
-          <img
-            src={photos[idx]} alt=""
-            style={{ width:"100%", height:"100%", objectFit:"contain", display:"block", background:"#0a0a0a" }}
-          />
-          {/* Counter badge */}
-          {photos.length > 1 && (
-            <div style={{ position:"absolute", top:12, right:12, background:"rgba(0,0,0,.65)", backdropFilter:"blur(6px)", borderRadius:20, padding:"4px 10px", fontSize:12, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
-              {idx+1} / {photos.length}
-            </div>
-          )}
-          {/* Zoom hint */}
-          <div style={{ position:"absolute", bottom:12, right:12, background:"rgba(0,0,0,.55)", backdropFilter:"blur(4px)", borderRadius:8, padding:"4px 8px", fontSize:10, color:"rgba(255,255,255,.7)", fontFamily:"Barlow Condensed,sans-serif", display:"flex", alignItems:"center", gap:4 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-            VER
-          </div>
-          {/* Nav arrows */}
-          {photos.length > 1 && (
-            <>
-              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
-                style={{ position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"50%",width:36,height:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
-                <Ic n="chevL" s={16} c="#fff"/>
-              </button>
-              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
-                style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)",border:"1px solid rgba(255,255,255,.1)",borderRadius:"50%",width:36,height:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
-                <Ic n="chevR" s={16} c="#fff"/>
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Thumbnail strip */}
-        {photos.length > 1 && (
-          <div style={{ display:"flex", gap:4, padding:"6px 8px", background:"#0a0a0a", overflowX:"auto" }}>
-            {photos.map((url,i)=>(
-              <div key={i} onClick={e=>{ e.stopPropagation(); setIdx(i); }}
-                style={{ position:"relative", flexShrink:0, width:64, height:64, borderRadius:8, overflow:"hidden",
-                  border: i===idx ? "2px solid #F04423" : "2px solid rgba(255,255,255,.08)",
-                  cursor:"pointer", transition:"all .15s", opacity: i===idx ? 1 : 0.55 }}>
-                <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+      {/* Compact thumbnail gallery */}
+      <div style={{ padding:"10px 16px 4px", background:"#0B0F14" }}>
+        <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4 }}>
+          {photos.map((url, i) => (
+            <div key={i} onClick={e=>openLightbox(i,e)}
+              style={{ position:"relative", flexShrink:0, width:80, height:80, borderRadius:10, overflow:"hidden",
+                border: "2px solid rgba(255,255,255,.08)", cursor:"zoom-in",
+                boxShadow:"0 2px 8px rgba(0,0,0,.4)", transition:"transform .15s" }}
+              onMouseEnter={e=>e.currentTarget.style.transform="scale(1.04)"}
+              onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+              <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+              {/* Zoom icon overlay */}
+              <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0)", display:"flex", alignItems:"center", justifyContent:"center", transition:"background .15s" }}
+                onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,.35)"}
+                onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0)"}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.8)" strokeWidth="2.5" style={{ opacity:0.7 }}>
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
+                </svg>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
+        {photos.length > 1 && (
+          <p style={{ fontSize:10, color:"rgba(255,255,255,.3)", marginTop:4, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
+            {photos.length} FOTOS · CLICK PARA AMPLIAR
+          </p>
         )}
       </div>
 
       {/* Lightbox */}
       {lightbox && (
         <div onClick={()=>setLightbox(false)}
-          style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.95)", zIndex:200, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+          style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.96)", zIndex:200, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
           <button onClick={()=>setLightbox(false)}
             style={{ position:"absolute", top:16, right:16, background:"rgba(255,255,255,.1)", border:"none", borderRadius:"50%", width:40, height:40, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <Ic n="x" s={20} c="#fff"/>
           </button>
+          {/* Counter */}
+          <div style={{ position:"absolute", top:20, left:"50%", transform:"translateX(-50%)", background:"rgba(255,255,255,.1)", borderRadius:20, padding:"4px 14px", fontSize:13, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif" }}>
+            {idx+1} / {photos.length}
+          </div>
           <img src={photos[idx]} alt=""
             onClick={e=>e.stopPropagation()}
-            style={{ maxWidth:"92vw", maxHeight:"80vh", objectFit:"contain", borderRadius:12, boxShadow:"0 24px 80px rgba(0,0,0,.8)" }}
+            style={{ maxWidth:"92vw", maxHeight:"78vh", objectFit:"contain", borderRadius:12, boxShadow:"0 24px 80px rgba(0,0,0,.8)" }}
           />
+          {/* Thumbnails */}
           {photos.length > 1 && (
-            <div style={{ display:"flex", gap:8, marginTop:16 }}>
+            <div style={{ display:"flex", gap:8, marginTop:16 }} onClick={e=>e.stopPropagation()}>
               {photos.map((url,i)=>(
                 <img key={i} src={url} alt="" onClick={e=>{ e.stopPropagation(); setIdx(i); }}
-                  style={{ width:52, height:52, borderRadius:8, objectFit:"cover", cursor:"pointer",
-                    border: i===idx ? "2px solid #F04423" : "2px solid rgba(255,255,255,.15)",
-                    opacity: i===idx ? 1 : 0.5, transition:"all .15s" }}
+                  style={{ width:54, height:54, borderRadius:8, objectFit:"cover", cursor:"pointer",
+                    border: i===idx ? "2px solid #F04423" : "2px solid rgba(255,255,255,.12)",
+                    opacity: i===idx ? 1 : 0.45, transition:"all .15s" }}
                 />
               ))}
             </div>
           )}
+          {/* Nav arrows */}
           {photos.length > 1 && (
             <>
               <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
