@@ -2208,7 +2208,7 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
     setLoading(true); setErr("");
     const uploadedUrls = await uploadNewPhotos();
     const allPhotos = [...existingPhotos, ...uploadedUrls];
-    const { data: updated, error } = await sb.from("listings").update({
+    const { error } = await sb.from("listings").update({
       title:          f.title,
       brand:          f.brand   || null,
       model:          f.model   || null,
@@ -2226,11 +2226,11 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
       biz:            f.biz     || null,
       description:    f.description || null,
       emoji:          f.emoji   || "📦",
-      photos:         allPhotos,
-    }).eq("id", listing.id).select().single();
+      photos:         Array.isArray(allPhotos) ? allPhotos : [],
+    }).eq("id", listing.id).eq("user_id", user.id);
     setLoading(false);
     if (error) { setErr(error.message); return; }
-    onSaved(updated || { ...listing, ...f, photos: allPhotos });
+    onSaved({ ...listing, ...f, photos: allPhotos });
   };
 
   const totalSlots = existingPhotos.length + newPreviews.length;
