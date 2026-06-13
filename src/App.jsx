@@ -232,11 +232,13 @@ const CATS = [
   { id:"for",   label:"Forestal",             emoji:"🌲" },
   { id:"const", label:"Construcción",         emoji:"🏗️" },
   { id:"ene",   label:"Energía",              emoji:"⚡" },
-  { id:"trans", label:"Transporte",           emoji:"🚛" },
+  { id:"trans", label:"Transporte y Logística",emoji:"🚛" },
   { id:"fae",   label:"Faenas",               emoji:"⛏️" },
   { id:"rut",   label:"Rutas y Caminos",      emoji:"🛣️" },
   { id:"san",   label:"Sanitarias",           emoji:"💧" },
   { id:"serv",  label:"Servicios",            emoji:"🔧" },
+  { id:"ali",   label:"Alimentos",            emoji:"🌾" },
+  { id:"her",   label:"Herramientas",         emoji:"🪛" },
 ];
 const CONDITIONS  = ["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"];
 const OPERATIONS  = ["Venta","Arriendo","Trade"];
@@ -498,197 +500,240 @@ function SearchPage({ user, onSelect, region }) {
   const [nMotor,     setNMotor]     = useState("");
   const [horasMin,   setHorasMin]   = useState("");
   const [horasMax,   setHorasMax]   = useState("");
-  const [ciudad,     setCiudad]     = useState("");
+  const [ubicacion,  setUbicacion]  = useState("all");   // region dropdown
+  const [tipo,       setTipo]       = useState("");       // "" | "repuesto" | "servicio"
   const [priceMin,   setPriceMin]   = useState("");
   const [priceMax,   setPriceMax]   = useState("");
+  const [priceCur,   setPriceCur]   = useState("USD");
   const [sortBy,     setSortBy]     = useState("newest");
   const [verified,   setVerified]   = useState(false);
-  const [priceCur,   setPriceCur]   = useState("CLP");
   const [listings,   setListings]   = useState([]);
   const [loading,    setLoading]    = useState(false);
   const [viewMode,   setViewMode]   = useState("grid");
-  const [showFilters,setShowFilters]= useState(true);
 
   const MARCAS = ["","Caterpillar","Komatsu","Rexroth","Parker","WEG","ABB","Siemens","SKF","Cummins","Fleetguard","Gates","SEW","Atlas Copco","Bosch","NSK","FAG","Timken"];
-  const SORT_OPTS = [["newest","Más recientes"],["price_asc","Menor precio"],["price_desc","Mayor precio"]];
+
+  const getSortParams = () => {
+    if (sortBy === "price_asc")  return { col:"price",      asc:true  };
+    if (sortBy === "price_desc") return { col:"price",      asc:false };
+    if (sortBy === "a_z")        return { col:"title",      asc:true  };
+    if (sortBy === "z_a")        return { col:"title",      asc:false };
+    return                              { col:"created_at", asc:false };
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
-    const asc = sortBy === "price_asc";
-    const col = sortBy.startsWith("price") ? "price" : "created_at";
+    const { col, asc } = getSortParams();
     let query = sb.from("listings").select("*").order(col, {ascending: asc});
-    if (cat !== "all")  query = query.eq("cat", cat);
-    if (q)              query = query.ilike("title", `%${q}%`);
-    if (condition)      query = query.eq("condition", condition);
-    if (marca)          query = query.ilike("brand", `%${marca}%`);
-    if (modelo)         query = query.ilike("model", `%${modelo}%`);
-    if (nSerie)         query = query.ilike("serial_number", `%${nSerie}%`);
-    if (nParte)         query = query.ilike("part_number", `%${nParte}%`);
-    if (nMotor)         query = query.ilike("engine_number", `%${nMotor}%`);
-    if (horasMin)       query = query.gte("hours", Number(horasMin));
-    if (horasMax)       query = query.lte("hours", Number(horasMax));
-    if (ciudad)         query = query.ilike("location", `%${ciudad}%`);
-    else if (region && region !== "all" && region !== "intl") {
+
+    if (cat !== "all")         query = query.eq("cat", cat);
+    if (q)                     query = query.ilike("title", `%${q}%`);
+    if (condition)             query = query.eq("condition", condition);
+    if (marca)                 query = query.ilike("brand", `%${marca}%`);
+    if (modelo)                query = query.ilike("model", `%${modelo}%`);
+    if (nSerie)                query = query.ilike("serial_number", `%${nSerie}%`);
+    if (nParte)                query = query.ilike("part_number", `%${nParte}%`);
+    if (nMotor)                query = query.ilike("engine_number", `%${nMotor}%`);
+    if (horasMin)              query = query.gte("hours", Number(horasMin));
+    if (horasMax)              query = query.lte("hours", Number(horasMax));
+    if (tipo === "servicio")   query = query.eq("operation", "Servicio");
+    if (tipo === "repuesto")   query = query.neq("operation", "Servicio");
+
+    // Location: sidebar dropdown > global header selector
+    if (ubicacion && ubicacion !== "all") {
+      const rObj = REGIONS.find(r => r.id === ubicacion);
+      if (rObj?.q) query = query.ilike("location", `%${rObj.q}%`);
+    } else if (region && region !== "all" && region !== "intl") {
       const rObj = REGIONS.find(r => r.id === region);
-      if (rObj?.q)      query = query.ilike("location", `%${rObj.q}%`);
+      if (rObj?.q) query = query.ilike("location", `%${rObj.q}%`);
     }
-    if (priceMin)       query = query.gte("price", Number(priceMin));
-    if (priceMax)       query = query.lte("price", Number(priceMax));
-    if (priceMin||priceMax) query = query.eq("currency", priceCur);
-    if (verified)       query = query.eq("verified", true);
+
+    if (priceMin)              query = query.gte("price", Number(priceMin));
+    if (priceMax)              query = query.lte("price", Number(priceMax));
+    if (priceMin || priceMax)  query = query.eq("currency", priceCur);
+    if (verified)              query = query.eq("verified", true);
+
     const { data } = await query;
-    setListings(data||[]);
+    setListings(data || []);
     setLoading(false);
-  }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, horasMin, horasMax, ciudad, priceMin, priceMax, priceCur, sortBy, verified, region]);
+  }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, horasMin, horasMax,
+      ubicacion, tipo, priceMin, priceMax, priceCur, sortBy, verified, region]);
 
-  useEffect(()=>{ load(); },[load]);
+  useEffect(()=>{ load(); }, [load]);
 
-  const activeFilters = [condition,marca,modelo,nSerie,nParte,nMotor,horasMin,horasMax,ciudad,priceMin,priceMax,verified?'verificado':''].filter(Boolean).length;
+  const activeFilters = [
+    cat !== "all" ? cat : "",
+    condition, marca, modelo, nSerie, nParte, nMotor,
+    horasMin, horasMax,
+    ubicacion !== "all" ? ubicacion : "",
+    tipo,
+    priceMin, priceMax,
+    verified ? "v" : "",
+  ].filter(Boolean).length;
 
-  const resetFilters = () => { setCondition(""); setMarca(""); setModelo(""); setNSerie(""); setNParte(""); setNMotor(""); setHorasMin(""); setHorasMax(""); setCiudad(""); setPriceMin(""); setPriceMax(""); setPriceCur("CLP"); setVerified(false); setSortBy("newest"); };
+  const resetFilters = () => {
+    setCat("all"); setCondition(""); setMarca(""); setModelo("");
+    setNSerie(""); setNParte(""); setNMotor("");
+    setHorasMin(""); setHorasMax("");
+    setUbicacion("all"); setTipo("");
+    setPriceMin(""); setPriceMax(""); setPriceCur("USD");
+    setVerified(false); setSortBy("newest");
+  };
 
-  const INP = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
+  const LABEL = { fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" };
+  const SEL   = (active) => ({ background:SURF, border:`1px solid ${active?RED:BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:active?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:active?700:400, transition:"border-color .2s" });
+  const INP   = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
+  const DIV   = { height:1, background:BORDER, margin:"14px 0" };
 
   const isMobile = useIsMobile();
 
   return (
     <div style={{ display:isMobile?"block":"flex", gap:24, alignItems:"flex-start" }}>
 
-      {/* ── Sidebar de filtros ── */}
-      <div style={{ width:isMobile?"100%":220, flexShrink:0, background:BG3, borderRadius:12, border:`1px solid ${BORDER}`, padding:"20px 16px", position:isMobile?"relative":"sticky", top:0, marginBottom:isMobile?16:0 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
+      {/* ══ FILTER SIDEBAR ══ */}
+      <div style={{ width:isMobile?"100%":232, flexShrink:0, background:BG3, borderRadius:12, border:`1px solid ${BORDER}`, padding:"18px 16px", position:isMobile?"relative":"sticky", top:0, maxHeight:isMobile?"none":"calc(100vh - 100px)", overflowY:"auto", marginBottom:isMobile?16:0 }}>
+
+        {/* Header */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
           <p className="bebas" style={{ fontSize:18, color:TEXT, letterSpacing:.5 }}>{t("search_filters")}</p>
-          {activeFilters > 0 && (
-            <button onClick={resetFilters} style={{ fontSize:11, color:RED, background:"none", border:"none", cursor:"pointer", fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
-              {t("search_clear")} ({activeFilters})
-            </button>
-          )}
+          {activeFilters > 0 && <span style={{ background:RED, color:"#fff", fontSize:10, fontWeight:700, borderRadius:10, padding:"2px 8px", fontFamily:"Barlow Condensed,sans-serif" }}>{activeFilters}</span>}
         </div>
 
-        {/* Region active badge */}
-        {region && region !== "all" && (
-          <div style={{ marginBottom:14,padding:"6px 10px",background:"rgba(240,68,35,.08)",borderRadius:7,border:"1px solid rgba(240,68,35,.2)",display:"flex",alignItems:"center",gap:6 }}>
-            <Ic n="map" s={12} c={RED}/>
-            <span style={{ fontSize:11,color:RED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>
-              {t("search_region_filter")} {lang==="en"?REGIONS.find(r=>r.id===region)?.label_en:REGIONS.find(r=>r.id===region)?.label_es}
+        {/* Global region badge */}
+        {region && region !== "all" && ubicacion === "all" && (
+          <div style={{ marginBottom:12, padding:"5px 9px", background:"rgba(240,68,35,.08)", borderRadius:7, border:"1px solid rgba(240,68,35,.2)", display:"flex", alignItems:"center", gap:6 }}>
+            <Ic n="map" s={11} c={RED}/>
+            <span style={{ fontSize:10, color:RED, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
+              {lang==="en" ? REGIONS.find(r=>r.id===region)?.label_en : REGIONS.find(r=>r.id===region)?.label_es}
             </span>
           </div>
         )}
 
-        {/* Categoría */}
-        <div style={{ marginBottom:20 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_category")}</p>
-          <select value={cat} onChange={e=>setCat(e.target.value)}
-            style={{ background:SURF, border:`1px solid ${cat!=="all"?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:cat!=="all"?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:cat!=="all"?700:400, transition:"border-color .2s" }}>
-            {CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+        {/* 1. TIPO */}
+        <div style={{ marginBottom:14 }}>
+          <p style={LABEL}>Tipo</p>
+          <div style={{ display:"flex", borderRadius:8, overflow:"hidden", border:`1px solid ${BORDER}` }}>
+            {[["","Todos"],["repuesto","Repuestos"],["servicio","Servicios"]].map(([val,lbl])=>(
+              <button key={val} onClick={()=>setTipo(val)}
+                style={{ flex:1, padding:"8px 4px", border:"none", cursor:"pointer", fontSize:11, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.3, transition:"all .15s",
+                  background: tipo===val ? RED : "transparent",
+                  color: tipo===val ? "#fff" : MUTED }}>
+                {lbl}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={DIV}/>
+
+        {/* 2. INDUSTRIA */}
+        <div style={{ marginBottom:14 }}>
+          <p style={LABEL}>Industria</p>
+          <select value={cat} onChange={e=>setCat(e.target.value)} style={SEL(cat !== "all")}>
+            {CATS.map(c=><option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
           </select>
         </div>
 
-        <div style={{ height:1, background:BORDER, marginBottom:20 }}/>
+        <div style={DIV}/>
 
-        {/* Condición */}
-        <div style={{ marginBottom:18 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_condition")}</p>
-          <select value={condition} onChange={e=>setCondition(e.target.value)}
-            style={{ background:SURF, border:`1px solid ${condition?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:condition?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:condition?700:400, transition:"border-color .2s" }}>
-            <option value="">{t("search_all_cond")}</option>
+        {/* 3. ESTADO */}
+        <div style={{ marginBottom:14 }}>
+          <p style={LABEL}>Estado</p>
+          <select value={condition} onChange={e=>setCondition(e.target.value)} style={SEL(!!condition)}>
+            <option value="">Todos</option>
             {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=><option key={c} value={c}>{c}</option>)}
           </select>
         </div>
 
-        <div style={{ height:1, background:BORDER, marginBottom:20 }}/>
+        <div style={DIV}/>
 
-        {/* Marca */}
-        <div style={{ marginBottom:18 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_brand")}</p>
-          <select value={marca} onChange={e=>setMarca(e.target.value)} style={{ ...INP }}>
-            {MARCAS.map(m=><option key={m} value={m}>{m||(lang==="en"?"All brands":"Todas las marcas")}</option>)}
+        {/* 4. UBICACIÓN */}
+        <div style={{ marginBottom:14 }}>
+          <p style={LABEL}>Ubicación</p>
+          <select value={ubicacion} onChange={e=>setUbicacion(e.target.value)} style={SEL(ubicacion !== "all")}>
+            {REGIONS.map(r=><option key={r.id} value={r.id} style={{ background:BG3 }}>
+              {lang === "en" ? r.label_en : r.label_es}
+            </option>)}
           </select>
         </div>
 
-        {/* Modelo */}
+        <div style={DIV}/>
+
+        {/* 5. RANGO DE PRECIO */}
         <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_model")}</p>
-          <input value={modelo} onChange={e=>setModelo(e.target.value)} placeholder="Ej: 3406E, A10V, 6205…" style={{ background:SURF, border:`1px solid ${modelo?RED:BORDER}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:modelo?RED:TEXT, width:"100%", outline:"none", fontFamily:"inherit", fontWeight:modelo?700:400, transition:"border-color .2s" }}/>
-        </div>
-
-        <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
-
-        {/* Números técnicos */}
-        <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_serial")}</p>
-          <input value={nSerie} onChange={e=>setNSerie(e.target.value)} placeholder="Nº serie del equipo" style={{ ...INP }}/>
-        </div>
-
-        <div style={{ height:1, background:BORDER, marginBottom:14 }}/>
-
-        <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_part")}</p>
-          <input value={nParte} onChange={e=>setNParte(e.target.value)} placeholder="Part number" style={{ ...INP }}/>
-        </div>
-
-        <div style={{ height:1, background:BORDER, marginBottom:14 }}/>
-
-        <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_engine")}</p>
-          <input value={nMotor} onChange={e=>setNMotor(e.target.value)} placeholder="Nº motor" style={{ ...INP }}/>
-        </div>
-
-        <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
-
-        {/* Horas de uso */}
-        <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("pub_hours")}</p>
-          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            <input value={horasMin} onChange={e=>setHorasMin(e.target.value)} placeholder="Mín" type="number" style={{ ...INP, width:"50%" }}/>
-            <span style={{ color:MUTED, fontSize:13 }}>–</span>
-            <input value={horasMax} onChange={e=>setHorasMax(e.target.value)} placeholder="Máx" type="number" style={{ ...INP, width:"50%" }}/>
-          </div>
-        </div>
-
-        <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
-
-        {/* Ciudad */}
-        <div style={{ marginBottom:14 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_city")}</p>
-          <input value={ciudad} onChange={e=>setCiudad(e.target.value)} placeholder="Ej: Santiago, Antofagasta…" style={{ ...INP }}/>
-        </div>
-
-        <div style={{ height:1, background:BORDER, marginBottom:16 }}/>
-
-        {/* Precio */}
-        <div style={{ marginBottom:18 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-            <p style={{ fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", fontFamily:"Barlow Condensed,sans-serif" }}>{t("search_price")}</p>
-            <div style={{ display:"flex", background:BG2, borderRadius:6, overflow:"hidden", border:`1px solid ${BORDER}` }}>
-              {["CLP","USD"].map(c=>(
+            <p style={{ ...LABEL, marginBottom:0 }}>Precio</p>
+            <div style={{ display:"flex", background:BG2, borderRadius:5, overflow:"hidden", border:`1px solid ${BORDER}` }}>
+              {["USD","CLP","EUR"].map(c=>(
                 <button key={c} onClick={()=>setPriceCur(c)}
-                  style={{ padding:"3px 10px", fontSize:11, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s",
-                    background:priceCur===c?RED:"transparent", color:priceCur===c?"#fff":MUTED }}>
+                  style={{ padding:"2px 7px", fontSize:10, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", transition:"all .12s",
+                    background: priceCur===c ? RED : "transparent",
+                    color: priceCur===c ? "#fff" : MUTED }}>
                   {c}
                 </button>
               ))}
             </div>
           </div>
-          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            <input value={priceMin} onChange={e=>setPriceMin(e.target.value)} placeholder="Mín" type="number" style={{ ...INP, width:"50%" }}/>
+          <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+            <input value={priceMin} onChange={e=>setPriceMin(e.target.value)} placeholder="Mín" type="number" min="0" style={{ ...INP, width:"50%" }}/>
             <span style={{ color:MUTED, fontSize:13 }}>–</span>
-            <input value={priceMax} onChange={e=>setPriceMax(e.target.value)} placeholder="Máx" type="number" style={{ ...INP, width:"50%" }}/>
+            <input value={priceMax} onChange={e=>setPriceMax(e.target.value)} placeholder="Máx" type="number" min="0" style={{ ...INP, width:"50%" }}/>
           </div>
         </div>
 
-        <div style={{ height:1, background:BORDER, marginBottom:20 }}/>
+        <div style={DIV}/>
 
-        {/* Solo verificados */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18, cursor:"pointer" }} onClick={()=>setVerified(v=>!v)}>
-          <p style={{ fontSize:13, color:verified?TEXT:SUB, fontWeight:verified?700:400 }}>{t("search_verified")} ✓</p>
+        {/* 6. MARCA */}
+        <div style={{ marginBottom:14 }}>
+          <p style={LABEL}>{t("search_brand")}</p>
+          <select value={marca} onChange={e=>setMarca(e.target.value)} style={SEL(!!marca)}>
+            {MARCAS.map(m=><option key={m} value={m}>{m || "Todas las marcas"}</option>)}
+          </select>
+        </div>
+
+        {/* 7. MODELO */}
+        <div style={{ marginBottom:14 }}>
+          <p style={LABEL}>{t("search_model")}</p>
+          <input value={modelo} onChange={e=>setModelo(e.target.value)} placeholder="Ej: 3406E, A10V…"
+            style={{ ...INP, border:`1px solid ${modelo?RED:BORDER}`, color:modelo?RED:TEXT, fontWeight:modelo?700:400 }}/>
+        </div>
+
+        <div style={DIV}/>
+
+        {/* 8. N° TÉCNICOS (collapsed section) */}
+        <div style={{ marginBottom:14 }}>
+          <p style={LABEL}>Números técnicos</p>
+          <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+            <input value={nSerie} onChange={e=>setNSerie(e.target.value)} placeholder="N° Serie" style={{ ...INP, fontSize:12 }}/>
+            <input value={nParte} onChange={e=>setNParte(e.target.value)} placeholder="N° Parte" style={{ ...INP, fontSize:12 }}/>
+            <input value={nMotor} onChange={e=>setNMotor(e.target.value)} placeholder="N° Motor" style={{ ...INP, fontSize:12 }}/>
+          </div>
+        </div>
+
+        {/* 9. HORAS DE USO */}
+        <div style={{ marginBottom:14 }}>
+          <p style={LABEL}>Horas de uso</p>
+          <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+            <input value={horasMin} onChange={e=>setHorasMin(e.target.value)} placeholder="Mín" type="number" min="0" style={{ ...INP, width:"50%" }}/>
+            <span style={{ color:MUTED, fontSize:13 }}>–</span>
+            <input value={horasMax} onChange={e=>setHorasMax(e.target.value)} placeholder="Máx" type="number" min="0" style={{ ...INP, width:"50%" }}/>
+          </div>
+        </div>
+
+        <div style={DIV}/>
+
+        {/* 10. VERIFICADOS */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, cursor:"pointer" }} onClick={()=>setVerified(v=>!v)}>
+          <p style={{ fontSize:13, color:verified?TEXT:SUB, fontWeight:verified?700:400 }}>Solo verificados ✓</p>
           <div className="toggle" style={{ background:verified?RED:"rgba(255,255,255,.1)" }}>
             <div className="toggle-knob" style={{ left:verified?20:2 }}/>
           </div>
         </div>
 
-        <button className="btn-red" onClick={load} style={{ width:"100%", padding:"11px", fontSize:13 }}>
-          {t("nav_search")}
+        {/* CLEAR ALL FILTERS */}
+        <button onClick={resetFilters}
+          style={{ width:"100%", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(240,68,35,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
+          {activeFilters > 0 ? `✕ Limpiar filtros (${activeFilters})` : "Sin filtros activos"}
         </button>
       </div>
 
@@ -703,7 +748,7 @@ function SearchPage({ user, onSelect, region }) {
           </div>
           <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
             style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:13, color:TEXT, outline:"none", cursor:"pointer", fontFamily:"inherit" }}>
-            {[["newest",t("search_newest")],["price_asc",t("search_price_asc")],["price_desc",t("search_price_desc")]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+            {[["newest","Más recientes"],["price_asc","Menor precio"],["price_desc","Mayor precio"],["a_z","A → Z"],["z_a","Z → A"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
           </select>
           <div style={{ display:"flex", gap:4 }}>
             <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="grid"?RED:MUTED }} onClick={()=>setViewMode("grid")}><Ic n="grid" s={18}/></button>
@@ -714,18 +759,20 @@ function SearchPage({ user, onSelect, region }) {
         {/* Active filter chips */}
         {activeFilters > 0 && (
           <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
-            {condition && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setCondition("")}>{condition} ✕</span>}
-            {marca     && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setMarca("")}>{marca} ✕</span>}
-            {modelo    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setModelo("")}>Modelo: {modelo} ✕</span>}
-            {nSerie    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNSerie("")}>Serie: {nSerie} ✕</span>}
-            {nParte    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNParte("")}>Parte: {nParte} ✕</span>}
-            {nMotor    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNMotor("")}>Motor: {nMotor} ✕</span>}
-            {horasMin  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setHorasMin("")}>Hrs desde {horasMin} ✕</span>}
-            {horasMax  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setHorasMax("")}>Hrs hasta {horasMax} ✕</span>}
-            {ciudad    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setCiudad("")}>{ciudad} ✕</span>}
-            {priceMin  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setPriceMin("")}>Desde {priceMin} ✕</span>}
-            {priceMax  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setPriceMax("")}>Hasta {priceMax} ✕</span>}
-            {verified  && <span className="tag t-green" style={{ cursor:"pointer" }} onClick={()=>setVerified(false)}>Solo verificados ✕</span>}
+            {cat !== "all"          && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setCat("all")}>{CATS.find(c=>c.id===cat)?.label} ✕</span>}
+            {tipo                   && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setTipo("")}>{tipo==="servicio"?"Servicios":"Repuestos"} ✕</span>}
+            {condition              && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setCondition("")}>{condition} ✕</span>}
+            {ubicacion !== "all"    && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setUbicacion("all")}>{REGIONS.find(r=>r.id===ubicacion)?.label_es} ✕</span>}
+            {marca                  && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setMarca("")}>{marca} ✕</span>}
+            {modelo                 && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setModelo("")}>Modelo: {modelo} ✕</span>}
+            {nSerie                 && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNSerie("")}>Serie: {nSerie} ✕</span>}
+            {nParte                 && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNParte("")}>Parte: {nParte} ✕</span>}
+            {nMotor                 && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setNMotor("")}>Motor: {nMotor} ✕</span>}
+            {horasMin               && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setHorasMin("")}>Hrs ≥ {horasMin} ✕</span>}
+            {horasMax               && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setHorasMax("")}>Hrs ≤ {horasMax} ✕</span>}
+            {priceMin               && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setPriceMin("")}>Desde {priceMin} {priceCur} ✕</span>}
+            {priceMax               && <span className="tag t-red" style={{ cursor:"pointer" }} onClick={()=>setPriceMax("")}>Hasta {priceMax} {priceCur} ✕</span>}
+            {verified               && <span className="tag t-green" style={{ cursor:"pointer" }} onClick={()=>setVerified(false)}>Verificados ✕</span>}
           </div>
         )}
 
@@ -1014,7 +1061,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
       serial_number:f.serial_number||null, part_number:f.part_number||null,
       engine_number:f.engine_number||null,
       hours:f.hours?Number(f.hours):null,
-      cat:f.cat, condition:f.condition, operation:"Venta",
+      cat:f.cat, condition:f.condition, operation:type==="servicio"?"Servicio":"Venta",
       price:Number(f.price), currency:f.currency,
       stock:Number(f.stock)||1, location:f.location,
       phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
@@ -1574,7 +1621,7 @@ function ProfilePage({ user, profile, onLogout }) {
       const text = e.target.result;
       const lines = text.split("\n").filter(Boolean);
       const headers = lines[0].split(",").map(h=>h.trim().toLowerCase().replace(/"/g,""));
-      const VALID_CATS = ["min","for","const","ene","trans","fae","rut","san","serv"];
+      const VALID_CATS = ["min","for","const","ene","trans","fae","rut","san","serv","ali","her"];
       const VALID_CONDS = ["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"];
       const rows = lines.slice(1, 501).map(line => {
         const vals = line.split(",").map(v=>v.trim().replace(/"/g,"").replace(/^[=+\-@]/, ""));
