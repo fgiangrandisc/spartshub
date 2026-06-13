@@ -845,36 +845,52 @@ function PhotoCarousel({ photos }) {
   const [idx, setIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
 
-  const openLightbox = (i, e) => { e.stopPropagation(); setIdx(i); setLightbox(true); };
-
   return (
     <>
-      {/* Compact thumbnail gallery */}
-      <div style={{ padding:"10px 16px 4px", background:"#0B0F14" }}>
-        <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4 }}>
-          {photos.map((url, i) => (
-            <div key={i} onClick={e=>openLightbox(i,e)}
-              style={{ position:"relative", flexShrink:0, width:80, height:80, borderRadius:10, overflow:"hidden",
-                border: "2px solid rgba(255,255,255,.08)", cursor:"zoom-in",
-                boxShadow:"0 2px 8px rgba(0,0,0,.4)", transition:"transform .15s" }}
-              onMouseEnter={e=>e.currentTarget.style.transform="scale(1.04)"}
-              onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
-              <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
-              {/* Zoom icon overlay */}
-              <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0)", display:"flex", alignItems:"center", justifyContent:"center", transition:"background .15s" }}
-                onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,.35)"}
-                onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0)"}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.8)" strokeWidth="2.5" style={{ opacity:0.7 }}>
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-                </svg>
-              </div>
+      <div style={{ width:"100%", background:"#0a0a0a" }}>
+        {/* Main photo — click to open lightbox */}
+        <div style={{ position:"relative", width:"100%", height:280, overflow:"hidden", cursor:"zoom-in" }}
+          onClick={e=>{ e.stopPropagation(); setLightbox(true); }}>
+          <img src={photos[idx]} alt=""
+            style={{ width:"100%", height:"100%", objectFit:"contain", display:"block", background:"#0a0a0a" }}
+          />
+          {/* Counter */}
+          {photos.length > 1 && (
+            <div style={{ position:"absolute", top:10, right:10, background:"rgba(0,0,0,.6)", backdropFilter:"blur(4px)", borderRadius:20, padding:"3px 10px", fontSize:11, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif" }}>
+              {idx+1} / {photos.length}
             </div>
-          ))}
+          )}
+          {/* Zoom hint */}
+          <div style={{ position:"absolute", bottom:10, right:10, background:"rgba(0,0,0,.5)", borderRadius:6, padding:"3px 7px", fontSize:10, color:"rgba(255,255,255,.6)", fontFamily:"Barlow Condensed,sans-serif", display:"flex", alignItems:"center", gap:3 }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+            AMPLIAR
+          </div>
+          {/* Arrows */}
+          {photos.length > 1 && (
+            <>
+              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
+                style={{ position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                <Ic n="chevL" s={16} c="#fff"/>
+              </button>
+              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
+                style={{ position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                <Ic n="chevR" s={16} c="#fff"/>
+              </button>
+            </>
+          )}
         </div>
+        {/* Thumbnails — click to select + open lightbox */}
         {photos.length > 1 && (
-          <p style={{ fontSize:10, color:"rgba(255,255,255,.3)", marginTop:4, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
-            {photos.length} FOTOS · CLICK PARA AMPLIAR
-          </p>
+          <div style={{ display:"flex", gap:5, padding:"8px 10px", overflowX:"auto" }}>
+            {photos.map((url,i)=>(
+              <img key={i} src={url} alt=""
+                onClick={e=>{ e.stopPropagation(); setIdx(i); setLightbox(true); }}
+                style={{ width:56, height:56, borderRadius:8, objectFit:"cover", flexShrink:0, cursor:"zoom-in",
+                  border: i===idx ? "2px solid #F04423" : "2px solid rgba(255,255,255,.1)",
+                  opacity: i===idx ? 1 : 0.5, transition:"all .15s" }}
+              />
+            ))}
+          </div>
         )}
       </div>
 
@@ -886,15 +902,13 @@ function PhotoCarousel({ photos }) {
             style={{ position:"absolute", top:16, right:16, background:"rgba(255,255,255,.1)", border:"none", borderRadius:"50%", width:40, height:40, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <Ic n="x" s={20} c="#fff"/>
           </button>
-          {/* Counter */}
           <div style={{ position:"absolute", top:20, left:"50%", transform:"translateX(-50%)", background:"rgba(255,255,255,.1)", borderRadius:20, padding:"4px 14px", fontSize:13, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif" }}>
             {idx+1} / {photos.length}
           </div>
           <img src={photos[idx]} alt=""
             onClick={e=>e.stopPropagation()}
-            style={{ maxWidth:"92vw", maxHeight:"78vh", objectFit:"contain", borderRadius:12, boxShadow:"0 24px 80px rgba(0,0,0,.8)" }}
+            style={{ maxWidth:"92vw", maxHeight:"78vh", objectFit:"contain", borderRadius:10, boxShadow:"0 24px 80px rgba(0,0,0,.8)" }}
           />
-          {/* Thumbnails */}
           {photos.length > 1 && (
             <div style={{ display:"flex", gap:8, marginTop:16 }} onClick={e=>e.stopPropagation()}>
               {photos.map((url,i)=>(
@@ -906,7 +920,6 @@ function PhotoCarousel({ photos }) {
               ))}
             </div>
           )}
-          {/* Nav arrows */}
           {photos.length > 1 && (
             <>
               <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
@@ -924,7 +937,6 @@ function PhotoCarousel({ photos }) {
     </>
   );
 }
-
 function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
   const [showEdit,    setShowEdit]    = useState(false);
   const [confirmDel,  setConfirmDel]  = useState(false);
