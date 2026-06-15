@@ -2449,15 +2449,25 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
    MIS PUBLICACIONES
 ══════════════════════════════════════════════════════════════ */
 function MisPublicaciones({ user, onSelect }) {
+  const [subTab,      setSubTab]      = useState("pubs"); // "pubs" | "solicitudes"
   const [listings,    setListings]    = useState([]);
+  const [requests,    setRequests]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [editListing, setEditListing] = useState(null);   // listing being edited
   const [confirmDel,  setConfirmDel]  = useState(null);   // id being confirmed for delete
+  const [confirmDelReq, setConfirmDelReq] = useState(null);
   const [deleting,    setDeleting]    = useState(false);
 
   const reload = () => {
-    sb.from("listings").select("*").eq("user_id",user.id).order("created_at",{ascending:false})
-      .then(({ data })=>{ setListings(data||[]); setLoading(false); });
+    setLoading(true);
+    Promise.all([
+      sb.from("listings").select("*").eq("user_id",user.id).order("created_at",{ascending:false}),
+      sb.from("requests").select("*").eq("user_id",user.id).order("created_at",{ascending:false}),
+    ]).then(([lRes,rRes])=>{
+      setListings(lRes.data||[]);
+      setRequests(rRes.data||[]);
+      setLoading(false);
+    });
   };
 
   useEffect(()=>{ reload(); },[user.id]);
@@ -2470,78 +2480,165 @@ function MisPublicaciones({ user, onSelect }) {
     setDeleting(false);
   };
 
+  const deleteRequest = async id => {
+    setDeleting(true);
+    await sb.from("requests").delete().eq("id", id);
+    setRequests(prev => prev.filter(r => r.id !== id));
+    setConfirmDelReq(null);
+    setDeleting(false);
+  };
+
   if (loading) return <div style={{ display:"flex",justifyContent:"center",paddingTop:60 }}><Spin size={30}/></div>;
+
+  const URGENCY_C = { normal:BLUE, urgente:GOLD, critico:RED };
+  const URGENCY_L = { normal:"Normal", urgente:"Urgente", critico:"Crítico" };
 
   return (
     <div style={{ maxWidth:"100%" }}>
-      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24 }}>
-        <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Mis Publicaciones</h2>
-        <span className="tag t-dim">{listings.length} publicaciones</span>
+      <div style={{ display:"flex",gap:8,marginBottom:20 }}>
+        <button onClick={()=>setSubTab("pubs")}
+          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="pubs"?RED:BORDER}`,background:subTab==="pubs"?"rgba(240,68,35,.1)":"transparent",color:subTab==="pubs"?RED:SUB,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+          Mis Publicaciones
+        </button>
+        <button onClick={()=>setSubTab("solicitudes")}
+          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="solicitudes"?RED:BORDER}`,background:subTab==="solicitudes"?"rgba(240,68,35,.1)":"transparent",color:subTab==="solicitudes"?RED:SUB,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+          Mis Solicitudes
+        </button>
       </div>
 
-      {listings.length===0 ? (
-        <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
-          <div style={{ fontSize:56,marginBottom:16 }}>📦</div>
-          <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Todavía no publicaste nada</p>
-          <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Publicá tu primer producto o repuesto gratis</p>
-        </div>
-      ) : (
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12 }}>
-          {listings.map(l=>(
-            <div key={l.id} className="photo-card card" style={{ cursor:"default" }}>
-              {/* Photo — clickable to open detail */}
-              <div onClick={()=>onSelect(l)}>
-                <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={120}/>
-              </div>
-              <div style={{ padding:"12px 14px 14px" }}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
-                  <span className="tag t-dim" style={{ fontSize:9 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
-                  <span className="tag t-green" style={{ fontSize:9 }}>Activo</span>
-                </div>
-                <p style={{ fontWeight:700,fontSize:14,color:TEXT,marginBottom:3,lineHeight:1.3 }}>{l.title}</p>
-                <p style={{ fontSize:11,color:MUTED,marginBottom:8 }}>{l.location} · {fmtTs(l.created_at)}</p>
-                <p className="bebas" style={{ fontSize:18,color:RED,marginBottom:10 }}>{fmtPrice(l.price,l.currency)}</p>
+      {subTab==="pubs" ? (
+        <>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24 }}>
+            <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Mis Publicaciones</h2>
+            <span className="tag t-dim">{listings.length} publicaciones</span>
+          </div>
 
-                {/* Edit / Delete buttons */}
-                {confirmDel===l.id ? (
-                  <div style={{ display:"flex",gap:6 }}>
-                    <button onClick={()=>setConfirmDel(null)}
-                      style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:12,cursor:"pointer",fontWeight:600 }}>
-                      Cancelar
-                    </button>
-                    <button onClick={()=>deleteListing(l.id)} disabled={deleting}
-                      style={{ flex:1,padding:"7px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:12,cursor:"pointer",fontWeight:700 }}>
-                      {deleting?"…":"Confirmar"}
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ display:"flex",gap:6 }}>
-                    <button onClick={()=>setEditListing(l)}
-                      style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:TEXT,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
-                      <Ic n="settings" s={13} c={MUTED}/>Editar
-                    </button>
-                    <button onClick={()=>setConfirmDel(l.id)}
-                      style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
-                      <Ic n="trash" s={13} c={DANGER}/>Eliminar
-                    </button>
-                  </div>
-                )}
-              </div>
+          {listings.length===0 ? (
+            <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
+              <div style={{ fontSize:56,marginBottom:16 }}>📦</div>
+              <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Todavía no publicaste nada</p>
+              <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Publicá tu primer producto o repuesto gratis</p>
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12 }}>
+              {listings.map(l=>(
+                <div key={l.id} className="photo-card card" style={{ cursor:"default" }}>
+                  {/* Photo — clickable to open detail */}
+                  <div onClick={()=>onSelect(l)}>
+                    <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={120}/>
+                  </div>
+                  <div style={{ padding:"12px 14px 14px" }}>
+                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
+                      <span className="tag t-dim" style={{ fontSize:9 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
+                      <span className="tag t-green" style={{ fontSize:9 }}>Activo</span>
+                    </div>
+                    <p style={{ fontWeight:700,fontSize:14,color:TEXT,marginBottom:3,lineHeight:1.3 }}>{l.title}</p>
+                    <p style={{ fontSize:11,color:MUTED,marginBottom:8 }}>{l.location} · {fmtTs(l.created_at)}</p>
+                    <p className="bebas" style={{ fontSize:18,color:RED,marginBottom:10 }}>{fmtPrice(l.price,l.currency)}</p>
 
-      {editListing && (
-        <EditListingSheet
-          user={user}
-          listing={editListing}
-          onClose={()=>setEditListing(null)}
-          onSaved={updated=>{
-            setListings(prev => prev.map(l => l.id===updated.id ? updated : l));
-            setEditListing(null);
-          }}
-        />
+                    {/* Edit / Delete buttons */}
+                    {confirmDel===l.id ? (
+                      <div style={{ display:"flex",gap:6 }}>
+                        <button onClick={()=>setConfirmDel(null)}
+                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:12,cursor:"pointer",fontWeight:600 }}>
+                          Cancelar
+                        </button>
+                        <button onClick={()=>deleteListing(l.id)} disabled={deleting}
+                          style={{ flex:1,padding:"7px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:12,cursor:"pointer",fontWeight:700 }}>
+                          {deleting?"…":"Confirmar"}
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display:"flex",gap:6 }}>
+                        <button onClick={()=>setEditListing(l)}
+                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:TEXT,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
+                          <Ic n="settings" s={13} c={MUTED}/>Editar
+                        </button>
+                        <button onClick={()=>setConfirmDel(l.id)}
+                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
+                          <Ic n="trash" s={13} c={DANGER}/>Eliminar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {editListing && (
+            <EditListingSheet
+              user={user}
+              listing={editListing}
+              onClose={()=>setEditListing(null)}
+              onSaved={updated=>{
+                setListings(prev => prev.map(l => l.id===updated.id ? updated : l));
+                setEditListing(null);
+              }}
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24 }}>
+            <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Mis Solicitudes</h2>
+            <span className="tag t-dim">{requests.length} solicitudes</span>
+          </div>
+
+          {requests.length===0 ? (
+            <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
+              <div style={{ fontSize:56,marginBottom:16 }}>🔍</div>
+              <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>No tienes solicitudes activas</p>
+              <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Pedí lo que necesitas y te avisamos cuando aparezca</p>
+            </div>
+          ) : (
+            <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+              {requests.map(r=>(
+                <div key={r.id} className="card" style={{ padding:"14px 16px" }}>
+                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,marginBottom:6 }}>
+                    <div style={{ flex:1 }}>
+                      <p style={{ fontWeight:700,fontSize:15,color:TEXT,marginBottom:3 }}>{r.title}</p>
+                      <p style={{ fontSize:11,color:MUTED }}>{CATS.find(c=>c.id===r.cat)?.label||"—"} · {r.location||"—"} · {fmtTs(r.created_at)}</p>
+                    </div>
+                    <span className="tag" style={{ fontSize:9, color:URGENCY_C[r.urgency]||MUTED, border:`1px solid ${URGENCY_C[r.urgency]||BORDER}`, background:"transparent" }}>
+                      {URGENCY_L[r.urgency]||"Normal"}
+                    </span>
+                  </div>
+                  {(r.brand||r.model) && (
+                    <p style={{ fontSize:12,color:SUB,marginBottom:6 }}>
+                      {[r.brand,r.model].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                  {r.description && (
+                    <p style={{ fontSize:12,color:MUTED,marginBottom:8,lineHeight:1.5 }}>{r.description}</p>
+                  )}
+                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                    {r.budget ? (
+                      <p className="bebas" style={{ fontSize:16,color:RED }}>{r.currency} {Number(r.budget).toLocaleString()}</p>
+                    ) : <span/>}
+                    {confirmDelReq===r.id ? (
+                      <div style={{ display:"flex",gap:6 }}>
+                        <button onClick={()=>setConfirmDelReq(null)}
+                          style={{ padding:"6px 12px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:12,cursor:"pointer",fontWeight:600 }}>
+                          Cancelar
+                        </button>
+                        <button onClick={()=>deleteRequest(r.id)} disabled={deleting}
+                          style={{ padding:"6px 12px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:12,cursor:"pointer",fontWeight:700 }}>
+                          {deleting?"…":"Confirmar"}
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={()=>setConfirmDelReq(r.id)}
+                        style={{ padding:"6px 12px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
+                        <Ic n="trash" s={12} c={DANGER}/>Eliminar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
