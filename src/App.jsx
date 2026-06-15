@@ -25,7 +25,7 @@ async function analyzeImage(base64Data, mediaType) {
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 600,
@@ -66,9 +66,11 @@ Responde SOLO con JSON válido (sin markdown):
 
 async function analyzeMatch(listingText, requestText) {
   try {
+    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    console.log("[MatchEngine] API key presente:", !!apiKey, apiKey ? `(${apiKey.slice(0,8)}...)` : "FALTA");
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 100,
@@ -85,11 +87,16 @@ Match = true si el producto publicado es igual o muy similar a lo solicitado (sc
         }]
       })
     });
+    console.log("[MatchEngine] HTTP status:", response.status);
     const data = await response.json();
+    if (data.error) console.error("[MatchEngine] API error:", data.error);
     const text = data.content?.[0]?.text || '{"match":false,"score":0,"reason":"Error"}';
     const clean = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(clean);
+    const result = JSON.parse(clean);
+    console.log("[MatchEngine] Resultado análisis:", result);
+    return result;
   } catch(e) {
+    console.error("[MatchEngine] Excepción en analyzeMatch:", e);
     return { match: false, score: 0, reason: "Error de análisis" };
   }
 }
@@ -102,11 +109,14 @@ function buildText(item) {
 
 async function runMatchEngine(newItem, type, user, profile) {
   // type = "listing" (nueva publicación) o "request" (nueva solicitud)
+  console.log("[MatchEngine] Iniciando runMatchEngine. type:", type, "item:", newItem?.id);
   const newText = buildText(newItem);
-  
+
   // Buscar el lado opuesto
   const table = type === "listing" ? "requests" : "listings";
-  const { data: candidates } = await sb.from(table).select("*").limit(50);
+  const { data: candidates, error: candErr } = await sb.from(table).select("*").limit(50);
+  if (candErr) console.error("[MatchEngine] Error cargando candidatos:", candErr);
+  console.log(`[MatchEngine] Candidatos en '${table}':`, candidates?.length || 0);
   if (!candidates?.length) return [];
 
   const matches = [];
@@ -120,6 +130,7 @@ async function runMatchEngine(newItem, type, user, profile) {
       matches.push({ candidate, score: result.score, reason: result.reason });
     }
   }
+  console.log("[MatchEngine] Matches encontrados:", matches.length);
   return matches;
 }
 
