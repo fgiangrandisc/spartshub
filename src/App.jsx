@@ -1518,7 +1518,14 @@ function MessagesPage({ user, initListing, onClear }) {
   const [contacts, setContacts] = useState([]);
   const [active,   setActive]   = useState(null);
   const [filter,   setFilter]   = useState("Todas");
+  const [viewListing, setViewListing] = useState(null);
   const FILTERS = ["Todas","Interesado","Negociación","Vendido"];
+
+  const openListing = async (listingId) => {
+    if (!listingId) return;
+    const { data } = await sb.from("listings").select("*").eq("id", listingId).single();
+    if (data) setViewListing(data);
+  };
 
   useEffect(()=>{
     if (initListing) {
@@ -1543,7 +1550,12 @@ function MessagesPage({ user, initListing, onClear }) {
     load();
   },[user.id]);
 
-  if (active) return <ChatView user={user} other={active.profile} listing={active.listing} onBack={()=>setActive(null)}/>;
+  if (active) return (
+    <>
+      <ChatView user={user} other={active.profile} listing={active.listing} onBack={()=>setActive(null)} onViewListing={openListing}/>
+      {viewListing && <ListingDetail l={viewListing} onClose={()=>setViewListing(null)} user={user}/>}
+    </>
+  );
 
   return (
     <div style={{ paddingBottom:100 }}>
@@ -1587,7 +1599,7 @@ function MessagesPage({ user, initListing, onClear }) {
   );
 }
 
-function ChatView({ user, other, listing, onBack }) {
+function ChatView({ user, other, listing, onBack, onViewListing }) {
   const { t } = useLang();
   const [msgs,    setMsgs]    = useState([]);
   const [inp,     setInp]     = useState("");
@@ -1652,6 +1664,12 @@ function ChatView({ user, other, listing, onBack }) {
               <div key={m.id||i} style={{ display:"flex",justifyContent:mine?"flex-end":"flex-start" }}>
                 <div style={{ maxWidth:"76%",background:mine?RED:CARD,color:"#fff",borderRadius:mine?"18px 18px 4px 18px":"18px 18px 18px 4px",padding:"11px 15px",fontSize:15,lineHeight:1.5,border:mine?"none":`1px solid ${BORDER}` }}>
                   <p style={{ color:mine?"#fff":TEXT }}>{m.body}</p>
+                  {m.listing_id && (
+                    <button onClick={()=>onViewListing?.(m.listing_id)}
+                      style={{ marginTop:8,background:mine?"rgba(255,255,255,.18)":"rgba(240,68,35,.12)",border:`1px solid ${mine?"rgba(255,255,255,.3)":"rgba(240,68,35,.3)"}`,borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:mine?"#fff":RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
+                      <Ic n="chevR" s={12} c={mine?"#fff":RED}/> Ver publicación
+                    </button>
+                  )}
                   <p style={{ fontSize:10,opacity:.6,marginTop:4,textAlign:mine?"right":"left",color:mine?"rgba(255,255,255,.7)":MUTED }}>{fmtTs(m.created_at)}</p>
                 </div>
               </div>
@@ -1688,6 +1706,7 @@ function ProfilePage({ user, profile, onLogout }) {
   const [bulkDone,         setBulkDone]         = useState(false);
   const [inbox,            setInbox]            = useState([]);
   const [inboxLoading,     setInboxLoading]     = useState(true);
+  const [notifViewListing, setNotifViewListing] = useState(null);
   const fileRef = useRef();
 
   useEffect(()=>{
@@ -1708,6 +1727,12 @@ function ProfilePage({ user, profile, onLogout }) {
     if (!unreadIds.length) return;
     await sb.from("messages").update({ read:true }).in("id", unreadIds);
     setInbox(prev => prev.map(m => ({ ...m, read:true })));
+  };
+
+  const openNotifListing = async (listingId) => {
+    if (!listingId) return;
+    const { data } = await sb.from("listings").select("*").eq("id", listingId).single();
+    if (data) setNotifViewListing(data);
   };
 
   const saveProfile = async ()=>{ await sb.from("profiles").update(editData).eq("id",user.id); setEditMode(false); };
@@ -1875,6 +1900,12 @@ function ProfilePage({ user, profile, onLogout }) {
                     {!m.read && <div style={{ width:8,height:8,borderRadius:"50%",background:RED,marginTop:5,flexShrink:0 }}/>}
                     <div style={{ flex:1 }}>
                       <p style={{ fontSize:14,color:TEXT,lineHeight:1.5,fontWeight:m.read?400:600 }}>{m.body}</p>
+                      {m.listing_id && (
+                        <button onClick={()=>openNotifListing(m.listing_id)}
+                          style={{ marginTop:8,background:"rgba(240,68,35,.12)",border:"1px solid rgba(240,68,35,.3)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
+                          <Ic n="chevR" s={12} c={RED}/> Ver publicación
+                        </button>
+                      )}
                       <p style={{ fontSize:11,color:MUTED,marginTop:4 }}>{fmtTs(m.created_at)}</p>
                     </div>
                   </div>
@@ -1882,6 +1913,10 @@ function ProfilePage({ user, profile, onLogout }) {
               </div>
             )}
           </div>
+        )}
+
+        {notifViewListing && (
+          <ListingDetail l={notifViewListing} onClose={()=>setNotifViewListing(null)} user={user}/>
         )}
 
         {/* ── CARGA MASIVA ── */}
