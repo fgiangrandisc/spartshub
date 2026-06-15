@@ -2605,7 +2605,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
       }
     } catch(_) {}
 
-    const { data:inserted } = await sb.from("requests").insert({
+    const { data:inserted, error: insertErr } = await sb.from("requests").insert({
       user_id:     user.id,
       title:       f.title,
       brand:       f.brand||null,
@@ -2630,6 +2630,12 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
       biz:         profile?.biz||null,
     }).select().single();
     setLoading(false);
+
+    if (insertErr) {
+      console.error("Error al crear solicitud:", insertErr);
+      setErr(`Error al enviar solicitud: ${insertErr.message}`);
+      return;
+    }
 
     // Run match engine in background
     if (inserted) {
