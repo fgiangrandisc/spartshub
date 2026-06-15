@@ -1668,9 +1668,6 @@ function ProfilePage({ user, profile, onLogout }) {
   const [listings,         setListings]         = useState([]);
   const [editMode,         setEditMode]         = useState(false);
   const [editData,         setEditData]         = useState({ name:"",rut:"",biz:"",phone:"",address:"",location:"" });
-  const [alertForm,        setAlertForm]        = useState({ keyword:"",cat:"all",email:user?.email||"",notifType:"email",wa:"" });
-  const [alerts,           setAlerts]           = useState([]);
-  const [alertSaved,       setAlertSaved]       = useState(false);
   const [showDeleteConfirm,setShowDeleteConfirm]= useState(false);
   const [supportMsg,       setSupportMsg]       = useState("");
   const [supportSent,      setSupportSent]      = useState(false);
@@ -1678,6 +1675,8 @@ function ProfilePage({ user, profile, onLogout }) {
   const [bulkRows,         setBulkRows]         = useState([]);
   const [bulkUploading,    setBulkUploading]    = useState(false);
   const [bulkDone,         setBulkDone]         = useState(false);
+  const [inbox,            setInbox]            = useState([]);
+  const [inboxLoading,     setInboxLoading]     = useState(true);
   const fileRef = useRef();
 
   useEffect(()=>{
@@ -1686,10 +1685,21 @@ function ProfilePage({ user, profile, onLogout }) {
   useEffect(()=>{
     if (profile) setEditData({ name:profile.name||"",rut:profile.rut||"",biz:profile.biz||"",phone:profile.phone||"",address:profile.address||"",location:profile.location||"" });
   },[profile]);
+  useEffect(()=>{
+    if (section !== "notif") return;
+    setInboxLoading(true);
+    sb.from("messages").select("*").eq("to_id",user.id).order("created_at",{ascending:false}).limit(50)
+      .then(({ data })=>{ setInbox(data||[]); setInboxLoading(false); });
+  },[section, user.id]);
+
+  const markInboxRead = async () => {
+    const unreadIds = inbox.filter(m=>!m.read).map(m=>m.id);
+    if (!unreadIds.length) return;
+    await sb.from("messages").update({ read:true }).in("id", unreadIds);
+    setInbox(prev => prev.map(m => ({ ...m, read:true })));
+  };
 
   const saveProfile = async ()=>{ await sb.from("profiles").update(editData).eq("id",user.id); setEditMode(false); };
-  const saveAlert   = ()=>{ if(!alertForm.keyword) return; setAlerts(a=>[...a,{...alertForm,id:Date.now()}]); setAlertForm({keyword:"",cat:"all",email:user?.email||""}); setAlertSaved(true); setTimeout(()=>setAlertSaved(false),3000); };
-  const deleteAlert = id => setAlerts(a=>a.filter(x=>x.id!==id));
   const sendSupport = ()=>{ if(!supportMsg.trim()) return; setSupportSent(true); setSupportMsg(""); setTimeout(()=>setSupportSent(false),4000); };
 
   const handleBulkFile = file => {
@@ -1736,8 +1746,8 @@ function ProfilePage({ user, profile, onLogout }) {
 
   const SECTIONS = [
     { id:"perfil",   labelKey:"profile_title",   icn:"user" },
-    { id:"notif",    labelKey:"notif_title",      icn:"bell" },
-    { id:"bulk",     labelKey:"bulk_upload",      icn:"box" },
+    { id:"notif",    labelKey:"notif_title",      icn:"bell",  label:"Notificaciones" },
+    { id:"bulk",     labelKey:"bulk_upload",      icn:"box",   label:"Carga masiva" },
     { id:"soporte",  labelKey:"support_title",    icn:"msg" },
     { id:"settings", labelKey:"settings_title",   icn:"settings" },
   ];
@@ -1761,7 +1771,7 @@ function ProfilePage({ user, profile, onLogout }) {
         </div>
         {SECTIONS.map(s=>(
           <button key={s.id} className={`sidebar-btn${section===s.id?" active":""}`} onClick={()=>setSection(s.id)}>
-            <Ic n={s.icn} s={16} c={section===s.id?RED:MUTED}/>{t(s.labelKey)}
+            <Ic n={s.icn} s={16} c={section===s.id?RED:MUTED}/>{s.label||t(s.labelKey)}
           </button>
         ))}
         <div style={{ flex:1 }}/>
@@ -1825,41 +1835,37 @@ function ProfilePage({ user, profile, onLogout }) {
           </div>
         )}
 
-        {/* ── ALERTAS ── */}
+        {/* ── NOTIFICACIONES ── */}
         {section==="notif"&&(
           <div style={{ maxWidth:"100%" }}>
-            <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Notificaciones</h2>
-            <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Tus notificaciones y alertas de búsqueda activas.</p>
-            <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:24,display:"flex",flexDirection:"column",gap:12 }}>
-              <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif" }}>Crear nueva alerta</p>
-              <input className="inp" placeholder="Ej: Bomba hidráulica Rexroth A10V" value={alertForm.keyword} onChange={e=>setAlertForm(f=>({...f,keyword:e.target.value}))}/>
-              <select className="inp" value={alertForm.cat} onChange={e=>setAlertForm(f=>({...f,cat:e.target.value}))}>
-                {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-              <input className="inp" value={alertForm.email} onChange={e=>setAlertForm(f=>({...f,email:e.target.value}))} placeholder="tu@email.com"/>
-              <div style={{ display:"flex",gap:8 }}>
-                {[["email","Email"],["whatsapp","WhatsApp"]].map(([val,lbl])=>(
-                  <div key={val} onClick={()=>setAlertForm(f=>({...f,notifType:val}))}
-                    style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(240,68,35,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
-                    <p style={{ fontSize:13,fontWeight:700,color:alertForm.notifType===val?RED:SUB,fontFamily:"Barlow Condensed,sans-serif" }}>{lbl}</p>
-                  </div>
-                ))}
-              </div>
-              {alertSaved&&<p style={{ color:GREEN,fontSize:13,fontWeight:600 }}>✓ Alerta guardada — te avisaremos cuando haya coincidencias</p>}
-              <button className="btn-red" onClick={saveAlert} style={{ padding:"13px" }}>
-                <Ic n="bell" s={16} c="#fff"/> Activar alerta
-              </button>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8 }}>
+              <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Notificaciones</h2>
+              {inbox.some(m=>!m.read) && (
+                <button onClick={markInboxRead}
+                  style={{ background:"none",border:`1px solid ${BORDER}`,borderRadius:7,padding:"6px 12px",color:SUB,fontSize:12,cursor:"pointer",fontWeight:600 }}>
+                  Marcar todo como leído
+                </button>
+              )}
             </div>
-            {alerts.length>0&&(
-              <div>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Alertas activas</p>
-                {alerts.map(a=>(
-                  <div key={a.id} style={{ background:CARD,borderRadius:10,padding:"14px 16px",marginBottom:8,border:`1px solid ${BORDER}`,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-                    <div>
-                      <p style={{ fontWeight:600,fontSize:14,color:TEXT }}>{a.keyword}</p>
-                      <p style={{ fontSize:12,color:MUTED }}>{CATS.find(c=>c.id===a.cat)?.label} · {a.email}</p>
+            <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Mensajes y avisos de matches recibidos.</p>
+
+            {inboxLoading ? (
+              <div style={{ display:"flex",justifyContent:"center",paddingTop:40 }}><Spin size={26}/></div>
+            ) : inbox.length===0 ? (
+              <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
+                <div style={{ fontSize:56,marginBottom:16 }}>🔔</div>
+                <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>No tienes notificaciones</p>
+                <p style={{ color:MUTED,fontSize:14 }}>Cuando recibas mensajes o matches aparecerán aquí</p>
+              </div>
+            ) : (
+              <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                {inbox.map(m=>(
+                  <div key={m.id} style={{ background:m.read?CARD:"rgba(240,68,35,.06)",borderRadius:10,padding:"14px 16px",border:`1px solid ${m.read?BORDER:"rgba(240,68,35,.25)"}`,display:"flex",gap:12,alignItems:"flex-start" }}>
+                    {!m.read && <div style={{ width:8,height:8,borderRadius:"50%",background:RED,marginTop:5,flexShrink:0 }}/>}
+                    <div style={{ flex:1 }}>
+                      <p style={{ fontSize:14,color:TEXT,lineHeight:1.5,fontWeight:m.read?400:600 }}>{m.body}</p>
+                      <p style={{ fontSize:11,color:MUTED,marginTop:4 }}>{fmtTs(m.created_at)}</p>
                     </div>
-                    <button onClick={()=>deleteAlert(a.id)} style={{ color:RED,fontSize:12,background:"none",border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>Eliminar</button>
                   </div>
                 ))}
               </div>
