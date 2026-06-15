@@ -1258,7 +1258,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 <div>
                   <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
                   <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
-                    {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+                    {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
                 </div>
                 <div>
@@ -2375,7 +2375,7 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
             <div>
               <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
               <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
-                {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+                {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
             <div>
@@ -2663,7 +2663,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div>
                   <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Industria</p>
                   <select style={{ ...INP }} value={f.cat} onChange={e=>upd("cat",e.target.value)}>
-                    {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+                    {CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
                   </select>
                 </div>
                 <div>
