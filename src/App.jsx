@@ -2553,6 +2553,8 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
   const [showMatchAlert,setShowMatchAlert] = useState(false);
   const [done,    setDone]    = useState(false);
   const [solicitudMatches, setSolicitudMatches] = useState(0);
+  const [instantResults, setInstantResults] = useState([]);
+  const [viewListing, setViewListing] = useState(null);
   const [notif,   setNotif]   = useState({ email:true, whatsapp:false, inapp:true });
   const [f, setF] = useState({
     title:"", brand:"", model:"", cat:"min",
@@ -2573,6 +2575,30 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
   const submit = async () => {
     if (!f.title) { setErr(t("sol_no_title")); return; }
     setLoading(true); setErr("");
+
+    // 1. Búsqueda instantánea por texto entre publicaciones existentes
+    try {
+      const terms = [f.title, f.brand, f.model, f.part_number, f.serial_number, f.engine_number]
+        .filter(Boolean).map(s=>s.toLowerCase().trim()).filter(s=>s.length>1);
+
+      let query = sb.from("listings").select("*").neq("user_id", user.id);
+      if (f.cat !== "all") query = query.eq("cat", f.cat);
+      const { data: candidates } = await query.limit(100);
+
+      if (candidates?.length && terms.length) {
+        const scored = candidates.map(l => {
+          const text = [l.title, l.brand, l.model, l.part_number, l.serial_number, l.engine_number, l.description]
+            .filter(Boolean).join(" ").toLowerCase();
+          const hits = terms.filter(term => text.includes(term)).length;
+          return { listing: l, hits };
+        }).filter(x => x.hits > 0)
+          .sort((a,b)=>b.hits-a.hits)
+          .slice(0,6)
+          .map(x=>x.listing);
+        setInstantResults(scored);
+      }
+    } catch(_) {}
+
     const { data:inserted } = await sb.from("requests").insert({
       user_id:     user.id,
       title:       f.title,
@@ -2630,11 +2656,37 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
         </div>
 
         {done ? (
-          <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:48,textAlign:"center" }}>
+          <div style={{ flex:1,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:"48px 24px",textAlign:"center" }}>
             <div style={{ width:72,height:72,background:"rgba(34,197,94,.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${GREEN}` }}>
               <Ic n="check" s={32} c={GREEN}/>
             </div>
             <p className="bebas" style={{ fontSize:28,color:TEXT }}>¡Solicitud enviada!</p>
+
+            {instantResults.length > 0 && (
+              <div style={{ width:"100%", maxWidth:480, textAlign:"left" }}>
+                <p style={{ fontSize:13,fontWeight:700,color:TEXT,marginBottom:10,textAlign:"center" }}>
+                  📦 Encontramos {instantResults.length} publicación{instantResults.length>1?"es":""} que podría{instantResults.length>1?"n":""} interesarte:
+                </p>
+                <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                  {instantResults.map(l=>(
+                    <div key={l.id} onClick={()=>setViewListing(l)}
+                      style={{ display:"flex",alignItems:"center",gap:12,background:BG2,borderRadius:10,padding:"10px 12px",border:`1px solid ${BORDER}`,cursor:"pointer",transition:"border-color .15s" }}>
+                      {l.photos?.length>0 ? (
+                        <img src={l.photos[0]} alt="" style={{ width:48,height:48,borderRadius:8,objectFit:"cover",flexShrink:0 }}/>
+                      ) : (
+                        <div style={{ width:48,height:48,borderRadius:8,background:BG3,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0 }}>{l.emoji||"📦"}</div>
+                      )}
+                      <div style={{ flex:1,minWidth:0 }}>
+                        <p style={{ fontSize:13,fontWeight:700,color:TEXT,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{l.title}</p>
+                        <p style={{ fontSize:12,color:RED,fontWeight:700 }}>{l.currency} {Number(l.price).toLocaleString()}</p>
+                      </div>
+                      <Ic n="chevR" s={16} c={MUTED}/>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {solicitudMatches > 0 ? (
               <div style={{ background:"rgba(240,68,35,.1)",border:"1px solid rgba(240,68,35,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
                 <p className="bebas" style={{ fontSize:22,color:RED,marginBottom:6 }}>🤝 {solicitudMatches} MATCH{solicitudMatches>1?"ES":""} ENCONTRADO{solicitudMatches>1?"S":""}</p>
@@ -2780,6 +2832,9 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
           </div>
         )}
       </div>
+      {viewListing && (
+        <ListingDetail l={viewListing} onClose={()=>setViewListing(null)} user={user}/>
+      )}
     </div>
   );
 }
