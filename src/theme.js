@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════
    SPARTSHUB — UNIFIED DESIGN SYSTEM
    Dark industrial. Bebas Neue headings. Barlow body.
-   Primary: #F04423  |  Trust: #3B82F6  |  Success: #22C55E
+   Primary: #FF8C00  |  Trust: #3B82F6  |  Success: #22C55E
 ═══════════════════════════════════════════════════════════════ */
 
 export const T = {
-  RED:    "#F04423",   // Primary action
-  RED2:   "#FF5733",   // Primary hover
+  RED:    "#FF8C00",   // Primary action
+  RED2:   "#FFA733",   // Primary hover
   GOLD:   "#F59E0B",   // Warning
   BLUE:   "#3B82F6",   // Accent / trust
   GREEN:  "#22C55E",   // Success
@@ -47,30 +47,30 @@ img{object-fit:cover}
 @media(max-width:768px){.wrap{padding:0 24px}}
 
 /* Buttons */
-.btn-red{background:#F04423;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;border-radius:7px;padding:12px 24px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .18s;border:none;cursor:pointer}
-.btn-red:hover{background:#FF5733;transform:translateY(-1px);box-shadow:0 6px 24px rgba(240,68,35,.4)}
+.btn-red{background:#FF8C00;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;border-radius:7px;padding:12px 24px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .18s;border:none;cursor:pointer}
+.btn-red:hover{background:#FFA733;transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,140,0,.4)}
 .btn-red:active{transform:scale(.97)}
 .btn-red:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-gold{background:#F59E0B;color:#111;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;border-radius:7px;padding:12px 24px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .18s;border:none;cursor:pointer}
 .btn-gold:hover{filter:brightness(1.08);transform:translateY(-1px)}
 .btn-ol{background:transparent;color:#F2F5F7;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:1px;text-transform:uppercase;border:1.5px solid #303A46;border-radius:7px;padding:11px 20px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .18s;cursor:pointer}
-.btn-ol:hover{border-color:#F04423;color:#F04423}
+.btn-ol:hover{border-color:#FF8C00;color:#FF8C00}
 .btn-ghost{background:transparent;color:#A9B3BE;border-radius:8px;padding:8px 10px;display:inline-flex;align-items:center;gap:6px;font-size:14px;transition:background .15s;cursor:pointer}
 .btn-ghost:hover{background:rgba(255,255,255,.06);color:#F2F5F7}
 
 /* Inputs */
 .inp{background:#202833;border:1px solid #303A46;border-radius:8px;padding:11px 14px;font-size:14px;color:#F2F5F7;width:100%;transition:border-color .2s}
-.inp:focus{border-color:#F04423}
+.inp:focus{border-color:#FF8C00}
 .inp::placeholder{color:#707B88}
 select.inp{appearance:none}
 
 /* Cards */
 .card{background:#171D24;border:1px solid #252F3A;border-radius:10px;transition:border-color .2s}
-.card:hover{border-color:rgba(240,68,35,.3)}
+.card:hover{border-color:rgba(255,140,0,.3)}
 
 /* Tags / Badges */
 .tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.2px;text-transform:uppercase}
-.t-red{background:rgba(240,68,35,.12);color:#F04423;border:1px solid rgba(240,68,35,.25)}
+.t-red{background:rgba(255,140,0,.12);color:#FF8C00;border:1px solid rgba(255,140,0,.25)}
 .t-gold{background:rgba(245,158,11,.1);color:#F59E0B;border:1px solid rgba(245,158,11,.25)}
 .t-blue{background:rgba(59,130,246,.1);color:#3B82F6;border:1px solid rgba(59,130,246,.2)}
 .t-green{background:rgba(34,197,94,.1);color:#22C55E;border:1px solid rgba(34,197,94,.2)}
@@ -90,7 +90,7 @@ select.inp{appearance:none}
 .sheet-up{animation:sheetUp .35s cubic-bezier(.32,.72,0,1) both}
 
 /* Spinner */
-.spinner{border:2.5px solid rgba(48,58,70,.6);border-top-color:#F04423;border-radius:50%;animation:spin .7s linear infinite}
+.spinner{border:2.5px solid rgba(48,58,70,.6);border-top-color:#FF8C00;border-radius:50%;animation:spin .7s linear infinite}
 
 /* Divider */
 .hr{height:1px;background:#252F3A}
@@ -103,7 +103,7 @@ select.inp{appearance:none}
 /* Segment control */
 .seg{display:flex;background:#171D24;border-radius:8px;padding:3px;gap:2px}
 .seg-btn{flex:1;padding:7px;border-radius:6px;font-size:13px;font-weight:600;transition:all .15s;color:#A9B3BE;text-align:center;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase}
-.seg-btn.active{background:#F04423;color:#fff}
+.seg-btn.active{background:#FF8C00;color:#fff}
 
 /* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
@@ -146,7 +146,7 @@ select.inp{appearance:none}
 
 /* Sidebar nav (desktop) */
 .sidebar-btn{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-size:14px;width:100%;text-align:left;transition:all .15s;border-left:3px solid transparent}
-.sidebar-btn.active{background:rgba(240,68,35,.1);color:#F04423;font-weight:700;border-left-color:#F04423}
+.sidebar-btn.active{background:rgba(255,140,0,.1);color:#FF8C00;font-weight:700;border-left-color:#FF8C00}
 .sidebar-btn:not(.active){background:transparent;color:#A9B3BE;font-weight:500}
 .sidebar-btn:not(.active):hover{background:rgba(255,255,255,.05);color:#F2F5F7}
 `;

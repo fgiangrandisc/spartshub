@@ -208,7 +208,7 @@ function SpartsLogo({ size=36 }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:size*0.28 }}>
       <svg width={size} height={size} viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="8" fill="#F04423"/>
+        <rect width="36" height="36" rx="8" fill="#FF8C00"/>
         <text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white" letterSpacing="1">S</text>
         <circle cx="26" cy="10" r="4" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"/>
         <circle cx="26" cy="10" r="1.5" fill="rgba(255,255,255,0.9)"/>
@@ -230,7 +230,7 @@ function Spin({ size=22 }) {
 function Avatar({ name, size=40, color=RED }) {
   const initials = (name||"U").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   return (
-    <div style={{ width:size, height:size, borderRadius:"50%", background:`rgba(240,68,35,.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+    <div style={{ width:size, height:size, borderRadius:"50%", background:`rgba(255,140,0,.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
       <span style={{ color:RED, fontWeight:700, fontSize:size*0.38, fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
     </div>
   );
@@ -631,7 +631,7 @@ function SearchPage({ user, onSelect, region }) {
 
         {/* Global region badge */}
         {region && region !== "all" && ubicacion === "all" && (
-          <div style={{ marginBottom:12, padding:"5px 9px", background:"rgba(240,68,35,.08)", borderRadius:7, border:"1px solid rgba(240,68,35,.2)", display:"flex", alignItems:"center", gap:6 }}>
+          <div style={{ marginBottom:12, padding:"5px 9px", background:"rgba(255,140,0,.08)", borderRadius:7, border:"1px solid rgba(255,140,0,.2)", display:"flex", alignItems:"center", gap:6 }}>
             <Ic n="map" s={11} c={RED}/>
             <span style={{ fontSize:10, color:RED, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
               {lang==="en" ? REGIONS.find(r=>r.id===region)?.label_en : REGIONS.find(r=>r.id===region)?.label_es}
@@ -762,7 +762,7 @@ function SearchPage({ user, onSelect, region }) {
 
         {/* CLEAR ALL FILTERS */}
         <button onClick={resetFilters}
-          style={{ width:"100%", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(240,68,35,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
+          style={{ width:"100%", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,140,0,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
           {activeFilters > 0 ? `✕ Limpiar filtros (${activeFilters})` : "Sin filtros activos"}
         </button>
       </div>
@@ -897,7 +897,7 @@ function PhotoCarousel({ photos }) {
               <img key={i} src={url} alt=""
                 onClick={e=>{ e.stopPropagation(); setIdx(i); setLightbox(true); }}
                 style={{ width:56, height:56, borderRadius:8, objectFit:"cover", flexShrink:0, cursor:"zoom-in",
-                  border: i===idx ? "2px solid #F04423" : "2px solid rgba(255,255,255,.1)",
+                  border: i===idx ? "2px solid #FF8C00" : "2px solid rgba(255,255,255,.1)",
                   opacity: i===idx ? 1 : 0.5, transition:"all .15s" }}
               />
             ))}
@@ -925,7 +925,7 @@ function PhotoCarousel({ photos }) {
               {photos.map((url,i)=>(
                 <img key={i} src={url} alt="" onClick={e=>{ e.stopPropagation(); setIdx(i); }}
                   style={{ width:54, height:54, borderRadius:8, objectFit:"cover", cursor:"pointer",
-                    border: i===idx ? "2px solid #F04423" : "2px solid rgba(255,255,255,.12)",
+                    border: i===idx ? "2px solid #FF8C00" : "2px solid rgba(255,255,255,.12)",
                     opacity: i===idx ? 1 : 0.45, transition:"all .15s" }}
                 />
               ))}
@@ -1208,7 +1208,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
               <p style={{ fontSize:13,color:MUTED,marginBottom:4 }}>{t("pub_what")}</p>
               {TYPES.map(tp=>(
                 <div key={tp.id} onClick={()=>{ setType(tp.id); setStep(1); }}
-                  style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${tp.highlight?RED:BORDER}`,background:tp.highlight?"rgba(240,68,35,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
+                  style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${tp.highlight?RED:BORDER}`,background:tp.highlight?"rgba(255,140,0,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
                   <div style={{ width:44,height:44,background:tp.highlight?RED:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                     <Ic n={tp.icon} s={20} c={tp.highlight?"#fff":SUB}/>
                   </div>
@@ -1305,7 +1305,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",gap:8 }}>
                   {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                     <button key={c} onClick={()=>upd("condition",c)}
-                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(240,68,35,.1)":CARD,fontWeight:700,fontSize:11,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,140,0,.1)":CARD,fontWeight:700,fontSize:11,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
                       {c}
                     </button>
                   ))}
@@ -1358,10 +1358,10 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                       setAiError("");
                       setAiPreview(URL.createObjectURL(file));
                     }}/>
-                  <div style={{ border:`2px dashed rgba(240,68,35,.4)`,borderRadius:16,padding:"48px 24px",textAlign:"center",background:"rgba(240,68,35,.04)",transition:"all .2s" }}
+                  <div style={{ border:`2px dashed rgba(255,140,0,.4)`,borderRadius:16,padding:"48px 24px",textAlign:"center",background:"rgba(255,140,0,.04)",transition:"all .2s" }}
                     onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
-                    onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(240,68,35,.4)"}>
-                    <div style={{ width:72,height:72,background:"rgba(240,68,35,.12)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>
+                    onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,140,0,.4)"}>
+                    <div style={{ width:72,height:72,background:"rgba(255,140,0,.12)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>
                       <Ic n="camera" s={32} c={RED}/>
                     </div>
                     <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>{t("ai_take_photo")}</p>
@@ -1498,7 +1498,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
 
       {showMatchAlert&&(
         <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={()=>setShowMatchAlert(false)}>
-          <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(240,68,35,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(255,140,0,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
             <div style={{ fontSize:56,marginBottom:12 }}>🤝</div>
             <p className="bebas" style={{ fontSize:32,color:RED,marginBottom:8 }}>¡{matchCount} MATCH{matchCount>1?"ES":""} ENCONTRADO{matchCount>1?"S":""}!</p>
             <p style={{ fontSize:15,color:TEXT,lineHeight:1.7,marginBottom:20 }}>
@@ -1666,7 +1666,7 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
                   <p style={{ color:mine?"#fff":TEXT }}>{m.body}</p>
                   {m.listing_id && (
                     <button onClick={()=>onViewListing?.(m.listing_id)}
-                      style={{ marginTop:8,background:mine?"rgba(255,255,255,.18)":"rgba(240,68,35,.12)",border:`1px solid ${mine?"rgba(255,255,255,.3)":"rgba(240,68,35,.3)"}`,borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:mine?"#fff":RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
+                      style={{ marginTop:8,background:mine?"rgba(255,255,255,.18)":"rgba(255,140,0,.12)",border:`1px solid ${mine?"rgba(255,255,255,.3)":"rgba(255,140,0,.3)"}`,borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:mine?"#fff":RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
                       <Ic n="chevR" s={12} c={mine?"#fff":RED}/> Ver publicación
                     </button>
                   )}
@@ -1896,13 +1896,13 @@ function ProfilePage({ user, profile, onLogout }) {
             ) : (
               <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
                 {inbox.map(m=>(
-                  <div key={m.id} style={{ background:m.read?CARD:"rgba(240,68,35,.06)",borderRadius:10,padding:"14px 16px",border:`1px solid ${m.read?BORDER:"rgba(240,68,35,.25)"}`,display:"flex",gap:12,alignItems:"flex-start" }}>
+                  <div key={m.id} style={{ background:m.read?CARD:"rgba(255,140,0,.06)",borderRadius:10,padding:"14px 16px",border:`1px solid ${m.read?BORDER:"rgba(255,140,0,.25)"}`,display:"flex",gap:12,alignItems:"flex-start" }}>
                     {!m.read && <div style={{ width:8,height:8,borderRadius:"50%",background:RED,marginTop:5,flexShrink:0 }}/>}
                     <div style={{ flex:1 }}>
                       <p style={{ fontSize:14,color:TEXT,lineHeight:1.5,fontWeight:m.read?400:600 }}>{m.body}</p>
                       {m.listing_id && (
                         <button onClick={()=>openNotifListing(m.listing_id)}
-                          style={{ marginTop:8,background:"rgba(240,68,35,.12)",border:"1px solid rgba(240,68,35,.3)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
+                          style={{ marginTop:8,background:"rgba(255,140,0,.12)",border:"1px solid rgba(255,140,0,.3)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
                           <Ic n="chevR" s={12} c={RED}/> Ver publicación
                         </button>
                       )}
@@ -1924,7 +1924,7 @@ function ProfilePage({ user, profile, onLogout }) {
           <div style={{ maxWidth:"100%" }}>
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Carga Masiva de Publicaciones</h2>
             <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Sube hasta 500 publicaciones de una sola vez usando un archivo Excel o CSV.</p>
-            <div style={{ background:"rgba(240,68,35,.06)",border:"1px solid rgba(240,68,35,.2)",borderRadius:12,padding:20,marginBottom:24,display:"flex",gap:16,alignItems:"center" }}>
+            <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:20,marginBottom:24,display:"flex",gap:16,alignItems:"center" }}>
               <div style={{ width:44,height:44,background:RED,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                 <Ic n="box" s={20} c="#fff"/>
               </div>
@@ -1991,7 +1991,7 @@ function ProfilePage({ user, profile, onLogout }) {
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Soporte</h2>
             <p style={{ color:MUTED,fontSize:14,marginBottom:28 }}>Estamos aquí para ayudarte. Elige cómo quieres contactarnos.</p>
 
-            <div style={{ background:"rgba(240,68,35,.06)",border:"1px solid rgba(240,68,35,.2)",borderRadius:12,padding:24,marginBottom:16 }}>
+            <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:24,marginBottom:16 }}>
               <div style={{ display:"flex",gap:14,alignItems:"flex-start",marginBottom:16 }}>
                 <div style={{ width:44,height:44,background:RED,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                   <span style={{ color:"#fff",fontSize:20 }}>⚡</span>
@@ -2096,7 +2096,7 @@ function ProfilePage({ user, profile, onLogout }) {
               </div>
             </div>
 
-            <div style={{ background:"rgba(240,68,35,.06)",border:"1px solid rgba(240,68,35,.2)",borderRadius:12,padding:24 }}>
+            <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:24 }}>
               <p style={{ fontSize:11,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Zona de peligro</p>
               {!showDeleteConfirm ? (
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
@@ -2223,7 +2223,7 @@ function AlertasPage({ user, profile }) {
         <div style={{ display:"flex",gap:8 }}>
           {[["email","Email"],["whatsapp","WhatsApp"]].map(([val,lbl])=>(
             <div key={val} onClick={()=>setAlertForm(f=>({...f,notifType:val}))}
-              style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(240,68,35,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
+              style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(255,140,0,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
               <p style={{ fontSize:13,fontWeight:700,color:alertForm.notifType===val?RED:SUB,fontFamily:"Barlow Condensed,sans-serif" }}>{lbl}</p>
             </div>
           ))}
@@ -2448,7 +2448,7 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
             <div style={{ display:"flex",gap:8 }}>
               {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                 <button key={c} onClick={()=>upd("condition",c)}
-                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(240,68,35,.1)":CARD,fontWeight:700,fontSize:10,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,140,0,.1)":CARD,fontWeight:700,fontSize:10,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
                   {c}
                 </button>
               ))}
@@ -2543,11 +2543,11 @@ function MisPublicaciones({ user, onSelect }) {
     <div style={{ maxWidth:"100%" }}>
       <div style={{ display:"flex",gap:8,marginBottom:20 }}>
         <button onClick={()=>setSubTab("pubs")}
-          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="pubs"?RED:BORDER}`,background:subTab==="pubs"?"rgba(240,68,35,.1)":"transparent",color:subTab==="pubs"?RED:SUB,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="pubs"?RED:BORDER}`,background:subTab==="pubs"?"rgba(255,140,0,.1)":"transparent",color:subTab==="pubs"?RED:SUB,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
           Mis Publicaciones
         </button>
         <button onClick={()=>setSubTab("solicitudes")}
-          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="solicitudes"?RED:BORDER}`,background:subTab==="solicitudes"?"rgba(240,68,35,.1)":"transparent",color:subTab==="solicitudes"?RED:SUB,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="solicitudes"?RED:BORDER}`,background:subTab==="solicitudes"?"rgba(255,140,0,.1)":"transparent",color:subTab==="solicitudes"?RED:SUB,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
           Mis Solicitudes
         </button>
       </div>
@@ -2799,10 +2799,10 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:20,width:"100%",maxWidth:580,maxHeight:"92vh",display:"flex",flexDirection:"column",border:`1px solid rgba(240,68,35,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(240,68,35,.15)",overflow:"hidden",animation:"slideUp .3s ease" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:20,width:"100%",maxWidth:580,maxHeight:"92vh",display:"flex",flexDirection:"column",border:`1px solid rgba(255,140,0,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,140,0,.15)",overflow:"hidden",animation:"slideUp .3s ease" }}>
 
         {/* Header */}
-        <div style={{ background:`linear-gradient(135deg,${RED},#C03320)`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
+        <div style={{ background:`linear-gradient(135deg,${RED},#C26800)`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
           <div>
             <p className="bebas" style={{ fontSize:24,color:"#fff",letterSpacing:.5 }}>{t("sol_title")}</p>
             <p style={{ fontSize:13,color:"rgba(255,255,255,.75)",marginTop:2 }}>{t("sol_subtitle")}</p>
@@ -2843,7 +2843,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
             )}
 
             {solicitudMatches > 0 ? (
-              <div style={{ background:"rgba(240,68,35,.1)",border:"1px solid rgba(240,68,35,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
+              <div style={{ background:"rgba(255,140,0,.1)",border:"1px solid rgba(255,140,0,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
                 <p className="bebas" style={{ fontSize:22,color:RED,marginBottom:6 }}>🤝 {solicitudMatches} MATCH{solicitudMatches>1?"ES":""} ENCONTRADO{solicitudMatches>1?"S":""}</p>
                 <p style={{ fontSize:14,color:TEXT,lineHeight:1.6 }}>¡Hay publicaciones que coinciden con tu búsqueda! Revisá tus mensajes para ver los contactos automáticos.</p>
               </div>
@@ -2862,7 +2862,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
               {/* Título */}
               <div>
                 <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>¿Qué estás buscando? *</p>
-                <input style={{ ...INP,borderColor:f.title?"rgba(240,68,35,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
+                <input style={{ ...INP,borderColor:f.title?"rgba(255,140,0,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
               </div>
 
               {/* Industria + Marca */}
@@ -2937,7 +2937,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
                   {URGENCY.map(([val,label])=>(
                     <div key={val} onClick={()=>upd("urgency",val)}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"240,68,35":val==="urgente"?"245,158,11":"59,130,246"},.15)`:"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"255,140,0":val==="urgente"?"245,158,11":"59,130,246"},.15)`:"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <div style={{ width:10,height:10,borderRadius:"50%",background:URGENCY_C[val],flexShrink:0 }}/>
                       <p style={{ fontSize:13,fontWeight:f.urgency===val?700:400,color:f.urgency===val?TEXT:SUB }}>{label}</p>
                       {f.urgency===val&&<span style={{ marginLeft:"auto",fontSize:11,color:URGENCY_C[val] }}>✓</span>}
@@ -2964,7 +2964,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                   {[["email","📧","Email",user?.email||""],["whatsapp","💬","WhatsApp",f.phone||"Agrega tu número arriba"],["inapp","🔔","Notificación en la app","Cuando estés conectado"]].map(([key,icon,label,sub])=>(
                     <div key={key} onClick={()=>toggleNotif(key)}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(240,68,35,.2)":"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(255,140,0,.2)":"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <span style={{ fontSize:18,flexShrink:0 }}>{icon}</span>
                       <div style={{ flex:1 }}>
                         <p style={{ fontSize:13,fontWeight:notif[key]?700:400,color:notif[key]?TEXT:SUB }}>{label}</p>
@@ -3111,7 +3111,7 @@ function MobileTabBar({ tab, setTab, onPublish }) {
       {TABS.map(tb=>(
         <button key={tb.id} onClick={()=>{ if(tb.id==="publish"){onPublish();return;} setTab(tb.id); }}
           style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 0",background:"none",border:"none",cursor:"pointer" }}>
-          <div style={{ width:36,height:36,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(240,68,35,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
+          <div style={{ width:36,height:36,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,140,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
             <Ic n={tb.icon} s={20} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
           </div>
           <span style={{ fontSize:10,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase" }}>{t(tb.key)}</span>
@@ -3200,7 +3200,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Floating solicitud button — above tab bar */}
       {!showSolicitud&&!showPublish&&(
         <button onClick={()=>setShowSolicitud(true)}
-          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(240,68,35,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
+          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,140,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
           <Ic n="search" s={16} c="#fff"/>Solicita un repuesto
         </button>
       )}
@@ -3227,8 +3227,8 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
   return (
     <div style={{ position:"relative" }}>
       <button onClick={e=>{ e.stopPropagation(); setOpen(v=>!v); }}
-        style={{ display:"flex",alignItems:"center",gap:8,background:open?"rgba(240,68,35,.1)":CARD,border:`1px solid ${open?RED:BORDER}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",transition:"all .15s" }}>
-        <div style={{ width:28,height:28,borderRadius:"50%",background:"rgba(240,68,35,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+        style={{ display:"flex",alignItems:"center",gap:8,background:open?"rgba(255,140,0,.1)":CARD,border:`1px solid ${open?RED:BORDER}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",transition:"all .15s" }}>
+        <div style={{ width:28,height:28,borderRadius:"50%",background:"rgba(255,140,0,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
           <span style={{ fontSize:11,fontWeight:700,color:RED,fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
         </div>
         <span style={{ fontSize:12,fontWeight:700,color:TEXT,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"Barlow Condensed,sans-serif" }}>{profile?.biz||profile?.name||"Mi cuenta"}</span>
@@ -3256,7 +3256,7 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
           <div style={{ height:1,background:BORDER,margin:"4px 0" }}/>
           <button onClick={()=>{ setOpen(false); onLogout(); }}
             style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:13,color:RED,fontFamily:"inherit",transition:"all .15s" }}
-            onMouseEnter={e=>e.currentTarget.style.background="rgba(240,68,35,.08)"}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,140,0,.08)"}
             onMouseLeave={e=>e.currentTarget.style.background="none"}>
             <Ic n="logout" s={15} c={RED}/>Cerrar sesión
           </button>
@@ -3335,7 +3335,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           </nav>
 
           {/* ── Region selector ── */}
-          <div style={{ display:"flex",alignItems:"center",gap:6,borderRadius:7,border:`1px solid ${BORDER}`,padding:"6px 10px",background:region!=="all"?"rgba(240,68,35,.08)":"transparent",transition:"all .15s",flexShrink:0 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:6,borderRadius:7,border:`1px solid ${BORDER}`,padding:"6px 10px",background:region!=="all"?"rgba(255,140,0,.08)":"transparent",transition:"all .15s",flexShrink:0 }}>
             <Ic n="location" s={13} c={region!=="all"?RED:MUTED}/>
             <select value={region} onChange={e=>setRegion(e.target.value)}
               style={{ background:"transparent",border:"none",color:region!=="all"?RED:MUTED,fontSize:12,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.4,outline:"none",cursor:"pointer",textTransform:"uppercase",maxWidth:130 }}>
@@ -3356,7 +3356,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           <div style={{ display:"flex", gap:6, alignItems:"center" }}>
             <button onClick={()=>setShowSolicitud(true)}
               style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"7px 12px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(240,68,35,.1)"; }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.1)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
               <Ic n="search" s={13} c={RED}/>{t("nav_request")}
             </button>
@@ -3390,7 +3390,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   setTab(n.id);
                   if (n.id!=="messages") setChatListing(null);
                 }}
-                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C03320)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(240,68,35,.35)" } : undefined}>
+                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C26800)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(255,140,0,.35)" } : undefined}>
                 <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{t(n.key)}
                 {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:10,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
               </button>
