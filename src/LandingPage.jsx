@@ -52,22 +52,39 @@ export default function LandingPage({ onLogin, onRegister, onSearch, onEnter }) 
       </header>
 
       {/* HERO */}
-      <section style={{ padding: "80px 32px 64px", textAlign: "center", maxWidth: 780, margin: "0 auto" }}>
+      <section style={{ padding: "80px 32px 64px", textAlign: "center", maxWidth: 820, margin: "0 auto" }}>
+        {/* Slogan principal — EL MENSAJE MÁS IMPORTANTE */}
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(22px, 3.5vw, 32px)", color: RED, letterSpacing: 2, textTransform: "uppercase", marginBottom: 0 }}>
+            No vendemos repuestos.
+          </p>
+          <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(22px, 3.5vw, 32px)", color: RED, letterSpacing: 2, textTransform: "uppercase" }}>
+            Conectamos personas.
+          </p>
+        </div>
+
+        {/* Headline */}
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(44px, 7vw, 72px)", lineHeight: 1.05, color: TEXT, marginBottom: 16 }}>
+          Todo lo que necesita<br /><span style={{ color: RED }}>tu faena u operación.</span>
+        </h1>
+
+        {/* Subheadline */}
+        <p style={{ fontSize: 19, color: SUB, lineHeight: 1.7, marginBottom: 40, fontWeight: 400, maxWidth: 620, margin: "0 auto 40px" }}>
+          Repuestos, equipos, maquinaria, herramientas y más — encuentra lo que necesitas para que tu operación no se detenga. Sin intermediarios. Sin comisiones.
+        </p>
+
+        {/* Badge */}
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,140,0,.1)", border: "1px solid rgba(255,140,0,.3)", borderRadius: 20, padding: "6px 16px", marginBottom: 32 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: RED, fontFamily: "Barlow Condensed, sans-serif", letterSpacing: .5 }}>✓ GRATIS · SIN COMISIONES · CONTACTO DIRECTO</span>
         </div>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(48px, 8vw, 80px)", lineHeight: 1.05, color: TEXT, marginBottom: 16 }}>
-          Encuentra el repuesto<br /><span style={{ color: RED }}>que necesitas hoy.</span>
-        </h1>
-        <p style={{ fontSize: 20, color: SUB, lineHeight: 1.6, marginBottom: 40, fontWeight: 400 }}>
-          Conectamos compradores y vendedores de equipos industriales.<br />Sin intermediarios. Sin comisiones.
-        </p>
-        <div style={{ display: "flex", gap: 0, maxWidth: 560, margin: "0 auto 20px", borderRadius: 10, overflow: "hidden", border: `2px solid ${RED}`, background: BG3 }}>
+
+        {/* Search bar */}
+        <div style={{ display: "flex", gap: 0, maxWidth: 580, margin: "0 auto 20px", borderRadius: 10, overflow: "hidden", border: `2px solid ${RED}`, background: BG3 }}>
           <input
             value={searchQ}
             onChange={e => setSearchQ(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSearch()}
-            placeholder="¿Qué repuesto o equipo buscas?"
+            placeholder="¿Qué necesitas para tu faena u operación?"
             style={{ flex: 1, padding: "16px 20px", background: "transparent", border: "none", outline: "none", fontSize: 16, color: TEXT, fontFamily: "Barlow, sans-serif" }}
           />
           <button onClick={handleSearch}
@@ -77,6 +94,8 @@ export default function LandingPage({ onLogin, onRegister, onSearch, onEnter }) 
             Buscar →
           </button>
         </div>
+
+        {/* CTA buttons */}
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
           <button onClick={onRegister}
             style={{ background: RED, border: "none", borderRadius: 10, padding: "14px 32px", fontSize: 16, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "Barlow Condensed, sans-serif", letterSpacing: .6, textTransform: "uppercase", transition: "all .15s" }}
@@ -173,7 +192,7 @@ export default function LandingPage({ onLogin, onRegister, onSearch, onEnter }) 
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
             <SpartsLogo size={28} />
           </div>
-          <p style={{ fontSize: 13, color: MUTED, marginBottom: 16 }}>No vendemos repuestos, conectamos personas.</p>
+          <p style={{ fontSize: 15, color: RED, marginBottom: 16, fontFamily: "Bebas Neue, sans-serif", letterSpacing: 1.5, textTransform: "uppercase" }}>No vendemos repuestos. Conectamos personas.</p>
           <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
             {["Términos y condiciones", "Política de privacidad", "Contacto"].map((link, i) => (
               <span key={i} style={{ fontSize: 13, color: MUTED, cursor: "pointer", transition: "color .15s" }}
