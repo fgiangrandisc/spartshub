@@ -65,7 +65,7 @@ export default function LandingPage({ onLogin, onRegister, onSearch, onEnter }) 
 
         {/* Headline */}
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(44px, 7vw, 72px)", lineHeight: 1.05, color: TEXT, marginBottom: 16 }}>
-          Todo lo que necesita<br /><span style={{ color: RED }}>tu faena u operación.</span>
+          Todo lo que necesitas<br /><span style={{ color: RED }}>para tu operación o faena.</span>
         </h1>
 
         {/* Subheadline */}
@@ -174,7 +174,7 @@ export default function LandingPage({ onLogin, onRegister, onSearch, onEnter }) 
             Empieza hoy.<br /><span style={{ color: RED }}>Es completamente gratis.</span>
           </h2>
           <p style={{ fontSize: 16, color: SUB, marginBottom: 36, lineHeight: 1.6 }}>
-            Únete a cientos de empresas que ya conectan directamente con compradores y vendedores industriales.
+            Únete a esta comunidad. Busca, encuentra, vende y compra lo que necesitas para que tu negocio siga operando.
           </p>
           <button onClick={onRegister}
             style={{ background: RED, border: "none", borderRadius: 10, padding: "16px 40px", fontSize: 17, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "Barlow Condensed, sans-serif", letterSpacing: .6, textTransform: "uppercase", transition: "all .15s" }}
