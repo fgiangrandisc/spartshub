@@ -56,9 +56,15 @@ Responde SOLO con JSON válido (sin markdown):
         }]
       })
     });
+    if (!response.ok) return null;
     const data = await response.json();
-    const text = data.content?.[0]?.text || '{}';
-    return JSON.parse(text.replace(/```json|```/g, "").trim());
+    const text = data.content?.[0]?.text || "";
+    if (!text) return null;
+    // Strip markdown fences and extract the first JSON object
+    const cleaned = text.replace(/```(?:json)?/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    return JSON.parse(jsonMatch[0]);
   } catch(e) {
     return null;
   }
@@ -67,7 +73,6 @@ Responde SOLO con JSON válido (sin markdown):
 async function analyzeMatch(listingText, requestText) {
   try {
     const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    console.log("[MatchEngine] API key presente:", !!apiKey, apiKey ? `(${apiKey.slice(0,8)}...)` : "FALTA");
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
@@ -87,14 +92,14 @@ Match = true si el producto publicado es igual o muy similar a lo solicitado (sc
         }]
       })
     });
-    console.log("[MatchEngine] HTTP status:", response.status);
+    if (!response.ok) return { match: false, score: 0, reason: "Error HTTP" };
     const data = await response.json();
-    if (data.error) console.error("[MatchEngine] API error:", data.error);
-    const text = data.content?.[0]?.text || '{"match":false,"score":0,"reason":"Error"}';
-    const clean = text.replace(/```json|```/g, "").trim();
-    const result = JSON.parse(clean);
-    console.log("[MatchEngine] Resultado análisis:", result);
-    return result;
+    if (data.error) return { match: false, score: 0, reason: data.error.message || "Error API" };
+    const text = data.content?.[0]?.text || "";
+    const cleaned = text.replace(/```(?:json)?/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return { match: false, score: 0, reason: "Respuesta inválida" };
+    return JSON.parse(jsonMatch[0]);
   } catch(e) {
     console.error("[MatchEngine] Excepción en analyzeMatch:", e);
     return { match: false, score: 0, reason: "Error de análisis" };
@@ -169,7 +174,7 @@ async function notifyMatch(match, newItem, type, user, profile) {
 
 
 /* ── Icon system ────────────────────────────────────────────── */
-const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none" }) => {
+const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, className }) => {
   const p = {
     home:     <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
     search:   <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></>,
@@ -200,7 +205,7 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none" }) => {
       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/>
     </svg>
   );
-  return <svg width={s} height={s} fill={fill} stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{p[n]}</svg>;
+  return <svg aria-hidden="true" width={s} height={s} fill={fill} stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={extStyle} className={className}>{p[n]}</svg>;
 };
 
 /* ── Logo ───────────────────────────────────────────────────── */
@@ -227,10 +232,10 @@ function Spin({ size=22 }) {
 }
 
 /* ── Avatar ─────────────────────────────────────────────────── */
-function Avatar({ name, size=40, color=RED }) {
+function Avatar({ name, size=40 }) {
   const initials = (name||"U").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   return (
-    <div style={{ width:size, height:size, borderRadius:"50%", background:`rgba(255,140,0,.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+    <div title={name} style={{ width:size, height:size, borderRadius:"50%", background:`rgba(255,140,0,.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
       <span style={{ color:RED, fontWeight:700, fontSize:size*0.38, fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
     </div>
   );
@@ -242,13 +247,13 @@ const compressImage = (file, maxW = 1200, quality = 0.78) =>
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
+      URL.revokeObjectURL(url);
       const scale = Math.min(1, maxW / Math.max(img.width, img.height));
       const w = Math.round(img.width * scale);
       const h = Math.round(img.height * scale);
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
       canvas.toBlob(blob => resolve(blob || file), "image/jpeg", quality);
     };
     img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
@@ -275,13 +280,44 @@ const OPERATIONS  = ["Venta","Arriendo","Trade"];
 const CURRENCIES  = ["USD","CLP","EUR","COP","PEN","MXN"];
 
 const fmtTs = ts => {
-  const d = new Date(ts), diff = Math.floor((Date.now()-d)/1000);
-  if (diff < 60) return "Ahora"; if (diff < 3600) return `${Math.floor(diff/60)}m`;
-  if (diff < 86400) return `${Math.floor(diff/3600)}h`; return `${Math.floor(diff/86400)}d`;
+  if (!ts) return "—";
+  const d = new Date(ts);
+  if (isNaN(d)) return "—";
+  const diff = Math.floor((Date.now() - d) / 1000);
+  if (diff < 60)     return "Ahora";
+  if (diff < 3600)   return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400)  return `${Math.floor(diff / 3600)}h`;
+  if (diff < 2592000) return `${Math.floor(diff / 86400)}d`;
+  if (diff < 31536000) return `${Math.floor(diff / 2592000)} mes`;
+  return `${Math.floor(diff / 31536000)} año`;
 };
-const fmtPrice = (p, cur) => `${cur} ${Number(p)>=1000?(Number(p)/1000).toFixed(0)+"k":Number(p).toLocaleString()}`;
+const fmtPrice = (p, cur) => {
+  const n = Number(p);
+  if (!cur || isNaN(n)) return "—";
+  const fmt = n >= 1000 ? `${(n / 1000).toFixed(0)}k` : n.toLocaleString("es-CL");
+  return `${cur} ${fmt}`;
+};
 
-/* ── Photo placeholder ──────────────────────────────────────── */
+/* ── Shared hook: unread message count ──────────────────────── */
+function useUnreadCount(userId) {
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    if (!userId) return;
+    const load = async () => {
+      try {
+        const r = await sb.from("messages").select("*", { count:"exact", head:true }).eq("to_id", userId).eq("read", false);
+        setUnreadCount(r.count || 0);
+      } catch(_) {}
+    };
+    load();
+    const ch = sb.channel("unread-" + userId)
+      .on("postgres_changes", { event:"INSERT", schema:"public", table:"messages", filter:`to_id=eq.${userId}` },
+        () => setUnreadCount(c => c + 1))
+      .subscribe();
+    return () => sb.removeChannel(ch);
+  }, [userId]);
+  return unreadCount;
+}
 function PhotoPlaceholder({ emoji="📦", h=160, url }) {
   if (url) return (
     <div style={{ width:"100%", height:h, background:BG2, overflow:"hidden" }}>
@@ -313,18 +349,23 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
 
   const submit = async () => {
     setErr("");
-    if (!f.email || !f.pass) { setErr("Email y contraseña requeridos."); return; }
+    const email = f.email.trim();
+    const pass  = f.pass;
+    if (!email || !pass) { setErr("Email y contraseña requeridos."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr("Ingresa un email válido."); return; }
     setLoading(true);
     if (mode === "login") {
-      const { data, error } = await sb.auth.signInWithPassword({ email:f.email, password:f.pass });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
       if (error) { setErr(error.message); setLoading(false); return; }
       onAuth(data.user);
     } else {
-      if (!f.name || !f.biz) { setErr("Completa todos los campos."); setLoading(false); return; }
-      const { data, error } = await sb.auth.signUp({ email:f.email, password:f.pass });
+      const name = f.name.trim();
+      const biz  = f.biz.trim();
+      if (!name || !biz) { setErr("Completa todos los campos."); setLoading(false); return; }
+      const { data, error } = await sb.auth.signUp({ email, password: pass });
       if (error) { setErr(error.message); setLoading(false); return; }
       if (data.user) {
-        await sb.from("profiles").upsert({ id:data.user.id, name:f.name, biz:f.biz, phone:f.phone, location:f.location });
+        await sb.from("profiles").upsert({ id:data.user.id, name, biz, phone:f.phone.trim(), location:f.location.trim() });
         alert("¡Cuenta creada! Revisa tu email para confirmar.");
         setMode("login"); setStep(1);
       }
@@ -456,7 +497,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
             style={{ padding:"7px 14px",borderRadius:20,fontSize:12,fontWeight:700,border:`1px solid ${BORDER}`,background:CARD,color:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}
             onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
             onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=SUB; }}>
-            {c.icon} {c.label}
+            {c.emoji} {c.label}
           </button>
         ))}
       </div>
@@ -551,6 +592,7 @@ function SearchPage({ user, onSelect, region }) {
     return                              { col:"created_at", asc:false };
   };
 
+  const debounceRef = useRef(null);
   const load = useCallback(async () => {
     setLoading(true);
     const { col, asc } = getSortParams();
@@ -589,7 +631,11 @@ function SearchPage({ user, onSelect, region }) {
   }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, horasMin, horasMax,
       ubicacion, tipo, priceMin, priceMax, priceCur, sortBy, verified, region]);
 
-  useEffect(()=>{ load(); }, [load]);
+  useEffect(()=>{
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => load(), 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [load]);
 
   const activeFilters = [
     cat !== "all" ? cat : "",
@@ -821,7 +867,7 @@ function SearchPage({ user, onSelect, region }) {
             <button className="btn-ol" onClick={resetFilters} style={{ fontSize:13 }}>Limpiar filtros</button>
           </div>
         ) : viewMode === "grid" ? (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:14 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:14 }}>
             {listings.map(l=>(
               <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
                 <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
@@ -855,6 +901,18 @@ function SearchPage({ user, onSelect, region }) {
 function PhotoCarousel({ photos }) {
   const [idx, setIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!lightbox || photos.length <= 1) return;
+    const onKey = e => {
+      if (e.key === "ArrowLeft")  setIdx(i => (i - 1 + photos.length) % photos.length);
+      if (e.key === "ArrowRight") setIdx(i => (i + 1) % photos.length);
+      if (e.key === "Escape")     setLightbox(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox, photos.length]);
 
   return (
     <>
@@ -1053,8 +1111,10 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
                 </>
               ) : (
                 <>
-                  <button onClick={l.phone ? wa : ()=>alert("Este vendedor no publicó su WhatsApp. Usa el chat interno.")} style={{ background:"#25D366",color:"#fff",borderRadius:10,padding:"15px",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:"none",cursor:"pointer",opacity:l.phone?1:.7 }}>
-                    <Ic n="wa" s={20} c="#fff"/>{l.phone?"Contactar por WhatsApp":"WhatsApp no disponible"}
+                  <button onClick={l.phone ? wa : undefined}
+                    style={{ background: l.phone ? "#25D366" : BG2, color: l.phone ? "#fff" : MUTED, borderRadius:10, padding:"15px", fontSize:15, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", gap:10, border: l.phone ? "none" : `1px solid ${BORDER}`, cursor: l.phone ? "pointer" : "not-allowed", opacity: l.phone ? 1 : .6 }}
+                    title={l.phone ? undefined : "Este vendedor no publicó su WhatsApp. Usa el chat interno."}>
+                    <Ic n="wa" s={20} c={l.phone?"#fff":MUTED}/>{l.phone?"Contactar por WhatsApp":"WhatsApp no disponible"}
                   </button>
                   <button className="btn-ol" style={{ padding:14 }} onClick={()=>{ onClose(); onChat(l); }}>
                     <Ic n="msg" s={18} c={RED}/><span style={{ color:RED,fontWeight:700 }}>Mensaje en SpartsHub</span>
@@ -1124,15 +1184,22 @@ function PublishSheet({ user, profile, onClose, onDone }) {
     setErr("");
     const combined = [...photos, ...valid].slice(0, 4);
     setPhotos(combined);
+    // Revoke old previews before creating new ones
+    previews.forEach(u => URL.revokeObjectURL(u));
     setPreviews(combined.map(f => URL.createObjectURL(f)));
     e.target.value = "";
   };
 
   const removePhoto = idx => {
-    const next = photos.filter((_,i)=>i!==idx);
-    setPhotos(next);
-    setPreviews(next.map(f=>URL.createObjectURL(f)));
+    URL.revokeObjectURL(previews[idx]);
+    const nextPhotos = photos.filter((_,i) => i !== idx);
+    const nextPreviews = previews.filter((_,i) => i !== idx);
+    setPhotos(nextPhotos);
+    setPreviews(nextPreviews);
   };
+
+  // Cleanup object URLs on unmount
+  useEffect(() => () => previews.forEach(u => URL.revokeObjectURL(u)), []);
 
   const uploadPhotos = async listingId => {
     const uploadOne = async file => {
@@ -1356,6 +1423,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                       setAiFile(file);
                       setAiResult(null);
                       setAiError("");
+                      if (aiPreview) URL.revokeObjectURL(aiPreview);
                       setAiPreview(URL.createObjectURL(file));
                     }}/>
                   <div style={{ border:`2px dashed rgba(255,140,0,.4)`,borderRadius:16,padding:"48px 24px",textAlign:"center",background:"rgba(255,140,0,.04)",transition:"all .2s" }}
@@ -1534,7 +1602,10 @@ function MessagesPage({ user, initListing, onClear }) {
         onClear();
       });
     }
-  },[initListing]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[initListing?.id]);
+
+  const [contactMeta, setContactMeta] = useState({}); // { [contactId]: { lastMsg, listing, unread } }
 
   useEffect(()=>{
     const load = async () => {
@@ -1544,8 +1615,26 @@ function MessagesPage({ user, initListing, onClear }) {
       ]);
       const ids = new Set([...(s||[]).map(m=>m.to_id),...(r||[]).map(m=>m.from_id)]);
       if (!ids.size) return;
-      const { data } = await sb.from("profiles").select("*").in("id",[...ids]);
-      setContacts(data||[]);
+      const { data: profiles } = await sb.from("profiles").select("*").in("id",[...ids]);
+      setContacts(profiles||[]);
+
+      // For each contact, fetch last message + listing info + unread count
+      const meta = {};
+      await Promise.all([...ids].map(async cid => {
+        const { data: msgs } = await sb.from("messages").select("*")
+          .or(`and(from_id.eq.${user.id},to_id.eq.${cid}),and(from_id.eq.${cid},to_id.eq.${user.id})`)
+          .order("created_at",{ascending:false}).limit(1);
+        const lastMsg = msgs?.[0];
+        const unread = (await sb.from("messages").select("*",{count:"exact",head:true})
+          .eq("from_id",cid).eq("to_id",user.id).eq("read",false)).count || 0;
+        let listing = null;
+        if (lastMsg?.listing_id) {
+          const { data: l } = await sb.from("listings").select("id,title,photos").eq("id",lastMsg.listing_id).single();
+          listing = l;
+        }
+        meta[cid] = { lastMsg, listing, unread };
+      }));
+      setContactMeta(meta);
     };
     load();
   },[user.id]);
@@ -1584,16 +1673,38 @@ function MessagesPage({ user, initListing, onClear }) {
             <p className="bebas" style={{ fontSize:28,marginBottom:8 }}>Sin conversaciones</p>
             <p style={{ fontSize:14,color:MUTED }}>Contacta a un vendedor desde cualquier publicación</p>
           </div>
-        ) : contacts.map(c=>(
-          <div key={c.id} style={{ display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderBottom:`0.5px solid ${BORDER}`,cursor:"pointer",borderRadius:8,transition:"background .15s" }} onMouseEnter={e=>e.currentTarget.style.background=BG2} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>setActive({ profile:c,listing:null })}>
-            <Avatar name={c.biz||c.name||"U"} size={48}/>
-            <div style={{ flex:1,minWidth:0 }}>
-              <p style={{ fontSize:15,fontWeight:700,marginBottom:2,color:TEXT }}>{c.biz||c.name}</p>
-              <p style={{ fontSize:13,color:MUTED,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{c.location}</p>
+        ) : contacts.map(c=>{
+          const meta = contactMeta[c.id] || {};
+          const { lastMsg, listing, unread } = meta;
+          return (
+          <div key={c.id} style={{ display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderBottom:`0.5px solid ${BORDER}`,cursor:"pointer",transition:"background .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.background=BG2}
+            onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+            onClick={()=>setActive({ profile:c, listing:listing||null })}>
+            <div style={{ position:"relative", flexShrink:0 }}>
+              <Avatar name={c.biz||c.name||"U"} size={48}/>
+              {unread>0 && <div style={{ position:"absolute",top:-2,right:-2,width:18,height:18,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",border:`2px solid ${BG}` }}>{unread}</div>}
             </div>
-            <Ic n="chevR" s={18} c={MUTED}/>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:3 }}>
+                <p style={{ fontSize:15,fontWeight:700,color:TEXT }}>{c.biz||c.name||c.id?.slice(0,8)}</p>
+                {lastMsg && <p style={{ fontSize:11,color:MUTED,flexShrink:0 }}>{fmtTs(lastMsg.created_at)}</p>}
+              </div>
+              {listing && (
+                <p style={{ fontSize:11,fontWeight:700,color:RED,marginBottom:2,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                  📦 {listing.title}
+                </p>
+              )}
+              {lastMsg && (
+                <p style={{ fontSize:12,color:unread>0?SUB:MUTED,fontWeight:unread>0?600:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                  {lastMsg.from_id===user.id?"Tú: ":""}{lastMsg.body}
+                </p>
+              )}
+              {!lastMsg && <p style={{ fontSize:12,color:MUTED }}>{c.location||"—"}</p>}
+            </div>
+            <Ic n="chevR" s={16} c={MUTED}/>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );
@@ -1612,6 +1723,13 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
       .order("created_at",{ascending:true});
     setMsgs(data||[]); setLoading(false);
   },[user.id,other.id]);
+
+  useEffect(()=>{
+    // Mark messages from other user as read when chat opens
+    sb.from("messages").update({ read:true })
+      .eq("from_id", other.id).eq("to_id", user.id).eq("read", false)
+      .then(()=>{}, ()=>{});
+  }, [other.id, user.id]);
 
   useEffect(()=>{ load(); },[load]);
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[msgs]);
@@ -1637,7 +1755,7 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
         <Avatar name={other.biz||other.name||"U"} size={40}/>
         <div style={{ flex:1 }}>
           <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>{other.biz||other.name}</p>
-          <p style={{ fontSize:12,color:GREEN,fontWeight:600 }}>● En línea</p>
+          <p style={{ fontSize:12,color:MUTED,fontWeight:500 }}>{other.location||"SpartsHub"}</p>
         </div>
         <Ic n="phone" s={20} c={RED}/>
       </div>
@@ -1679,8 +1797,8 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
         <div ref={endRef}/>
       </div>
       <div style={{ padding:"12px 16px 32px",borderTop:`0.5px solid ${BORDER}`,display:"flex",gap:10,flexShrink:0,background:BG3 }}>
-        <input className="inp" value={inp} maxLength={2000} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder={t("chat_write")} style={{ flex:1,borderRadius:24,padding:"12px 18px" }}/>
-        <button onClick={send} style={{ width:44,height:44,background:RED,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"none",cursor:"pointer",flexShrink:0 }}>
+        <input className="inp" value={inp} maxLength={2000} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()} placeholder={t("chat_write")} style={{ flex:1,borderRadius:24,padding:"12px 18px" }}/>
+        <button onClick={send} disabled={!inp.trim()} style={{ width:44,height:44,background:inp.trim()?RED:`${RED}66`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"none",cursor:inp.trim()?"pointer":"default",flexShrink:0,transition:"background .15s" }}>
           <Ic n="send" s={18} c="#fff"/>
         </button>
       </div>
@@ -1735,7 +1853,10 @@ function ProfilePage({ user, profile, onLogout }) {
     if (data) setNotifViewListing(data);
   };
 
-  const saveProfile = async ()=>{ await sb.from("profiles").update(editData).eq("id",user.id); setEditMode(false); };
+  const saveProfile = async () => {
+    const { error } = await sb.from("profiles").update(editData).eq("id", user.id);
+    if (!error) setEditMode(false);
+  };
   const sendSupport = ()=>{ if(!supportMsg.trim()) return; setSupportSent(true); setSupportMsg(""); setTimeout(()=>setSupportSent(false),4000); };
 
   const handleBulkFile = file => {
@@ -1770,10 +1891,18 @@ function ProfilePage({ user, profile, onLogout }) {
     reader.readAsText(file);
   };
 
-  const uploadBulk = async ()=>{
+  const uploadBulk = async () => {
     setBulkUploading(true);
-    for (const row of bulkRows) {
-      await sb.from("listings").insert({ user_id:user.id,title:row.title,cat:row.cat,condition:row.condition,price:Number(row.price),currency:row.currency,biz:profile?.biz||"",location:profile?.location||"",emoji:"📦",verified:false });
+    // Batch inserts in chunks of 20 for better performance
+    const CHUNK = 20;
+    const rows = bulkRows.map(row => ({
+      user_id: user.id, title: row.title, cat: row.cat,
+      condition: row.condition, price: Number(row.price),
+      currency: row.currency, biz: profile?.biz||"",
+      location: profile?.location||"", emoji: "📦", verified: false,
+    }));
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      await sb.from("listings").insert(rows.slice(i, i + CHUNK));
     }
     setBulkUploading(false); setBulkDone(true); setBulkRows([]); setBulkFile(null);
   };
@@ -2138,15 +2267,25 @@ function SupportPanel({ onClose }) {
   const [aiResp,   setAiResp]   = useState("Hola, soy el asistente de SpartsHub. ¿En qué puedo ayudarte?");
   const [aiLoading,setAiLoading]= useState(false);
 
-  const sendAI = () => {
-    if (!aiInput.trim()) return;
-    const q = aiInput; setAiInput(""); setAiLoading(true);
-    setTimeout(()=>{
-      const R = { publicar:"Para publicar, haz clic en 'Publicar aquí'. ¡Es gratis!", precio:"Puedes publicar en CLP, USD, EUR y más.", contactar:"Para contactar a un vendedor, necesitas estar registrado.", cuenta:"Escríbenos por el formulario de soporte o por WhatsApp." };
-      const key = Object.keys(R).find(k=>q.toLowerCase().includes(k));
-      setAiResp(key?R[key]:"Entiendo tu consulta. Te recomiendo escribir al soporte humano o contactarnos por WhatsApp. Respondemos en menos de 24hrs.");
-      setAiLoading(false);
-    },800);
+  const sendAI = async () => {
+    if (!aiInput.trim() || aiLoading) return;
+    const q = aiInput.trim(); setAiInput(""); setAiLoading(true);
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6", max_tokens: 200,
+          system: "Eres el asistente de soporte de SpartsHub, un marketplace P2P de repuestos industriales. Responde en español, de forma breve y útil. Si no sabes algo, sugiere contactar soporte humano o WhatsApp.",
+          messages: [{ role:"user", content: q }]
+        })
+      });
+      const data = await response.json();
+      setAiResp(data.content?.[0]?.text || "Lo siento, no pude procesar tu consulta. Contacta al soporte humano.");
+    } catch {
+      setAiResp("Error de conexión. Por favor contacta al soporte humano o por WhatsApp.");
+    }
+    setAiLoading(false);
   };
 
   return (
@@ -2313,15 +2452,18 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
     setErr("");
     const combined = [...newFiles, ...valid].slice(0, Math.max(0, 4 - existingPhotos.length));
     setNewFiles(combined);
+    newPreviews.forEach(u => URL.revokeObjectURL(u));
     setNewPreviews(combined.map(f => URL.createObjectURL(f)));
     e.target.value = "";
   };
 
   const removeExisting = idx => setExistingPhotos(p => p.filter((_,i) => i !== idx));
   const removeNew      = idx => {
+    URL.revokeObjectURL(newPreviews[idx]);
     const nf = newFiles.filter((_,i) => i !== idx);
+    const np = newPreviews.filter((_,i) => i !== idx);
     setNewFiles(nf);
-    setNewPreviews(nf.map(f => URL.createObjectURL(f)));
+    setNewPreviews(np);
   };
 
   const uploadNewPhotos = async () => {
@@ -2504,7 +2646,7 @@ function MisPublicaciones({ user, onSelect }) {
   const [confirmDelReq, setConfirmDelReq] = useState(null);
   const [deleting,    setDeleting]    = useState(false);
 
-  const reload = () => {
+  const reload = useCallback(() => {
     setLoading(true);
     Promise.all([
       sb.from("listings").select("*").eq("user_id",user.id).order("created_at",{ascending:false}),
@@ -2514,7 +2656,7 @@ function MisPublicaciones({ user, onSelect }) {
       setRequests(rRes.data||[]);
       setLoading(false);
     });
-  };
+  }, [user.id]);
 
   useEffect(()=>{ reload(); },[user.id]);
 
@@ -2566,7 +2708,7 @@ function MisPublicaciones({ user, onSelect }) {
               <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Publicá tu primer producto o repuesto gratis</p>
             </div>
           ) : (
-            <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12 }}>
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))",gap:12 }}>
               {listings.map(l=>(
                 <div key={l.id} className="photo-card card" style={{ cursor:"default" }}>
                   {/* Photo — clickable to open detail */}
@@ -3129,7 +3271,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
   const [showPublish,   setShowPublish]   = useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
-  const [unreadCount,   setUnreadCount]   = useState(0);
+  const unreadCount = useUnreadCount(session?.user?.id);
 
   useEffect(()=>{
     const onKey = e => {
@@ -3141,20 +3283,6 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [showPublish, showSolicitud, showSupport]);
-
-  useEffect(()=>{
-    if (!session?.user) return;
-    const load = async () => {
-      let count = 0;
-      try { const r = await sb.from("messages").select("*",{count:"exact",head:true}).eq("to_id",session.user.id).eq("read",false); count = r.count||0; } catch(_) {}
-      setUnreadCount(count);
-    };
-    load();
-    const ch = sb.channel("unread-"+session.user.id)
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`to_id=eq.${session.user.id}`},()=>{ setUnreadCount(c=>c+1); })
-      .subscribe();
-    return ()=>sb.removeChannel(ch);
-  },[session?.user?.id]);
 
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT }}>
@@ -3241,12 +3369,12 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
             <p style={{ fontSize:11,color:MUTED }}>{profile?.biz||""}</p>
           </div>
           {[
-            {icon:"user",    label:"Mi perfil",          action:()=>{ onProfile(); setOpen(false); }},
-            {icon:"box",     label:"Mis publicaciones",   action:null, tab:"mispubs"},
-            {icon:"bell",    label:"Solicitudes & Alertas",action:null, tab:"alertas"},
-            {icon:"settings",label:"Configuración",       action:null, tab:"profile_settings"},
-          ].map(({icon,label,action,tab})=>(
-            <button key={label} onClick={()=>{ setOpen(false); if(action) action(); else if(tab==="profile_settings"){ onProfile(); } else onProfile(); }}
+            {icon:"user",    label:"Mi perfil",          action:()=>{ onProfile("perfil"); setOpen(false); }},
+            {icon:"box",     label:"Mis publicaciones",   action:()=>{ onProfile("mispubs"); setOpen(false); }},
+            {icon:"bell",    label:"Solicitudes & Alertas",action:()=>{ onProfile("notif"); setOpen(false); }},
+            {icon:"settings",label:"Configuración",       action:()=>{ onProfile("settings"); setOpen(false); }},
+          ].map(({icon,label,action})=>(
+            <button key={label} onClick={action}
               style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:13,color:SUB,fontFamily:"inherit",transition:"all .15s" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,255,255,.05)"; e.currentTarget.style.color=TEXT; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="none"; e.currentTarget.style.color=SUB; }}>
@@ -3274,7 +3402,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
   const [showPublish,   setShowPublish]   = useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
-  const [unreadCount,   setUnreadCount]   = useState(0);
+  const unreadCount = useUnreadCount(session?.user?.id);
 
   useEffect(()=>{
     const onKey = e => {
@@ -3286,20 +3414,6 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [showPublish, showSolicitud, showSupport]);
-
-  useEffect(()=>{
-    if (!session?.user) return;
-    const load = async () => {
-      let count = 0;
-      try { const r = await sb.from("messages").select("*",{count:"exact",head:true}).eq("to_id",session.user.id).eq("read",false); count = r.count||0; } catch(_) {}
-      setUnreadCount(count);
-    };
-    load();
-    const ch = sb.channel("unread-"+session.user.id)
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`to_id=eq.${session.user.id}`},()=>{ setUnreadCount(c=>c+1); })
-      .subscribe();
-    return ()=>sb.removeChannel(ch);
-  },[session?.user?.id]);
 
   const SIDEBAR = [
     { id:"home",        icon:"home",    key:"nav_home" },
@@ -3316,29 +3430,29 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
       <style>{CSS_BASE}</style>
 
       {/* GLOBAL HEADER */}
-      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 24px" }}>
-        <div style={{ display:"flex", alignItems:"center", height:70, gap:16 }}>
-          <div style={{ display:"flex",flexDirection:"column",gap:3,flexShrink:0 }}>
-            <SpartsLogo size={28}/>
-            <span style={{ fontSize:10,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
+      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 28px" }}>
+        <div style={{ display:"flex", alignItems:"center", height:56, gap:20 }}>
+          <div style={{ display:"flex",flexDirection:"column",gap:2,flexShrink:0 }}>
+            <SpartsLogo size={30}/>
+            <span style={{ fontSize:9,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
           </div>
-          <div style={{ width:1, height:36, background:BORDER }}/>
-          <nav style={{ display:"flex", gap:2, flex:1 }}>
+          <div style={{ width:1, height:32, background:BORDER }}/>
+          <nav style={{ display:"flex", gap:4, flex:1 }}>
             {[{id:"home",key:"nav_home"},{id:"search",key:"nav_search"},{id:"profile",key:"nav_my_profile"},{id:"soporte",key:"nav_support"}].map((n,i)=>(
               <button key={i} onClick={()=>{ if(n.id==="soporte"){setShowSupport(true);return;} setTab(n.id); }}
-                style={{ padding:"6px 12px",borderRadius:6,background:"none",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,color:tab===n.id?RED:SUB,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}
-                onMouseEnter={e=>{ e.currentTarget.style.color=TEXT; }}
-                onMouseLeave={e=>{ e.currentTarget.style.color=tab===n.id?RED:SUB; }}>
+                style={{ padding:"7px 14px",borderRadius:7,background:tab===n.id?`rgba(255,140,0,.12)`:"none",border:tab===n.id?`1px solid rgba(255,140,0,.3)`:"1px solid transparent",cursor:"pointer",fontSize:13,fontWeight:700,color:tab===n.id?RED:TEXT,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase" }}
+                onMouseEnter={e=>{ if(tab!==n.id) e.currentTarget.style.color=RED; }}
+                onMouseLeave={e=>{ e.currentTarget.style.color=tab===n.id?RED:TEXT; }}>
                 {t(n.key)}
               </button>
             ))}
           </nav>
 
           {/* ── Region selector ── */}
-          <div style={{ display:"flex",alignItems:"center",gap:6,borderRadius:7,border:`1px solid ${BORDER}`,padding:"6px 10px",background:region!=="all"?"rgba(255,140,0,.08)":"transparent",transition:"all .15s",flexShrink:0 }}>
-            <Ic n="location" s={13} c={region!=="all"?RED:MUTED}/>
+          <div style={{ display:"flex",alignItems:"center",gap:6,borderRadius:7,border:`1px solid ${BORDER}`,padding:"6px 12px",background:region!=="all"?`rgba(255,140,0,.08)`:"transparent",transition:"all .15s",flexShrink:0 }}>
+            <Ic n="location" s={14} c={region!=="all"?RED:MUTED}/>
             <select value={region} onChange={e=>setRegion(e.target.value)}
-              style={{ background:"transparent",border:"none",color:region!=="all"?RED:MUTED,fontSize:12,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.4,outline:"none",cursor:"pointer",textTransform:"uppercase",maxWidth:130 }}>
+              style={{ background:"transparent",border:"none",color:region!=="all"?RED:TEXT,fontSize:13,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.4,outline:"none",cursor:"pointer",textTransform:"uppercase",maxWidth:140 }}>
               {REGIONS.map(r=><option key={r.id} value={r.id} style={{ background:BG3,color:TEXT }}>{lang==="en"?r.label_en:r.label_es}</option>)}
             </select>
           </div>
@@ -3347,30 +3461,30 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           <div style={{ display:"flex",borderRadius:7,overflow:"hidden",border:`1px solid ${BORDER}`,flexShrink:0 }}>
             {["es","en"].map(l=>(
               <button key={l} onClick={()=>setLang(l)}
-                style={{ padding:"6px 12px",background:lang===l?RED:"transparent",color:lang===l?"#fff":MUTED,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}>
+                style={{ padding:"6px 14px",background:lang===l?RED:"transparent",color:lang===l?"#fff":TEXT,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}>
                 {l.toUpperCase()}
               </button>
             ))}
           </div>
 
-          <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
             <button onClick={()=>setShowSolicitud(true)}
-              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"7px 12px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.1)"; }}
+              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
-              <Ic n="search" s={13} c={RED}/>{t("nav_request")}
+              <Ic n="search" s={14} c={RED}/>{t("nav_request")}
             </button>
             <button onClick={()=>setShowPublish(true)}
-              style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s" }}
+              style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"8px 16px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>e.currentTarget.style.background=RED2}
               onMouseLeave={e=>e.currentTarget.style.background=RED}>
-              <Ic n="plus" s={13} c="#fff"/>{t("nav_publish_here")}
+              <Ic n="plus" s={14} c="#fff"/>{t("nav_publish_here")}
             </button>
             <button onClick={()=>setShowSupport(true)}
-              style={{ background:"none",color:SUB,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"7px 12px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}
+              style={{ background:"none",color:TEXT,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"8px 12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
-              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=SUB; }}>
-              <Ic n="msg" s={13} c="currentColor"/>{t("nav_support")}
+              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
+              <Ic n="msg" s={14} c="currentColor"/>{t("nav_support")}
             </button>
           </div>
         </div>
@@ -3472,7 +3586,12 @@ export default function SpartsHub() {
   if (!session) {
     if (showAuthMode==="landing") return (
       <LangCtx.Provider value={{ lang, setLang, t }}>
-        <LandingPage onGoRegister={()=>setShowAuthMode("register")} onGoLogin={()=>setShowAuthMode("login")} lang={lang} setLang={setLang}/>
+        <LandingPage 
+          onRegister={()=>setShowAuthMode("register")} 
+          onLogin={()=>setShowAuthMode("login")} 
+          onEnter={()=>setShowAuthMode("login")}
+          onSearch={(q)=>{ setShowAuthMode("login"); }}
+          lang={lang} setLang={setLang}/>
       </LangCtx.Provider>
     );
     return (
