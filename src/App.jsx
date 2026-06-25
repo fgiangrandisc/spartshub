@@ -6,6 +6,15 @@ import { LangCtx, useLang, REGIONS, makeT } from "./i18n.js";
 
 const { RED, RED2, GOLD, BLUE, GREEN, DANGER, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
 
+const CSS_OVERRIDE = `
+  .inp { font-size: 16px !important; padding: 12px 16px !important; }
+  .btn-red, .btn-ol { font-size: 15px !important; }
+  .tag { font-size: 12px !important; }
+  .sidebar-btn { font-size: 15px !important; gap: 10px !important; }
+  select { font-size: 16px !important; }
+  textarea { font-size: 16px !important; }
+`;
+
 /* ── Mobile detection hook ──────────────────────────────────── */
 function useIsMobile() {
   const [mobile, setMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
@@ -276,7 +285,7 @@ const CATS = [
 ];
 const CONDITIONS  = ["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"];
 const OPERATIONS  = ["Venta","Arriendo","Trade"];
-const CURRENCIES  = ["USD","CLP","EUR","COP","PEN","MXN"];
+const CURRENCIES  = ["CLP","USD","EUR","COP","PEN","MXN"];
 
 const fmtTs = ts => {
   if (!ts) return "—";
@@ -346,7 +355,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
 
   return (
     <div style={{ minHeight:"100vh", background:BG, color:TEXT, fontFamily:"'Barlow', sans-serif" }}>
-      <style>{CSS_BASE}</style>
+      <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
       {/* HEADER */}
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 32px", position:"sticky", top:0, zIndex:50 }}>
@@ -354,13 +363,13 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
           <SpartsLogo size={32}/>
           <div style={{ flex:1 }}/>
           <button onClick={onLogin}
-            style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"9px 20px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}
+            style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"9px 20px", fontSize:16, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}
             onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
             onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
             Iniciar Sesión
           </button>
           <button onClick={onRegister}
-            style={{ background:RED, border:"none", borderRadius:8, padding:"9px 24px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}
+            style={{ background:RED, border:"none", borderRadius:8, padding:"9px 24px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}
             onMouseEnter={e=>e.currentTarget.style.background=RED2}
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
             Registrarse →
@@ -385,7 +394,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
           Repuestos, equipos, maquinaria, herramientas y más — encuentra lo que necesitas para que tu operación no se detenga. Sin intermediarios. Sin comisiones.
         </p>
         <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(255,140,0,.1)", border:"1px solid rgba(255,140,0,.3)", borderRadius:20, padding:"6px 16px", marginBottom:32 }}>
-          <span style={{ fontSize:13, fontWeight:700, color:RED, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5 }}>✓ GRATIS · SIN COMISIONES · CONTACTO DIRECTO</span>
+          <span style={{ fontSize:16, fontWeight:700, color:RED, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5 }}>✓ GRATIS · SIN COMISIONES · CONTACTO DIRECTO</span>
         </div>
 
         {/* Search bar */}
@@ -398,7 +407,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
             style={{ flex:1, padding:"16px 20px", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}
           />
           <button onClick={handleSearch}
-            style={{ background:RED, border:"none", padding:"16px 28px", fontSize:15, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s" }}
+            style={{ background:RED, border:"none", padding:"16px 28px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s" }}
             onMouseEnter={e=>e.currentTarget.style.background=RED2}
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
             Buscar →
@@ -420,7 +429,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
             Explorar publicaciones
           </button>
         </div>
-        <p style={{ fontSize:13, color:MUTED }}>✓ Sin tarjeta de crédito &nbsp;&nbsp; ✓ Activa en minutos &nbsp;&nbsp; ✓ Gratis para siempre</p>
+        <p style={{ fontSize:16, color:MUTED }}>✓ Sin tarjeta de crédito &nbsp;&nbsp; ✓ Activa en minutos &nbsp;&nbsp; ✓ Gratis para siempre</p>
       </section>
 
       {/* CÓMO FUNCIONA */}
@@ -436,7 +445,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
               <div key={i} style={{ background:CARD, borderRadius:14, padding:"32px 24px", border:`1px solid ${BORDER}`, textAlign:"center" }}>
                 <div style={{ fontSize:44, marginBottom:16 }}>{s.icon}</div>
                 <h3 style={{ fontSize:17, fontWeight:700, color:TEXT, marginBottom:10, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3 }}>{s.title}</h3>
-                <p style={{ fontSize:14, color:SUB, lineHeight:1.7 }}>{s.desc}</p>
+                <p style={{ fontSize:16, color:SUB, lineHeight:1.7 }}>{s.desc}</p>
               </div>
             ))}
           </div>
@@ -453,7 +462,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
           ].map((s,i)=>(
             <div key={i}>
               <div style={{ fontFamily:"Bebas Neue, sans-serif", fontSize:56, color:RED, lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontSize:15, color:SUB, marginTop:8, fontWeight:600 }}>{s.label}</div>
+              <div style={{ fontSize:16, color:SUB, marginTop:8, fontWeight:600 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -463,11 +472,11 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       <section style={{ padding:"56px 32px", background:BG2, borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}` }}>
         <div style={{ maxWidth:900, margin:"0 auto", textAlign:"center" }}>
           <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:38, color:TEXT, marginBottom:12 }}>Industrias que cubrimos</h2>
-          <p style={{ fontSize:15, color:SUB, marginBottom:36 }}>Repuestos y equipos para toda la industria</p>
+          <p style={{ fontSize:16, color:SUB, marginBottom:36 }}>Repuestos y equipos para toda la industria</p>
           <div style={{ display:"flex", flexWrap:"wrap", gap:10, justifyContent:"center" }}>
             {["⚙️ Minería","🌲 Forestal","🏗️ Construcción","⚡ Energía","🚛 Transporte","🌾 Agroindustrial","🔧 Herramientas","💧 Sanitarias","🍎 Alimentos","🛣️ Rutas y Caminos"].map((ind,i)=>(
               <button key={i} onClick={onEnter}
-                style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:24, padding:"10px 20px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3, transition:"all .15s" }}
+                style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:24, padding:"10px 20px", fontSize:16, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3, transition:"all .15s" }}
                 onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; e.currentTarget.style.background="rgba(255,140,0,.08)"; }}
                 onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=TEXT; e.currentTarget.style.background=CARD; }}>
                 {ind}
@@ -492,7 +501,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
             Crear cuenta gratis →
           </button>
-          <p style={{ fontSize:13, color:MUTED, marginTop:16 }}>Sin tarjeta de crédito · Sin comisiones · Sin contratos</p>
+          <p style={{ fontSize:16, color:MUTED, marginTop:16 }}>Sin tarjeta de crédito · Sin comisiones · Sin contratos</p>
         </div>
       </section>
 
@@ -502,17 +511,17 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
           <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}>
             <SpartsLogo size={28}/>
           </div>
-          <p style={{ fontSize:15, color:RED, marginBottom:16, fontFamily:"Bebas Neue, sans-serif", letterSpacing:1.5, textTransform:"uppercase" }}>No vendemos repuestos. Conectamos personas.</p>
+          <p style={{ fontSize:16, color:RED, marginBottom:16, fontFamily:"Bebas Neue, sans-serif", letterSpacing:1.5, textTransform:"uppercase" }}>No vendemos repuestos. Conectamos personas.</p>
           <div style={{ display:"flex", gap:24, justifyContent:"center", flexWrap:"wrap", marginBottom:20 }}>
             {["Términos y condiciones","Política de privacidad","Contacto"].map((link,i)=>(
-              <span key={i} style={{ fontSize:13, color:MUTED, cursor:"pointer", transition:"color .15s" }}
+              <span key={i} style={{ fontSize:16, color:MUTED, cursor:"pointer", transition:"color .15s" }}
                 onMouseEnter={e=>e.currentTarget.style.color=TEXT}
                 onMouseLeave={e=>e.currentTarget.style.color=MUTED}>
                 {link}
               </span>
             ))}
           </div>
-          <p style={{ fontSize:12, color:MUTED }}>© {new Date().getFullYear()} SpartsHub™ · fgiangrandisc@gmail.com · +56 9 3268 9914</p>
+          <p style={{ fontSize:16, color:MUTED }}>© {new Date().getFullYear()} SpartsHub™ · fgiangrandisc@gmail.com · +56 9 3268 9914</p>
         </div>
       </footer>
     </div>
@@ -544,12 +553,11 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
       onAuth(data.user);
     } else {
       const name = f.name.trim();
-      const biz  = f.biz.trim();
-      if (!name || !biz) { setErr("Completa todos los campos."); setLoading(false); return; }
+      if (!name) { setErr("Ingresa tu nombre."); setLoading(false); return; }
       const { data, error } = await sb.auth.signUp({ email, password: pass });
       if (error) { setErr(error.message); setLoading(false); return; }
       if (data.user) {
-        await sb.from("profiles").upsert({ id:data.user.id, name, biz, phone:f.phone.trim(), location:f.location.trim() });
+        await sb.from("profiles").upsert({ id:data.user.id, name, biz:f.biz.trim()||null, phone:f.phone.trim(), location:f.location.trim() });
         alert("¡Cuenta creada! Revisa tu email para confirmar.");
         setMode("login");
       }
@@ -559,8 +567,16 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
 
   return (
     <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column" }}>
-      <style>{CSS_BASE}</style>
-      <div style={{ padding:"56px 20px 20px", display:"flex", alignItems:"center", gap:12 }}>
+      <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
+      <style>{`
+        *, *::before, *::after { box-sizing: border-box; }
+        .inp { font-size: 16px !important; padding: 12px 16px !important; }
+        .btn-red, .btn-ol, .btn-ghost { font-size: 15px !important; }
+        .tag { font-size: 12px !important; }
+        .sidebar-btn { font-size: 15px !important; }
+        .bebas { letter-spacing: 0.5px; }
+        select, input, textarea { font-size: 16px !important; }
+      `}</style>
         <button className="btn-ghost" onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
         <SpartsLogo size={36}/>
       </div>
@@ -569,7 +585,7 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
         <h2 className="bebas" style={{ fontSize:34, color:TEXT, marginBottom:4 }}>
           {mode==="login" ? "Bienvenido de vuelta" : "Crear cuenta"}
         </h2>
-        <p style={{ fontSize:15, color:SUB, marginBottom:8 }}>
+        <p style={{ fontSize:16, color:SUB, marginBottom:8 }}>
           {mode==="login" ? "Ingresa para continuar" : "Únete a la red industrial"}
         </p>
 
@@ -579,14 +595,14 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
           ))}
         </div>
 
-        {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.3)",borderRadius:8,padding:"12px 16px",fontSize:13,color:DANGER }}>
+        {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.3)",borderRadius:8,padding:"12px 16px",fontSize:16,color:DANGER }}>
           {err === "Invalid login credentials" ? (lang==="en"?"Invalid email or password.":"Email o contraseña incorrectos.") : err}
         </div>}
 
         {mode === "register" && (
           <>
             <input className="inp" placeholder={t("auth_name")} maxLength={100} value={f.name} onChange={e=>upd("name",e.target.value)}/>
-            <input className="inp" placeholder={t("auth_company")} maxLength={150} value={f.biz} onChange={e=>upd("biz",e.target.value)}/>
+            <input className="inp" placeholder={`${t("auth_company")} (opcional)`} maxLength={150} value={f.biz} onChange={e=>upd("biz",e.target.value)}/>
             <input className="inp" placeholder={t("auth_whatsapp")} maxLength={25} value={f.phone} onChange={e=>upd("phone",e.target.value)}/>
             <input className="inp" placeholder={t("pub_location_ph")} maxLength={100} value={f.location} onChange={e=>upd("location",e.target.value)}/>
           </>
@@ -595,7 +611,7 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
         <input className="inp" type="email" placeholder={t("auth_email")} value={f.email} onChange={e=>upd("email",e.target.value)}/>
         <div style={{ position:"relative" }}>
           <input className="inp" type={showPass?"text":"password"} placeholder={t("auth_password")} value={f.pass} onChange={e=>upd("pass",e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} style={{ paddingRight:44 }}/>
-          <button onClick={()=>setShowPass(v=>!v)} style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:MUTED,fontSize:14,padding:0 }}>
+          <button onClick={()=>setShowPass(v=>!v)} style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:MUTED,fontSize:16,padding:0 }}>
             {showPass?"🙈":"👁️"}
           </button>
         </div>
@@ -604,7 +620,7 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
           {loading ? <Spin/> : mode==="login" ? t("auth_enter") : t("auth_create")}
         </button>
 
-        <p style={{ textAlign:"center", fontSize:12, color:MUTED, marginTop:4 }}>
+        <p style={{ textAlign:"center", fontSize:16, color:MUTED, marginTop:4 }}>
           {t("auth_tagline")}
         </p>
       </div>
@@ -632,7 +648,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
         {[[listings.length||"—",t("home_active")],["0%",t("home_commission")],["P2P",t("home_p2p")],["✓",t("home_verified")]].map(([v,l])=>(
           <div key={l} style={{ background:CARD,borderRadius:10,padding:"16px 20px",border:`1px solid ${BORDER}`,display:"flex",alignItems:"center",gap:14 }}>
             <p className="bebas" style={{ fontSize:28,color:RED,lineHeight:1 }}>{v}</p>
-            <p style={{ fontSize:12,color:MUTED,lineHeight:1.4 }}>{l}</p>
+            <p style={{ fontSize:16,color:MUTED,lineHeight:1.4 }}>{l}</p>
           </div>
         ))}
       </div>
@@ -643,7 +659,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
       <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
         {CATS.slice(1).map(c=>(
           <button key={c.id} onClick={onGoSearch}
-            style={{ padding:"7px 14px",borderRadius:20,fontSize:12,fontWeight:700,border:`1px solid ${BORDER}`,background:CARD,color:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}
+            style={{ padding:"7px 14px",borderRadius:20,fontSize:16,fontWeight:700,border:`1px solid ${BORDER}`,background:CARD,color:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}
             onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
             onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=SUB; }}>
             {c.emoji} {c.label}
@@ -654,7 +670,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
       {/* Featured grid — 4 columns */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
         <span className="bebas" style={{ fontSize:22,color:TEXT }}>{t("home_top")}</span>
-        <span style={{ fontSize:13,fontWeight:700,color:RED,cursor:"pointer" }} onClick={onGoSearch}>{t("home_see_all")}</span>
+        <span style={{ fontSize:16,fontWeight:700,color:RED,cursor:"pointer" }} onClick={onGoSearch}>{t("home_see_all")}</span>
       </div>
       {loading ? (
         <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24 }}>
@@ -666,9 +682,9 @@ function HomePage({ user, onSelect, onGoSearch }) {
             <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
               <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
               <div style={{ padding:"10px 12px 14px" }}>
-                <span className="tag t-dim" style={{ fontSize:9,marginBottom:6,display:"inline-flex" }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
-                <p style={{ fontSize:13,fontWeight:700,lineHeight:1.3,marginBottom:4,color:TEXT }}>{l.title}</p>
-                <p style={{ fontSize:11,color:MUTED,marginBottom:6 }}>{l.location}</p>
+                <span className="tag t-dim" style={{ fontSize:16,marginBottom:6,display:"inline-flex" }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
+                <p style={{ fontSize:16,fontWeight:700,lineHeight:1.3,marginBottom:4,color:TEXT }}>{l.title}</p>
+                <p style={{ fontSize:16,color:MUTED,marginBottom:6 }}>{l.location}</p>
                 <p className="bebas" style={{ fontSize:17,color:RED }}>{fmtPrice(l.price,l.currency)}</p>
               </div>
             </div>
@@ -694,11 +710,11 @@ function MiniCard({ l, onClick }) {
         {l.emoji||"📦"}
       </div>
       <div style={{ flex:1, minWidth:0 }}>
-        <p style={{ fontSize:14, fontWeight:600, lineHeight:1.3, marginBottom:3, color:TEXT }}>{l.title}</p>
-        <p style={{ fontSize:12, color:MUTED, marginBottom:6 }}>{l.biz} · {l.location}</p>
+        <p style={{ fontSize:16, fontWeight:600, lineHeight:1.3, marginBottom:3, color:TEXT }}>{l.title}</p>
+        <p style={{ fontSize:16, color:MUTED, marginBottom:6 }}>{l.biz} · {l.location}</p>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <span className="bebas" style={{ fontSize:16, color:RED }}>{fmtPrice(l.price, l.currency)}</span>
-          <span style={{ fontSize:11, color:MUTED }}>{fmtTs(l.created_at)}</span>
+          <span style={{ fontSize:16, color:MUTED }}>{fmtTs(l.created_at)}</span>
         </div>
       </div>
     </div>
@@ -724,7 +740,7 @@ function SearchPage({ user, onSelect, region }) {
   const [tipo,       setTipo]       = useState("");       // "" | "repuesto" | "servicio"
   const [priceMin,   setPriceMin]   = useState("");
   const [priceMax,   setPriceMax]   = useState("");
-  const [priceCur,   setPriceCur]   = useState("USD");
+  const [priceCur,   setPriceCur]   = useState("CLP");
   const [sortBy,     setSortBy]     = useState("newest");
   const [verified,   setVerified]   = useState(false);
   const [listings,   setListings]   = useState([]);
@@ -801,13 +817,13 @@ function SearchPage({ user, onSelect, region }) {
     setNSerie(""); setNParte(""); setNMotor("");
     setHorasMin(""); setHorasMax("");
     setUbicacion("all"); setTipo("");
-    setPriceMin(""); setPriceMax(""); setPriceCur("USD");
+    setPriceMin(""); setPriceMax(""); setPriceCur("CLP");
     setVerified(false); setSortBy("newest");
   };
 
-  const LABEL = { fontSize:10, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" };
-  const SEL   = (active) => ({ background:SURF, border:`1px solid ${active?RED:BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:active?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:active?700:400, transition:"border-color .2s" });
-  const INP   = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
+  const LABEL = { fontSize:16, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" };
+  const SEL   = (active) => ({ background:SURF, border:`1px solid ${active?RED:BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:16, color:active?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:active?700:400, transition:"border-color .2s" });
+  const INP   = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:16, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
   const DIV   = { height:1, background:BORDER, margin:"14px 0" };
 
   const isMobile = useIsMobile();
@@ -821,14 +837,14 @@ function SearchPage({ user, onSelect, region }) {
         {/* Header */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
           <p className="bebas" style={{ fontSize:18, color:TEXT, letterSpacing:.5 }}>{t("search_filters")}</p>
-          {activeFilters > 0 && <span style={{ background:RED, color:"#fff", fontSize:10, fontWeight:700, borderRadius:10, padding:"2px 8px", fontFamily:"Barlow Condensed,sans-serif" }}>{activeFilters}</span>}
+          {activeFilters > 0 && <span style={{ background:RED, color:"#fff", fontSize:16, fontWeight:700, borderRadius:10, padding:"2px 8px", fontFamily:"Barlow Condensed,sans-serif" }}>{activeFilters}</span>}
         </div>
 
         {/* Global region badge */}
         {region && region !== "all" && ubicacion === "all" && (
           <div style={{ marginBottom:12, padding:"5px 9px", background:"rgba(255,140,0,.08)", borderRadius:7, border:"1px solid rgba(255,140,0,.2)", display:"flex", alignItems:"center", gap:6 }}>
             <Ic n="map" s={11} c={RED}/>
-            <span style={{ fontSize:10, color:RED, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
+            <span style={{ fontSize:16, color:RED, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
               {lang==="en" ? REGIONS.find(r=>r.id===region)?.label_en : REGIONS.find(r=>r.id===region)?.label_es}
             </span>
           </div>
@@ -840,7 +856,7 @@ function SearchPage({ user, onSelect, region }) {
           <div style={{ display:"flex", borderRadius:8, overflow:"hidden", border:`1px solid ${BORDER}` }}>
             {[["","Todos"],["repuesto","Repuestos"],["servicio","Servicios"]].map(([val,lbl])=>(
               <button key={val} onClick={()=>setTipo(val)}
-                style={{ flex:1, padding:"8px 4px", border:"none", cursor:"pointer", fontSize:11, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.3, transition:"all .15s",
+                style={{ flex:1, padding:"8px 4px", border:"none", cursor:"pointer", fontSize:16, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.3, transition:"all .15s",
                   background: tipo===val ? RED : "transparent",
                   color: tipo===val ? "#fff" : MUTED }}>
                 {lbl}
@@ -891,7 +907,7 @@ function SearchPage({ user, onSelect, region }) {
             <div style={{ display:"flex", background:BG2, borderRadius:5, overflow:"hidden", border:`1px solid ${BORDER}` }}>
               {["USD","CLP","EUR"].map(c=>(
                 <button key={c} onClick={()=>setPriceCur(c)}
-                  style={{ padding:"2px 7px", fontSize:10, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", transition:"all .12s",
+                  style={{ padding:"2px 7px", fontSize:16, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", transition:"all .12s",
                     background: priceCur===c ? RED : "transparent",
                     color: priceCur===c ? "#fff" : MUTED }}>
                   {c}
@@ -901,7 +917,7 @@ function SearchPage({ user, onSelect, region }) {
           </div>
           <div style={{ display:"flex", gap:6, alignItems:"center" }}>
             <input value={priceMin} onChange={e=>setPriceMin(e.target.value)} placeholder="Mín" type="number" min="0" style={{ ...INP, width:"50%" }}/>
-            <span style={{ color:MUTED, fontSize:13 }}>–</span>
+            <span style={{ color:MUTED, fontSize:16 }}>–</span>
             <input value={priceMax} onChange={e=>setPriceMax(e.target.value)} placeholder="Máx" type="number" min="0" style={{ ...INP, width:"50%" }}/>
           </div>
         </div>
@@ -929,9 +945,9 @@ function SearchPage({ user, onSelect, region }) {
         <div style={{ marginBottom:14 }}>
           <p style={LABEL}>Números técnicos</p>
           <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
-            <input value={nSerie} onChange={e=>setNSerie(e.target.value)} placeholder="N° Serie" style={{ ...INP, fontSize:12 }}/>
-            <input value={nParte} onChange={e=>setNParte(e.target.value)} placeholder="N° Parte" style={{ ...INP, fontSize:12 }}/>
-            <input value={nMotor} onChange={e=>setNMotor(e.target.value)} placeholder="N° Motor" style={{ ...INP, fontSize:12 }}/>
+            <input value={nSerie} onChange={e=>setNSerie(e.target.value)} placeholder="N° Serie" style={{ ...INP, fontSize:16 }}/>
+            <input value={nParte} onChange={e=>setNParte(e.target.value)} placeholder="N° Parte" style={{ ...INP, fontSize:16 }}/>
+            <input value={nMotor} onChange={e=>setNMotor(e.target.value)} placeholder="N° Motor" style={{ ...INP, fontSize:16 }}/>
           </div>
         </div>
 
@@ -940,7 +956,7 @@ function SearchPage({ user, onSelect, region }) {
           <p style={LABEL}>Horas de uso</p>
           <div style={{ display:"flex", gap:6, alignItems:"center" }}>
             <input value={horasMin} onChange={e=>setHorasMin(e.target.value)} placeholder="Mín" type="number" min="0" style={{ ...INP, width:"50%" }}/>
-            <span style={{ color:MUTED, fontSize:13 }}>–</span>
+            <span style={{ color:MUTED, fontSize:16 }}>–</span>
             <input value={horasMax} onChange={e=>setHorasMax(e.target.value)} placeholder="Máx" type="number" min="0" style={{ ...INP, width:"50%" }}/>
           </div>
         </div>
@@ -949,7 +965,7 @@ function SearchPage({ user, onSelect, region }) {
 
         {/* 10. VERIFICADOS */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, cursor:"pointer" }} onClick={()=>setVerified(v=>!v)}>
-          <p style={{ fontSize:13, color:verified?TEXT:SUB, fontWeight:verified?700:400 }}>Solo verificados ✓</p>
+          <p style={{ fontSize:16, color:verified?TEXT:SUB, fontWeight:verified?700:400 }}>Solo verificados ✓</p>
           <div className="toggle" style={{ background:verified?RED:"rgba(255,255,255,.1)" }}>
             <div className="toggle-knob" style={{ left:verified?20:2 }}/>
           </div>
@@ -957,7 +973,7 @@ function SearchPage({ user, onSelect, region }) {
 
         {/* CLEAR ALL FILTERS */}
         <button onClick={resetFilters}
-          style={{ width:"100%", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,140,0,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
+          style={{ width:"100%", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,140,0,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
           {activeFilters > 0 ? `✕ Limpiar filtros (${activeFilters})` : "Sin filtros activos"}
         </button>
       </div>
@@ -972,7 +988,7 @@ function SearchPage({ user, onSelect, region }) {
             {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
           </div>
           <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
-            style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:13, color:TEXT, outline:"none", cursor:"pointer", fontFamily:"inherit" }}>
+            style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:16, color:TEXT, outline:"none", cursor:"pointer", fontFamily:"inherit" }}>
             {[["newest","Más recientes"],["price_asc","Menor precio"],["price_desc","Mayor precio"],["a_z","A → Z"],["z_a","Z → A"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
           </select>
           <div style={{ display:"flex", gap:4 }}>
@@ -1002,7 +1018,7 @@ function SearchPage({ user, onSelect, region }) {
         )}
 
         {/* Count */}
-        <p style={{ fontSize:13, color:MUTED, marginBottom:14 }}>
+        <p style={{ fontSize:16, color:MUTED, marginBottom:14 }}>
           {loading ? t("search_searching") : `${listings.length} ${t("search_found")}`}
         </p>
 
@@ -1012,8 +1028,8 @@ function SearchPage({ user, onSelect, region }) {
           <div style={{ padding:"60px 0", textAlign:"center" }}>
             <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
             <p className="bebas" style={{ fontSize:24, color:TEXT, marginBottom:8 }}>Sin resultados</p>
-            <p style={{ color:MUTED, fontSize:14, marginBottom:16 }}>Intentá con otro término o ajustá los filtros</p>
-            <button className="btn-ol" onClick={resetFilters} style={{ fontSize:13 }}>Limpiar filtros</button>
+            <p style={{ color:MUTED, fontSize:16, marginBottom:16 }}>Intentá con otro término o ajustá los filtros</p>
+            <button className="btn-ol" onClick={resetFilters} style={{ fontSize:16 }}>Limpiar filtros</button>
           </div>
         ) : viewMode === "grid" ? (
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:14 }}>
@@ -1022,13 +1038,13 @@ function SearchPage({ user, onSelect, region }) {
                 <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
                 <div style={{ padding:"10px 12px 14px" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-                    <span className="tag t-dim" style={{ fontSize:9 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
-                    {l.verified && <span className="tag t-green" style={{ fontSize:9 }}>✓</span>}
+                    <span className="tag t-dim" style={{ fontSize:16 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
+                    {l.verified && <span className="tag t-green" style={{ fontSize:16 }}>✓</span>}
                   </div>
-                  <p style={{ fontSize:13, fontWeight:600, lineHeight:1.3, marginBottom:3, color:TEXT }}>{l.title}</p>
-                  <p style={{ fontSize:11, color:MUTED, marginBottom:2 }}>{l.biz}</p>
-                  {l.location && <p style={{ fontSize:11, color:MUTED, marginBottom:6 }}>📍 {l.location}</p>}
-                  {l.brand && <p style={{ fontSize:11, color:MUTED, marginBottom:6 }}>🏷️ {l.brand}</p>}
+                  <p style={{ fontSize:16, fontWeight:600, lineHeight:1.3, marginBottom:3, color:TEXT }}>{l.title}</p>
+                  <p style={{ fontSize:16, color:MUTED, marginBottom:2 }}>{l.biz}</p>
+                  {l.location && <p style={{ fontSize:16, color:MUTED, marginBottom:6 }}>📍 {l.location}</p>}
+                  {l.brand && <p style={{ fontSize:16, color:MUTED, marginBottom:6 }}>🏷️ {l.brand}</p>}
                   <p className="bebas" style={{ fontSize:16, color:RED }}>{fmtPrice(l.price, l.currency)}</p>
                 </div>
               </div>
@@ -1074,12 +1090,12 @@ function PhotoCarousel({ photos }) {
           />
           {/* Counter */}
           {photos.length > 1 && (
-            <div style={{ position:"absolute", top:10, right:10, background:"rgba(0,0,0,.6)", backdropFilter:"blur(4px)", borderRadius:20, padding:"3px 10px", fontSize:11, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif" }}>
+            <div style={{ position:"absolute", top:10, right:10, background:"rgba(0,0,0,.6)", backdropFilter:"blur(4px)", borderRadius:20, padding:"3px 10px", fontSize:16, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif" }}>
               {idx+1} / {photos.length}
             </div>
           )}
           {/* Zoom hint */}
-          <div style={{ position:"absolute", bottom:10, right:10, background:"rgba(0,0,0,.5)", borderRadius:6, padding:"3px 7px", fontSize:10, color:"rgba(255,255,255,.6)", fontFamily:"Barlow Condensed,sans-serif", display:"flex", alignItems:"center", gap:3 }}>
+          <div style={{ position:"absolute", bottom:10, right:10, background:"rgba(0,0,0,.5)", borderRadius:6, padding:"3px 7px", fontSize:16, color:"rgba(255,255,255,.6)", fontFamily:"Barlow Condensed,sans-serif", display:"flex", alignItems:"center", gap:3 }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
             AMPLIAR
           </div>
@@ -1120,7 +1136,7 @@ function PhotoCarousel({ photos }) {
             style={{ position:"absolute", top:16, right:16, background:"rgba(255,255,255,.1)", border:"none", borderRadius:"50%", width:40, height:40, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <Ic n="x" s={20} c="#fff"/>
           </button>
-          <div style={{ position:"absolute", top:20, left:"50%", transform:"translateX(-50%)", background:"rgba(255,255,255,.1)", borderRadius:20, padding:"4px 14px", fontSize:13, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif" }}>
+          <div style={{ position:"absolute", top:20, left:"50%", transform:"translateX(-50%)", background:"rgba(255,255,255,.1)", borderRadius:20, padding:"4px 14px", fontSize:16, fontWeight:700, color:"#fff", fontFamily:"Barlow Condensed,sans-serif" }}>
             {idx+1} / {photos.length}
           </div>
           <img src={photos[idx]} alt=""
@@ -1202,21 +1218,21 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20 }}>
               {[["Condición",l.condition],["Marca",l.brand||"—"],["Modelo",l.model||"—"],["Stock",`${l.stock||1} u.`],l.hours&&["Horas de uso",`${l.hours} hrs`],l.serial_number&&["N° Serie",l.serial_number],l.part_number&&["N° Parte",l.part_number],l.engine_number&&["N° Motor",l.engine_number],l.chassis_number&&["N° Chasis",l.chassis_number]].filter(Boolean).map(([k,v])=>(
                 <div key={k} style={{ background:BG2,borderRadius:10,padding:"12px 14px",border:`1px solid ${BORDER}` }}>
-                  <p style={{ fontSize:11,color:MUTED,marginBottom:3,fontWeight:600,textTransform:"uppercase",letterSpacing:.5 }}>{k}</p>
-                  <p style={{ fontSize:14,fontWeight:600,color:TEXT }}>{v}</p>
+                  <p style={{ fontSize:16,color:MUTED,marginBottom:3,fontWeight:600,textTransform:"uppercase",letterSpacing:.5 }}>{k}</p>
+                  <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{v}</p>
                 </div>
               ))}
             </div>
 
             <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:16,padding:"12px 14px",background:BG2,borderRadius:10,border:`1px solid ${BORDER}` }}>
               <Ic n="map" s={16} c={RED}/>
-              <span style={{ fontSize:14,fontWeight:500,color:TEXT }}>{l.location}</span>
+              <span style={{ fontSize:16,fontWeight:500,color:TEXT }}>{l.location}</span>
             </div>
 
             {l.description && (
               <div style={{ marginBottom:20 }}>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:8 }}>DESCRIPCIÓN</p>
-                <p style={{ fontSize:15,color:SUB,lineHeight:1.7 }}>{l.description}</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:8 }}>DESCRIPCIÓN</p>
+                <p style={{ fontSize:16,color:SUB,lineHeight:1.7 }}>{l.description}</p>
               </div>
             )}
 
@@ -1228,7 +1244,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
               <div>
                 <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>{l.biz}</p>
                 <div style={{ display:"flex",gap:4,alignItems:"center",marginTop:2 }}>
-                  <span style={{ fontSize:12,color:MUTED }}>{l.location}</span>
+                  <span style={{ fontSize:16,color:MUTED }}>{l.location}</span>
                 </div>
               </div>
             </div>
@@ -1237,23 +1253,23 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
               {isOwner ? (
                 <>
                   <button onClick={()=>setShowEdit(true)}
-                    style={{ background:BG2,color:TEXT,borderRadius:10,padding:"14px",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${BORDER}`,cursor:"pointer" }}>
+                    style={{ background:BG2,color:TEXT,borderRadius:10,padding:"14px",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${BORDER}`,cursor:"pointer" }}>
                     <Ic n="settings" s={18} c={TEXT}/>Editar publicación
                   </button>
                   {confirmDel ? (
                     <div style={{ display:"flex",gap:10 }}>
                       <button onClick={()=>setConfirmDel(false)}
-                        style={{ flex:1,padding:"14px",borderRadius:10,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:14,cursor:"pointer",fontWeight:600 }}>
+                        style={{ flex:1,padding:"14px",borderRadius:10,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:16,cursor:"pointer",fontWeight:600 }}>
                         Cancelar
                       </button>
                       <button onClick={deleteListing} disabled={deleting}
-                        style={{ flex:1,padding:"14px",borderRadius:10,border:"none",background:DANGER,color:"#fff",fontSize:14,cursor:"pointer",fontWeight:700 }}>
+                        style={{ flex:1,padding:"14px",borderRadius:10,border:"none",background:DANGER,color:"#fff",fontSize:16,cursor:"pointer",fontWeight:700 }}>
                         {deleting?<Spin/>:"Sí, eliminar"}
                       </button>
                     </div>
                   ) : (
                     <button onClick={()=>setConfirmDel(true)}
-                      style={{ background:"rgba(220,38,38,.08)",color:DANGER,borderRadius:10,padding:"14px",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid rgba(220,38,38,.25)`,cursor:"pointer" }}>
+                      style={{ background:"rgba(220,38,38,.08)",color:DANGER,borderRadius:10,padding:"14px",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid rgba(220,38,38,.25)`,cursor:"pointer" }}>
                       <Ic n="trash" s={18} c={DANGER}/>Eliminar publicación
                     </button>
                   )}
@@ -1261,7 +1277,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
               ) : (
                 <>
                   <button onClick={l.phone ? wa : undefined}
-                    style={{ background: l.phone ? "#25D366" : BG2, color: l.phone ? "#fff" : MUTED, borderRadius:10, padding:"15px", fontSize:15, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", gap:10, border: l.phone ? "none" : `1px solid ${BORDER}`, cursor: l.phone ? "pointer" : "not-allowed", opacity: l.phone ? 1 : .6 }}
+                    style={{ background: l.phone ? "#25D366" : BG2, color: l.phone ? "#fff" : MUTED, borderRadius:10, padding:"15px", fontSize:16, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", gap:10, border: l.phone ? "none" : `1px solid ${BORDER}`, cursor: l.phone ? "pointer" : "not-allowed", opacity: l.phone ? 1 : .6 }}
                     title={l.phone ? undefined : "Este vendedor no publicó su WhatsApp. Usa el chat interno."}>
                     <Ic n="wa" s={20} c={l.phone?"#fff":MUTED}/>{l.phone?"Contactar por WhatsApp":"WhatsApp no disponible"}
                   </button>
@@ -1315,7 +1331,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
   const [f, setF] = useState({
     title:"", brand:"", model:"", serial_number:"", part_number:"",
     engine_number:"", hours:"", cat:"min",
-    condition:"Nuevo", price:"", currency:"USD", stock:"1",
+    condition:"Nuevo", price:"", currency:"CLP", stock:"1",
     location:profile?.location||"", phone:profile?.phone||"",
     biz:profile?.biz||"", description:"", emoji:"📦"
   });
@@ -1421,7 +1437,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
         <div style={{ overflowY:"auto",flex:1,padding:"0 20px 40px" }}>
           {step===0 && (
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-              <p style={{ fontSize:13,color:MUTED,marginBottom:4 }}>{t("pub_what")}</p>
+              <p style={{ fontSize:16,color:MUTED,marginBottom:4 }}>{t("pub_what")}</p>
               {TYPES.map(tp=>(
                 <div key={tp.id} onClick={()=>{ setType(tp.id); setStep(1); }}
                   style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${tp.highlight?RED:BORDER}`,background:tp.highlight?"rgba(255,140,0,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
@@ -1429,8 +1445,8 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                     <Ic n={tp.icon} s={20} c={tp.highlight?"#fff":SUB}/>
                   </div>
                   <div style={{ flex:1 }}>
-                    <p style={{ fontSize:15,fontWeight:700,marginBottom:2,color:TEXT }}>{t(tp.titleKey)}</p>
-                    <p style={{ fontSize:13,color:MUTED }}>{t(tp.subKey)}</p>
+                    <p style={{ fontSize:16,fontWeight:700,marginBottom:2,color:TEXT }}>{t(tp.titleKey)}</p>
+                    <p style={{ fontSize:16,color:MUTED }}>{t(tp.subKey)}</p>
                   </div>
                   <Ic n="chevR" s={18} c={MUTED}/>
                 </div>
@@ -1448,7 +1464,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                   <div key={i} style={{ position:"relative",flexShrink:0 }}>
                     <img src={url} alt="" style={{ width:80,height:80,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${BORDER}` }}/>
                     <button onClick={()=>removePhoto(i)}
-                      style={{ position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,color:MUTED,fontSize:11,lineHeight:"20px",textAlign:"center",cursor:"pointer",padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                      style={{ position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,color:MUTED,fontSize:16,lineHeight:"20px",textAlign:"center",cursor:"pointer",padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
                       <Ic n="x" s={10} c="#fff"/>
                     </button>
                   </div>
@@ -1460,7 +1476,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                     onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
                     onMouseLeave={e=>e.currentTarget.style.borderColor=previews.length===0?RED:BORDER}>
                     <Ic n="camera" s={previews.length===0?22:18} c={previews.length===0?RED:MUTED}/>
-                    <span style={{ fontSize:10,color:previews.length===0?RED:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>
+                    <span style={{ fontSize:16,color:previews.length===0?RED:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>
                       {previews.length===0?"FOTO":"+ FOTO"}
                     </span>
                   </div>
@@ -1474,54 +1490,54 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 ))}
               </div>
 
-              {err&&<div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:DANGER }}>{err}</div>}
+              {err&&<div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:16,color:DANGER }}>{err}</div>}
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_title")}</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_title")}</p>
                 <input className="inp" placeholder={t("pub_title_ph")} value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
               </div>
 
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
                 <div>
-                  <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
                   <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
                     {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_brand")}</p>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_brand")}</p>
                   <input className="inp" placeholder={t("pub_brand_ph")} value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)}/>
                 </div>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_model")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_model")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
                 <input className="inp" placeholder={t("pub_model_ph")} value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)}/>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_serial")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_serial")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
                 <input className="inp" placeholder={t("pub_serial_ph")} value={f.serial_number} maxLength={100} onChange={e=>upd("serial_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_part")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_part")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
                 <input className="inp" placeholder={t("pub_part_ph")} value={f.part_number} maxLength={100} onChange={e=>upd("part_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_engine")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_engine")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
                 <input className="inp" placeholder={t("pub_engine_ph")} value={f.engine_number} maxLength={100} onChange={e=>upd("engine_number",e.target.value)}/>
               </div>
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_hours")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_hours")} <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
                 <input className="inp" type="number" placeholder={t("pub_hours_ph")} value={f.hours} onChange={e=>upd("hours",e.target.value)}/>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
                 <div style={{ display:"flex",gap:8 }}>
                   {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                     <button key={c} onClick={()=>upd("condition",c)}
-                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,140,0,.1)":CARD,fontWeight:700,fontSize:11,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,140,0,.1)":CARD,fontWeight:700,fontSize:16,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
                       {c}
                     </button>
                   ))}
@@ -1529,30 +1545,30 @@ function PublishSheet({ user, profile, onClose, onDone }) {
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
                 <div style={{ display:"flex",gap:8 }}>
                   <div style={{ position:"relative",flex:1 }}>
                     <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
                     <input className="inp" type="number" placeholder="0" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }}/>
                   </div>
                   <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
-                    {["USD","CLP","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                    {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_description")}</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_description")}</p>
                 <textarea className="inp" rows={3} placeholder={t("pub_desc_ph")} value={f.description} maxLength={1000} onChange={e=>upd("description",e.target.value)} style={{ resize:"none" }}/>
               </div>
 
               <div>
-                <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_location")}</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_location")}</p>
                 <input className="inp" placeholder={t("pub_location_ph")} value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)}/>
               </div>
 
               <button className="btn-red" onClick={submit} disabled={loading||!f.title||!f.price}
-                style={{ marginTop:8,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:15 }}>
+                style={{ marginTop:8,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:16 }}>
                 {loading?<Spin/>:t("pub_submit")}
               </button>
             </div>
@@ -1582,10 +1598,10 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                       <Ic n="camera" s={32} c={RED}/>
                     </div>
                     <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>{t("ai_take_photo")}</p>
-                    <p style={{ fontSize:13,color:MUTED,lineHeight:1.6 }}>{t("ai_desc")}</p>
+                    <p style={{ fontSize:16,color:MUTED,lineHeight:1.6 }}>{t("ai_desc")}</p>
                     <div style={{ display:"flex",gap:8,justifyContent:"center",marginTop:16,flexWrap:"wrap" }}>
                       {["Rodamientos","Bombas","Motores","Filtros","Válvulas"].map(tag=>(
-                        <span key={tag} className="tag t-dim" style={{ fontSize:10 }}>{tag}</span>
+                        <span key={tag} className="tag t-dim" style={{ fontSize:16 }}>{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -1605,15 +1621,15 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                   {aiLoading&&(
                     <div style={{ textAlign:"center",padding:"24px 0" }}>
                       <Spin size={32}/>
-                      <p style={{ fontSize:15,color:SUB,marginTop:14,fontWeight:600 }}>{t("ai_analyzing")}</p>
-                      <p style={{ fontSize:13,color:MUTED,marginTop:4 }}>Identificando marca, modelo y número de parte</p>
+                      <p style={{ fontSize:16,color:SUB,marginTop:14,fontWeight:600 }}>{t("ai_analyzing")}</p>
+                      <p style={{ fontSize:16,color:MUTED,marginTop:4 }}>Identificando marca, modelo y número de parte</p>
                     </div>
                   )}
 
                   {aiError&&!aiLoading&&(
                     <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:10,padding:"14px 16px",marginBottom:12 }}>
-                      <p style={{ fontSize:14,color:DANGER,fontWeight:600,marginBottom:4 }}>No se pudo identificar el componente</p>
-                      <p style={{ fontSize:13,color:MUTED }}>{aiError}</p>
+                      <p style={{ fontSize:16,color:DANGER,fontWeight:600,marginBottom:4 }}>No se pudo identificar el componente</p>
+                      <p style={{ fontSize:16,color:MUTED }}>{aiError}</p>
                     </div>
                   )}
 
@@ -1626,7 +1642,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                           </div>
                           <div>
                             <p style={{ fontSize:16,fontWeight:700,color:TEXT,lineHeight:1.2 }}>{aiResult.title}</p>
-                            <p style={{ fontSize:12,color:GREEN,fontWeight:600,marginTop:3 }}>
+                            <p style={{ fontSize:16,color:GREEN,fontWeight:600,marginTop:3 }}>
                               ✓ Identificado · Confianza {aiResult.confidence||"media"}
                             </p>
                           </div>
@@ -1634,16 +1650,16 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
                           {[["Marca",aiResult.brand],["Modelo",aiResult.model],["N° Parte",aiResult.part_number],["Condición",aiResult.condition]].map(([k,v])=>v&&(
                             <div key={k} style={{ background:BG2,borderRadius:8,padding:"10px 12px",border:`1px solid ${BORDER}` }}>
-                              <p style={{ fontSize:10,color:MUTED,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3 }}>{k}</p>
-                              <p style={{ fontSize:13,fontWeight:600,color:TEXT }}>{v}</p>
+                              <p style={{ fontSize:16,color:MUTED,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3 }}>{k}</p>
+                              <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{v}</p>
                             </div>
                           ))}
                         </div>
                         {aiResult.description&&(
-                          <p style={{ fontSize:13,color:SUB,marginTop:12,lineHeight:1.6 }}>{aiResult.description}</p>
+                          <p style={{ fontSize:16,color:SUB,marginTop:12,lineHeight:1.6 }}>{aiResult.description}</p>
                         )}
                       </div>
-                      <button className="btn-red" style={{ width:"100%",padding:"14px",fontSize:15 }}
+                      <button className="btn-red" style={{ width:"100%",padding:"14px",fontSize:16 }}
                         onClick={()=>{
                           upd("title",      aiResult.title||"");
                           upd("brand",      aiResult.brand||"");
@@ -1657,7 +1673,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                         }}>
                         Usar estos datos y completar publicación →
                       </button>
-                      <button className="btn-ghost" style={{ width:"100%",marginTop:8,justifyContent:"center",fontSize:13 }}
+                      <button className="btn-ghost" style={{ width:"100%",marginTop:8,justifyContent:"center",fontSize:16 }}
                         onClick={()=>{ setAiFile(null); setAiPreview(null); setAiResult(null); setAiError(""); }}>
                         {t("ai_try_other")}
                       </button>
@@ -1666,7 +1682,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
 
                   {!aiLoading&&!aiResult&&(
                     <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-                      <button className="btn-red" style={{ width:"100%",padding:"14px",fontSize:15 }}
+                      <button className="btn-red" style={{ width:"100%",padding:"14px",fontSize:16 }}
                         onClick={async()=>{
                           setAiLoading(true); setAiError(""); setAiResult(null);
                           try {
@@ -1691,7 +1707,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                         }}>
                         {t("ai_identify")}
                       </button>
-                      <button className="btn-ghost" style={{ justifyContent:"center",fontSize:13 }}
+                      <button className="btn-ghost" style={{ justifyContent:"center",fontSize:16 }}
                         onClick={()=>{ setAiFile(null); setAiPreview(null); }}>
                         {t("ai_change")}
                       </button>
@@ -1706,7 +1722,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
             <div style={{ paddingTop:40,textAlign:"center" }}>
               <div style={{ fontSize:64,marginBottom:16 }}>🚧</div>
               <p className="bebas" style={{ fontSize:28,marginBottom:8 }}>Próximamente</p>
-              <p style={{ fontSize:14,color:MUTED }}>Esta función estará disponible pronto.</p>
+              <p style={{ fontSize:16,color:MUTED }}>Esta función estará disponible pronto.</p>
               <button className="btn-red" style={{ marginTop:24 }} onClick={()=>setStep(0)}>Volver</button>
             </div>
           )}
@@ -1718,7 +1734,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
           <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(255,140,0,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
             <div style={{ fontSize:56,marginBottom:12 }}>🤝</div>
             <p className="bebas" style={{ fontSize:32,color:RED,marginBottom:8 }}>¡{matchCount} MATCH{matchCount>1?"ES":""} ENCONTRADO{matchCount>1?"S":""}!</p>
-            <p style={{ fontSize:15,color:TEXT,lineHeight:1.7,marginBottom:20 }}>
+            <p style={{ fontSize:16,color:TEXT,lineHeight:1.7,marginBottom:20 }}>
               Tu publicación coincide con {matchCount} solicitud{matchCount>1?"es":""} activa{matchCount>1?"s":""}. Ya enviamos un mensaje automático a los interesados.
             </p>
             <button className="btn-red" style={{ width:"100%",padding:"13px" }} onClick={()=>setShowMatchAlert(false)}>Ver mis mensajes →</button>
@@ -1810,7 +1826,7 @@ function MessagesPage({ user, initListing, onClear }) {
       <div style={{ padding:"0 20px 16px",display:"flex",gap:8,overflowX:"auto" }}>
         {FILTERS.map(f=>(
           <button key={f} onClick={()=>setFilter(f)}
-            style={{ flexShrink:0,padding:"7px 16px",borderRadius:20,fontSize:12,fontWeight:700,border:`1px solid ${filter===f?RED:BORDER}`,cursor:"pointer",background:filter===f?RED:CARD,color:filter===f?"#fff":SUB,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+            style={{ flexShrink:0,padding:"7px 16px",borderRadius:20,fontSize:16,fontWeight:700,border:`1px solid ${filter===f?RED:BORDER}`,cursor:"pointer",background:filter===f?RED:CARD,color:filter===f?"#fff":SUB,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
             {f}
           </button>
         ))}
@@ -1820,7 +1836,7 @@ function MessagesPage({ user, initListing, onClear }) {
           <div style={{ paddingTop:60,textAlign:"center" }}>
             <div style={{ fontSize:56,marginBottom:16 }}>💬</div>
             <p className="bebas" style={{ fontSize:28,marginBottom:8 }}>Sin conversaciones</p>
-            <p style={{ fontSize:14,color:MUTED }}>Contacta a un vendedor desde cualquier publicación</p>
+            <p style={{ fontSize:16,color:MUTED }}>Contacta a un vendedor desde cualquier publicación</p>
           </div>
         ) : contacts.map(c=>{
           const meta = contactMeta[c.id] || {};
@@ -1832,24 +1848,24 @@ function MessagesPage({ user, initListing, onClear }) {
             onClick={()=>setActive({ profile:c, listing:listing||null })}>
             <div style={{ position:"relative", flexShrink:0 }}>
               <Avatar name={c.biz||c.name||"U"} size={48}/>
-              {unread>0 && <div style={{ position:"absolute",top:-2,right:-2,width:18,height:18,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",border:`2px solid ${BG}` }}>{unread}</div>}
+              {unread>0 && <div style={{ position:"absolute",top:-2,right:-2,width:18,height:18,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#fff",border:`2px solid ${BG}` }}>{unread}</div>}
             </div>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:3 }}>
-                <p style={{ fontSize:15,fontWeight:700,color:TEXT }}>{c.biz||c.name||c.id?.slice(0,8)}</p>
-                {lastMsg && <p style={{ fontSize:11,color:MUTED,flexShrink:0 }}>{fmtTs(lastMsg.created_at)}</p>}
+                <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>{c.biz||c.name||c.id?.slice(0,8)}</p>
+                {lastMsg && <p style={{ fontSize:16,color:MUTED,flexShrink:0 }}>{fmtTs(lastMsg.created_at)}</p>}
               </div>
               {listing && (
-                <p style={{ fontSize:11,fontWeight:700,color:RED,marginBottom:2,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                <p style={{ fontSize:16,fontWeight:700,color:RED,marginBottom:2,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
                   📦 {listing.title}
                 </p>
               )}
               {lastMsg && (
-                <p style={{ fontSize:12,color:unread>0?SUB:MUTED,fontWeight:unread>0?600:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+                <p style={{ fontSize:16,color:unread>0?SUB:MUTED,fontWeight:unread>0?600:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
                   {lastMsg.from_id===user.id?"Tú: ":""}{lastMsg.body}
                 </p>
               )}
-              {!lastMsg && <p style={{ fontSize:12,color:MUTED }}>{c.location||"—"}</p>}
+              {!lastMsg && <p style={{ fontSize:16,color:MUTED }}>{c.location||"—"}</p>}
             </div>
             <Ic n="chevR" s={16} c={MUTED}/>
           </div>
@@ -1904,7 +1920,7 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
         <Avatar name={other.biz||other.name||"U"} size={40}/>
         <div style={{ flex:1 }}>
           <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>{other.biz||other.name}</p>
-          <p style={{ fontSize:12,color:MUTED,fontWeight:500 }}>{other.location||"SpartsHub"}</p>
+          <p style={{ fontSize:16,color:MUTED,fontWeight:500 }}>{other.location||"SpartsHub"}</p>
         </div>
         <Ic n="phone" s={20} c={RED}/>
       </div>
@@ -1912,8 +1928,8 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
         <div style={{ padding:"10px 16px",background:BG2,borderBottom:`0.5px solid ${BORDER}`,display:"flex",gap:10,alignItems:"center" }}>
           <span style={{ fontSize:20 }}>{listing.emoji||"📦"}</span>
           <div>
-            <p style={{ fontSize:11,color:MUTED }}>Consulta sobre</p>
-            <p style={{ fontSize:13,fontWeight:600,color:TEXT }}>{listing.title}</p>
+            <p style={{ fontSize:16,color:MUTED }}>Consulta sobre</p>
+            <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{listing.title}</p>
           </div>
         </div>
       )}
@@ -1923,21 +1939,21 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
             <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12 }}>
               <div style={{ fontSize:48 }}>👋</div>
               <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>Inicia la conversación</p>
-              <p style={{ fontSize:14,color:MUTED }}>Los mensajes son directos y privados</p>
+              <p style={{ fontSize:16,color:MUTED }}>Los mensajes son directos y privados</p>
             </div>
           ) : msgs.map((m,i)=>{
             const mine = m.from_id===user.id;
             return (
               <div key={m.id||i} style={{ display:"flex",justifyContent:mine?"flex-end":"flex-start" }}>
-                <div style={{ maxWidth:"76%",background:mine?RED:CARD,color:"#fff",borderRadius:mine?"18px 18px 4px 18px":"18px 18px 18px 4px",padding:"11px 15px",fontSize:15,lineHeight:1.5,border:mine?"none":`1px solid ${BORDER}` }}>
+                <div style={{ maxWidth:"76%",background:mine?RED:CARD,color:"#fff",borderRadius:mine?"18px 18px 4px 18px":"18px 18px 18px 4px",padding:"11px 15px",fontSize:16,lineHeight:1.5,border:mine?"none":`1px solid ${BORDER}` }}>
                   <p style={{ color:mine?"#fff":TEXT }}>{m.body}</p>
                   {m.listing_id && (
                     <button onClick={()=>onViewListing?.(m.listing_id)}
-                      style={{ marginTop:8,background:mine?"rgba(255,255,255,.18)":"rgba(255,140,0,.12)",border:`1px solid ${mine?"rgba(255,255,255,.3)":"rgba(255,140,0,.3)"}`,borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:mine?"#fff":RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
+                      style={{ marginTop:8,background:mine?"rgba(255,255,255,.18)":"rgba(255,140,0,.12)",border:`1px solid ${mine?"rgba(255,255,255,.3)":"rgba(255,140,0,.3)"}`,borderRadius:8,padding:"6px 12px",fontSize:16,fontWeight:700,color:mine?"#fff":RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
                       <Ic n="chevR" s={12} c={mine?"#fff":RED}/> Ver publicación
                     </button>
                   )}
-                  <p style={{ fontSize:10,opacity:.6,marginTop:4,textAlign:mine?"right":"left",color:mine?"rgba(255,255,255,.7)":MUTED }}>{fmtTs(m.created_at)}</p>
+                  <p style={{ fontSize:16,opacity:.6,marginTop:4,textAlign:mine?"right":"left",color:mine?"rgba(255,255,255,.7)":MUTED }}>{fmtTs(m.created_at)}</p>
                 </div>
               </div>
             );
@@ -2032,7 +2048,7 @@ function ProfilePage({ user, profile, onLogout }) {
         const cat = VALID_CATS.includes(obj.categoria||obj.cat) ? (obj.categoria||obj.cat) : "min";
         const condition = VALID_CONDS.includes(obj.condicion||obj.condition) ? (obj.condicion||obj.condition) : "Nuevo";
         const price = Math.max(0, Number(obj.precio||obj.price)||0);
-        const currency = ["USD","CLP","EUR","COP","PEN","MXN"].includes(obj.moneda||obj.currency) ? (obj.moneda||obj.currency) : "CLP";
+        const currency = ["CLP","USD","EUR","COP","PEN","MXN"].includes(obj.moneda||obj.currency) ? (obj.moneda||obj.currency) : "CLP";
         return { title, cat, condition, price: String(price), currency };
       }).filter(r=>r.title);
       setBulkRows(rows);
@@ -2080,8 +2096,8 @@ function ProfilePage({ user, profile, onLogout }) {
       <div style={{ width:isMobile?"100%":200,background:BG3,borderRight:isMobile?"none":`1px solid ${BORDER}`,borderBottom:isMobile?`1px solid ${BORDER}`:'none',padding:"12px 0",flexShrink:0,display:"flex",flexDirection:isMobile?"row":"column",flexWrap:isMobile?"wrap":"nowrap",overflowX:isMobile?"auto":"visible" }}>
         <div style={{ padding:"0 16px 20px",borderBottom:`1px solid ${BORDER}`,marginBottom:8 }}>
           <Avatar name={profile?.name||"U"} size={48}/>
-          <p style={{ fontSize:14,fontWeight:700,color:TEXT,marginTop:10 }}>{profile?.name||"Usuario"}</p>
-          <p style={{ fontSize:12,color:MUTED }}>{profile?.biz||"—"}</p>
+          <p style={{ fontSize:16,fontWeight:700,color:TEXT,marginTop:10 }}>{profile?.name||"Usuario"}</p>
+          <p style={{ fontSize:16,color:MUTED }}>{profile?.biz||"—"}</p>
         </div>
         {SECTIONS.map(s=>(
           <button key={s.id} className={`sidebar-btn${section===s.id?" active":""}`} onClick={()=>setSection(s.id)}>
@@ -2102,7 +2118,7 @@ function ProfilePage({ user, profile, onLogout }) {
           <div style={{ maxWidth:"100%" }}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24 }}>
               <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Mi Perfil</h2>
-              <button className="btn-ol" style={{ padding:"8px 16px",fontSize:12 }} onClick={()=>setEditMode(e=>!e)}>
+              <button className="btn-ol" style={{ padding:"8px 16px",fontSize:16 }} onClick={()=>setEditMode(e=>!e)}>
                 {editMode?t("profile_cancel"):t("profile_edit")}
               </button>
             </div>
@@ -2110,23 +2126,23 @@ function ProfilePage({ user, profile, onLogout }) {
               {[["Publicaciones",listings.length]].map(([k,v])=>(
                 <div key={k} style={{ background:CARD,borderRadius:10,padding:"16px",border:`1px solid ${BORDER}`,textAlign:"center" }}>
                   <p className="bebas" style={{ fontSize:26,color:RED }}>{v}</p>
-                  <p style={{ fontSize:11,color:MUTED,marginTop:4,textTransform:"uppercase",letterSpacing:.5,fontFamily:"Barlow Condensed,sans-serif" }}>{k}</p>
+                  <p style={{ fontSize:16,color:MUTED,marginTop:4,textTransform:"uppercase",letterSpacing:.5,fontFamily:"Barlow Condensed,sans-serif" }}>{k}</p>
                 </div>
               ))}
             </div>
             <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,display:"flex",flexDirection:"column",gap:14 }}>
               {[["Nombre completo","name","Ej: Carlos García"],["RUT","rut","RUT / ID fiscal"],["Empresa / Negocio","biz","Ej: Mining Corp S.A."],["WhatsApp / Teléfono","phone","+1 555 1234 / +56 9 1234"],["Dirección","address","Ej: Av. Principal 1234"],["Ciudad y País","location","Ciudad, País"]].map(([label,key,ph])=>(
                 <div key={key}>
-                  <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>{label}</p>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>{label}</p>
                   {editMode
                     ? <input className="inp" value={editData[key]} maxLength={key==="name"?100:key==="rut"?30:key==="biz"?150:key==="phone"?25:key==="address"?200:100} onChange={e=>setEditData(d=>({...d,[key]:e.target.value}))} placeholder={ph}/>
-                    : <p style={{ fontSize:15,color:editData[key]?TEXT:MUTED,padding:"10px 0",borderBottom:`1px solid ${BORDER}` }}>{editData[key]||"—"}</p>
+                    : <p style={{ fontSize:16,color:editData[key]?TEXT:MUTED,padding:"10px 0",borderBottom:`1px solid ${BORDER}` }}>{editData[key]||"—"}</p>
                   }
                 </div>
               ))}
               <div>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Email</p>
-                <p style={{ fontSize:15,color:MUTED,padding:"10px 0" }}>{user.email}</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Email</p>
+                <p style={{ fontSize:16,color:MUTED,padding:"10px 0" }}>{user.email}</p>
               </div>
               {editMode&&<button className="btn-red" onClick={saveProfile} style={{ padding:"13px" }}>{t("profile_save")}</button>}
             </div>
@@ -2140,10 +2156,10 @@ function ProfilePage({ user, profile, onLogout }) {
               <div key={l.id} style={{ background:CARD,borderRadius:10,padding:16,marginBottom:10,border:`1px solid ${BORDER}`,display:"flex",gap:12,alignItems:"center" }}>
                 <div style={{ width:48,height:48,background:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22 }}>{l.emoji||"📦"}</div>
                 <div style={{ flex:1 }}>
-                  <p style={{ fontWeight:600,fontSize:14,color:TEXT }}>{l.title}</p>
+                  <p style={{ fontWeight:600,fontSize:16,color:TEXT }}>{l.title}</p>
                   <p className="bebas" style={{ fontSize:16,color:RED }}>{fmtPrice(l.price,l.currency)}</p>
                 </div>
-                <span className="tag t-green" style={{ fontSize:10 }}>Activo</span>
+                <span className="tag t-green" style={{ fontSize:16 }}>Activo</span>
               </div>
             ))}
           </div>
@@ -2156,12 +2172,12 @@ function ProfilePage({ user, profile, onLogout }) {
               <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Notificaciones</h2>
               {inbox.some(m=>!m.read) && (
                 <button onClick={markInboxRead}
-                  style={{ background:"none",border:`1px solid ${BORDER}`,borderRadius:7,padding:"6px 12px",color:SUB,fontSize:12,cursor:"pointer",fontWeight:600 }}>
+                  style={{ background:"none",border:`1px solid ${BORDER}`,borderRadius:7,padding:"6px 12px",color:SUB,fontSize:16,cursor:"pointer",fontWeight:600 }}>
                   Marcar todo como leído
                 </button>
               )}
             </div>
-            <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Mensajes y avisos de matches recibidos.</p>
+            <p style={{ color:MUTED,fontSize:16,marginBottom:24 }}>Mensajes y avisos de matches recibidos.</p>
 
             {inboxLoading ? (
               <div style={{ display:"flex",justifyContent:"center",paddingTop:40 }}><Spin size={26}/></div>
@@ -2169,7 +2185,7 @@ function ProfilePage({ user, profile, onLogout }) {
               <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
                 <div style={{ fontSize:56,marginBottom:16 }}>🔔</div>
                 <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>No tienes notificaciones</p>
-                <p style={{ color:MUTED,fontSize:14 }}>Cuando recibas mensajes o matches aparecerán aquí</p>
+                <p style={{ color:MUTED,fontSize:16 }}>Cuando recibas mensajes o matches aparecerán aquí</p>
               </div>
             ) : (
               <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
@@ -2177,14 +2193,14 @@ function ProfilePage({ user, profile, onLogout }) {
                   <div key={m.id} style={{ background:m.read?CARD:"rgba(255,140,0,.06)",borderRadius:10,padding:"14px 16px",border:`1px solid ${m.read?BORDER:"rgba(255,140,0,.25)"}`,display:"flex",gap:12,alignItems:"flex-start" }}>
                     {!m.read && <div style={{ width:8,height:8,borderRadius:"50%",background:RED,marginTop:5,flexShrink:0 }}/>}
                     <div style={{ flex:1 }}>
-                      <p style={{ fontSize:14,color:TEXT,lineHeight:1.5,fontWeight:m.read?400:600 }}>{m.body}</p>
+                      <p style={{ fontSize:16,color:TEXT,lineHeight:1.5,fontWeight:m.read?400:600 }}>{m.body}</p>
                       {m.listing_id && (
                         <button onClick={()=>openNotifListing(m.listing_id)}
-                          style={{ marginTop:8,background:"rgba(255,140,0,.12)",border:"1px solid rgba(255,140,0,.3)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
+                          style={{ marginTop:8,background:"rgba(255,140,0,.12)",border:"1px solid rgba(255,140,0,.3)",borderRadius:8,padding:"6px 12px",fontSize:16,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
                           <Ic n="chevR" s={12} c={RED}/> Ver publicación
                         </button>
                       )}
-                      <p style={{ fontSize:11,color:MUTED,marginTop:4 }}>{fmtTs(m.created_at)}</p>
+                      <p style={{ fontSize:16,color:MUTED,marginTop:4 }}>{fmtTs(m.created_at)}</p>
                     </div>
                   </div>
                 ))}
@@ -2201,16 +2217,16 @@ function ProfilePage({ user, profile, onLogout }) {
         {section==="bulk"&&(
           <div style={{ maxWidth:"100%" }}>
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Carga Masiva de Publicaciones</h2>
-            <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Sube hasta 500 publicaciones de una sola vez usando un archivo Excel o CSV.</p>
+            <p style={{ color:MUTED,fontSize:16,marginBottom:24 }}>Sube hasta 500 publicaciones de una sola vez usando un archivo Excel o CSV.</p>
             <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:20,marginBottom:24,display:"flex",gap:16,alignItems:"center" }}>
               <div style={{ width:44,height:44,background:RED,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                 <Ic n="box" s={20} c="#fff"/>
               </div>
               <div style={{ flex:1 }}>
-                <p style={{ fontWeight:700,fontSize:15,color:TEXT }}>Descargar plantilla Excel</p>
-                <p style={{ fontSize:13,color:MUTED,marginTop:2 }}>Usa esta plantilla con las columnas correctas.</p>
+                <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>Descargar plantilla Excel</p>
+                <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Usa esta plantilla con las columnas correctas.</p>
               </div>
-              <button className="btn-ol" style={{ padding:"9px 18px",fontSize:12,flexShrink:0 }} onClick={()=>window.open("/plantilla_carga_masiva.xlsx","_blank")}>Descargar →</button>
+              <button className="btn-ol" style={{ padding:"9px 18px",fontSize:16,flexShrink:0 }} onClick={()=>window.open("/plantilla_carga_masiva.xlsx","_blank")}>Descargar →</button>
             </div>
             {!bulkFile ? (
               <div onClick={()=>fileRef.current.click()}
@@ -2222,8 +2238,8 @@ function ProfilePage({ user, profile, onLogout }) {
                   <Ic n="box" s={28} c={MUTED}/>
                 </div>
                 <p style={{ fontWeight:700,fontSize:16,marginBottom:6,color:TEXT }}>Arrastra tu archivo aquí</p>
-                <p style={{ color:MUTED,fontSize:14 }}>o haz click para seleccionar</p>
-                <p style={{ color:MUTED,fontSize:12,marginTop:8 }}>Excel (.xlsx) o CSV — máximo 500 filas</p>
+                <p style={{ color:MUTED,fontSize:16 }}>o haz click para seleccionar</p>
+                <p style={{ color:MUTED,fontSize:16,marginTop:8 }}>Excel (.xlsx) o CSV — máximo 500 filas</p>
               </div>
             ) : (
               <div>
@@ -2233,27 +2249,27 @@ function ProfilePage({ user, profile, onLogout }) {
                   </div>
                   <div style={{ flex:1 }}>
                     <p style={{ fontWeight:600,color:TEXT }}>{bulkFile.name}</p>
-                    <p style={{ fontSize:13,color:GREEN }}>{bulkRows.length} publicaciones encontradas</p>
+                    <p style={{ fontSize:16,color:GREEN }}>{bulkRows.length} publicaciones encontradas</p>
                   </div>
-                  <button onClick={()=>{setBulkFile(null);setBulkRows([]);}} style={{ color:MUTED,fontSize:13,background:"none",border:"none",cursor:"pointer" }}>Cambiar</button>
+                  <button onClick={()=>{setBulkFile(null);setBulkRows([]);}} style={{ color:MUTED,fontSize:16,background:"none",border:"none",cursor:"pointer" }}>Cambiar</button>
                 </div>
                 {bulkRows.length > 0 && (
                 <div style={{ background:CARD,borderRadius:10,border:`1px solid ${BORDER}`,overflow:"hidden",marginBottom:16 }}>
                   <div style={{ background:BG2,padding:"10px 16px",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:12 }}>
-                    {["Título","Categoría","Condición","Precio"].map(h=><span key={h} style={{ fontSize:11,fontWeight:700,color:MUTED,fontFamily:"Barlow Condensed,sans-serif",textTransform:"uppercase" }}>{h}</span>)}
+                    {["Título","Categoría","Condición","Precio"].map(h=><span key={h} style={{ fontSize:16,fontWeight:700,color:MUTED,fontFamily:"Barlow Condensed,sans-serif",textTransform:"uppercase" }}>{h}</span>)}
                   </div>
                   {bulkRows.map((r,i)=>(
                     <div key={i} style={{ padding:"12px 16px",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:12,borderTop:`1px solid ${BORDER}` }}>
-                      <span style={{ fontSize:13,color:TEXT }}>{r.title}</span>
-                      <span style={{ fontSize:13,color:MUTED }}>{CATS.find(c=>c.id===r.cat)?.label||r.cat}</span>
-                      <span style={{ fontSize:13,color:MUTED }}>{r.condition}</span>
-                      <span className="bebas" style={{ fontSize:14,color:RED }}>{Number(r.price).toLocaleString()} {r.currency}</span>
+                      <span style={{ fontSize:16,color:TEXT }}>{r.title}</span>
+                      <span style={{ fontSize:16,color:MUTED }}>{CATS.find(c=>c.id===r.cat)?.label||r.cat}</span>
+                      <span style={{ fontSize:16,color:MUTED }}>{r.condition}</span>
+                      <span className="bebas" style={{ fontSize:16,color:RED }}>{Number(r.price).toLocaleString()} {r.currency}</span>
                     </div>
                   ))}
                 </div>
                 )}
                 {bulkDone
-                  ? <p style={{ color:GREEN,fontSize:14,fontWeight:700,textAlign:"center" }}>✓ ¡Carga completada!</p>
+                  ? <p style={{ color:GREEN,fontSize:16,fontWeight:700,textAlign:"center" }}>✓ ¡Carga completada!</p>
                   : <button className="btn-red" onClick={uploadBulk} disabled={bulkUploading} style={{ width:"100%",padding:"13px" }}>
                       {bulkUploading?"Subiendo…":`Publicar ${bulkRows.length} productos`}
                     </button>
@@ -2267,7 +2283,7 @@ function ProfilePage({ user, profile, onLogout }) {
         {section==="soporte"&&(
           <div style={{ maxWidth:"100%" }}>
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Soporte</h2>
-            <p style={{ color:MUTED,fontSize:14,marginBottom:28 }}>Estamos aquí para ayudarte. Elige cómo quieres contactarnos.</p>
+            <p style={{ color:MUTED,fontSize:16,marginBottom:28 }}>Estamos aquí para ayudarte. Elige cómo quieres contactarnos.</p>
 
             <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:24,marginBottom:16 }}>
               <div style={{ display:"flex",gap:14,alignItems:"flex-start",marginBottom:16 }}>
@@ -2275,15 +2291,15 @@ function ProfilePage({ user, profile, onLogout }) {
                   <span style={{ color:"#fff",fontSize:20 }}>⚡</span>
                 </div>
                 <div>
-                  <p style={{ fontWeight:700,fontSize:15,color:TEXT }}>Soporte con IA</p>
-                  <p style={{ fontSize:13,color:MUTED,marginTop:2 }}>Respuesta inmediata las 24 horas.</p>
+                  <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>Soporte con IA</p>
+                  <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Respuesta inmediata las 24 horas.</p>
                 </div>
               </div>
-              <div style={{ background:BG2,borderRadius:8,padding:14,marginBottom:12,minHeight:60,fontSize:14,color:MUTED,border:`1px solid ${BORDER}` }}>
+              <div style={{ background:BG2,borderRadius:8,padding:14,marginBottom:12,minHeight:60,fontSize:16,color:MUTED,border:`1px solid ${BORDER}` }}>
                 Escribe tu consulta y te responderemos a la brevedad.
               </div>
               <div style={{ display:"flex",gap:8 }}>
-                <input className="inp" placeholder="Escribe tu pregunta…" style={{ flex:1,borderRadius:8,padding:"10px 14px",fontSize:14 }}/>
+                <input className="inp" placeholder="Escribe tu pregunta…" style={{ flex:1,borderRadius:8,padding:"10px 14px",fontSize:16 }}/>
                 <button className="btn-red" style={{ padding:"10px 14px" }}><Ic n="send" s={15} c="#fff"/></button>
               </div>
             </div>
@@ -2294,13 +2310,13 @@ function ProfilePage({ user, profile, onLogout }) {
                   <Ic n="user" s={20} c={SUB}/>
                 </div>
                 <div>
-                  <p style={{ fontWeight:700,fontSize:15,color:TEXT }}>Soporte humano</p>
-                  <p style={{ fontSize:13,color:MUTED,marginTop:2 }}>Respuesta en menos de 24 horas hábiles.</p>
+                  <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>Soporte humano</p>
+                  <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Respuesta en menos de 24 horas hábiles.</p>
                 </div>
               </div>
               <textarea className="inp" rows={4} placeholder="Describe tu problema o consulta…" value={supportMsg} onChange={e=>setSupportMsg(e.target.value)} style={{ resize:"none",marginBottom:12 }}/>
               {supportSent
-                ? <p style={{ color:GREEN,fontSize:13,fontWeight:700 }}>✓ Mensaje enviado — te responderemos en menos de 24hrs</p>
+                ? <p style={{ color:GREEN,fontSize:16,fontWeight:700 }}>✓ Mensaje enviado — te responderemos en menos de 24hrs</p>
                 : <button className="btn-red" onClick={sendSupport} style={{ padding:"13px" }}>Enviar mensaje</button>
               }
             </div>
@@ -2310,11 +2326,11 @@ function ProfilePage({ user, profile, onLogout }) {
                 <Ic n="wa" s={20} c="#fff"/>
               </div>
               <div style={{ flex:1 }}>
-                <p style={{ fontWeight:700,fontSize:15,color:TEXT }}>WhatsApp directo</p>
-                <p style={{ fontSize:13,color:MUTED,marginTop:2 }}>Lun–Vie 9:00–18:00 · +56 9 3268 9914</p>
+                <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>WhatsApp directo</p>
+                <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Lun–Vie 9:00–18:00 · +56 9 3268 9914</p>
               </div>
               <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20SpartsHub","_blank")}
-                style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:8,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0 }}>
+                style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:8,padding:"9px 18px",fontSize:16,fontWeight:700,cursor:"pointer",flexShrink:0 }}>
                 Chatear
               </button>
             </div>
@@ -2327,12 +2343,12 @@ function ProfilePage({ user, profile, onLogout }) {
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:24 }}>Configuración</h2>
 
             <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:16 }}>
-              <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:16,fontFamily:"Barlow Condensed,sans-serif" }}>Notificaciones</p>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:16,fontFamily:"Barlow Condensed,sans-serif" }}>Notificaciones</p>
               {[["Nuevos mensajes","Recibir email cuando alguien te contacta",true],["Alertas de búsqueda","Notificar cuando aparezcan productos que buscas",true],["Novedades de SpartsHub","Actualizaciones y mejoras de la plataforma",false]].map(([label,desc,def])=>(
                 <div key={label} style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:`1px solid ${BORDER}` }}>
                   <div>
-                    <p style={{ fontSize:14,fontWeight:600,color:TEXT }}>{label}</p>
-                    <p style={{ fontSize:12,color:MUTED,marginTop:2 }}>{desc}</p>
+                    <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{label}</p>
+                    <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>{desc}</p>
                   </div>
                   <div className="toggle" style={{ background:def?RED:"rgba(255,255,255,.15)" }}>
                     <div className="toggle-knob" style={{ left:def?20:2 }}/>
@@ -2342,12 +2358,12 @@ function ProfilePage({ user, profile, onLogout }) {
             </div>
 
             <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:16 }}>
-              <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:16,fontFamily:"Barlow Condensed,sans-serif" }}>Privacidad</p>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:16,fontFamily:"Barlow Condensed,sans-serif" }}>Privacidad</p>
               {[["Mostrar WhatsApp en publicaciones","Tu número aparece en el botón de contacto directo",true],["Perfil visible en búsquedas","Otros usuarios pueden ver tu perfil público",true]].map(([label,desc,def])=>(
                 <div key={label} style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:`1px solid ${BORDER}` }}>
                   <div>
-                    <p style={{ fontSize:14,fontWeight:600,color:TEXT }}>{label}</p>
-                    <p style={{ fontSize:12,color:MUTED,marginTop:2 }}>{desc}</p>
+                    <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{label}</p>
+                    <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>{desc}</p>
                   </div>
                   <div className="toggle" style={{ background:def?RED:"rgba(255,255,255,.15)" }}>
                     <div className="toggle-knob" style={{ left:def?20:2 }}/>
@@ -2357,42 +2373,42 @@ function ProfilePage({ user, profile, onLogout }) {
             </div>
 
             <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:16 }}>
-              <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:16,fontFamily:"Barlow Condensed,sans-serif" }}>Seguridad</p>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:16,fontFamily:"Barlow Condensed,sans-serif" }}>Seguridad</p>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:`1px solid ${BORDER}` }}>
                 <div>
-                  <p style={{ fontSize:14,fontWeight:600,color:TEXT }}>Cambiar contraseña</p>
-                  <p style={{ fontSize:12,color:MUTED }}>Recibirás un email con instrucciones</p>
+                  <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>Cambiar contraseña</p>
+                  <p style={{ fontSize:16,color:MUTED }}>Recibirás un email con instrucciones</p>
                 </div>
-                <button className="btn-ol" style={{ padding:"8px 14px",fontSize:12 }}
+                <button className="btn-ol" style={{ padding:"8px 14px",fontSize:16 }}
                   onClick={async()=>{ await sb.auth.resetPasswordForEmail(user.email,{redirectTo:"https://spartshub.com"}); alert("Email enviado — revisa tu correo"); }}>
                   Enviar email
                 </button>
               </div>
               <div style={{ padding:"12px 0" }}>
-                <p style={{ fontSize:14,fontWeight:600,color:TEXT }}>Email de la cuenta</p>
-                <p style={{ fontSize:12,color:MUTED,marginTop:2 }}>{user.email}</p>
+                <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>Email de la cuenta</p>
+                <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>{user.email}</p>
               </div>
             </div>
 
             <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:24 }}>
-              <p style={{ fontSize:11,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Zona de peligro</p>
+              <p style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Zona de peligro</p>
               {!showDeleteConfirm ? (
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                   <div>
-                    <p style={{ fontSize:14,fontWeight:600,color:TEXT }}>Cerrar mi cuenta</p>
-                    <p style={{ fontSize:12,color:MUTED,marginTop:2 }}>Esta acción es irreversible.</p>
+                    <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>Cerrar mi cuenta</p>
+                    <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Esta acción es irreversible.</p>
                   </div>
-                  <button onClick={()=>setShowDeleteConfirm(true)} className="btn-ol" style={{ borderColor:RED,color:RED,padding:"8px 16px",fontSize:12 }}>
+                  <button onClick={()=>setShowDeleteConfirm(true)} className="btn-ol" style={{ borderColor:RED,color:RED,padding:"8px 16px",fontSize:16 }}>
                     Cerrar cuenta
                   </button>
                 </div>
               ) : (
                 <div>
-                  <p style={{ fontSize:14,color:RED,fontWeight:700,marginBottom:12 }}>¿Estás seguro? Esta acción no se puede deshacer.</p>
+                  <p style={{ fontSize:16,color:RED,fontWeight:700,marginBottom:12 }}>¿Estás seguro? Esta acción no se puede deshacer.</p>
                   <div style={{ display:"flex",gap:10 }}>
                     <button className="btn-ol" onClick={()=>setShowDeleteConfirm(false)} style={{ flex:1,padding:"11px" }}>Cancelar</button>
                     <button onClick={async()=>{ await sb.auth.signOut(); window.location.reload(); }}
-                      style={{ flex:1,background:RED,color:"#fff",border:"none",borderRadius:8,padding:"11px",fontSize:14,fontWeight:700,cursor:"pointer" }}>
+                      style={{ flex:1,background:RED,color:"#fff",border:"none",borderRadius:8,padding:"11px",fontSize:16,fontWeight:700,cursor:"pointer" }}>
                       Sí, cerrar mi cuenta
                     </button>
                   </div>
@@ -2443,7 +2459,7 @@ function SupportPanel({ onClose }) {
         <div style={{ background:RED,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <div>
             <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:2 }}><svg width={22} height={22} viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.2)"/><text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white">S</text></svg><p className="bebas" style={{ fontSize:18,color:"#fff",letterSpacing:.5 }}>SOPORTE</p></div>
-            <p style={{ fontSize:12,color:"rgba(255,255,255,.7)",marginTop:2 }}>Respuesta inmediata · IA + Humano</p>
+            <p style={{ fontSize:16,color:"rgba(255,255,255,.7)",marginTop:2 }}>Respuesta inmediata · IA + Humano</p>
           </div>
           <button onClick={onClose} style={{ color:"rgba(255,255,255,.8)",background:"none",border:"none",cursor:"pointer",fontSize:20 }}>✕</button>
         </div>
@@ -2451,28 +2467,28 @@ function SupportPanel({ onClose }) {
           <div style={{ background:BG2,borderRadius:10,padding:16,border:`1px solid ${BORDER}` }}>
             <div style={{ display:"flex",gap:10,alignItems:"center",marginBottom:12 }}>
               <div style={{ width:32,height:32,background:RED,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center" }}>
-                <span style={{ color:"#fff",fontSize:14 }}>⚡</span>
+                <span style={{ color:"#fff",fontSize:16 }}>⚡</span>
               </div>
               <div>
-                <p style={{ fontWeight:700,fontSize:13,color:TEXT }}>Asistente IA</p>
-                <p style={{ fontSize:11,color:GREEN }}>● En línea ahora</p>
+                <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>Asistente IA</p>
+                <p style={{ fontSize:16,color:GREEN }}>● En línea ahora</p>
               </div>
             </div>
-            <div style={{ background:CARD,borderRadius:8,padding:12,marginBottom:10,fontSize:13,color:TEXT,lineHeight:1.6,border:`1px solid ${BORDER}` }}>{aiResp}</div>
+            <div style={{ background:CARD,borderRadius:8,padding:12,marginBottom:10,fontSize:16,color:TEXT,lineHeight:1.6,border:`1px solid ${BORDER}` }}>{aiResp}</div>
             <div style={{ display:"flex",gap:8 }}>
-              <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAI()} placeholder="Escribe tu pregunta…" className="inp" style={{ flex:1,borderRadius:8,padding:"8px 12px",fontSize:13 }}/>
+              <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAI()} placeholder="Escribe tu pregunta…" className="inp" style={{ flex:1,borderRadius:8,padding:"8px 12px",fontSize:16 }}/>
               <button onClick={sendAI} className="btn-red" style={{ padding:"8px 12px" }}><Ic n="send" s={14} c="#fff"/></button>
             </div>
           </div>
           <div style={{ background:BG2,borderRadius:10,padding:16,border:`1px solid ${BORDER}` }}>
-            <p style={{ fontWeight:700,fontSize:13,color:TEXT,marginBottom:8 }}>Soporte humano</p>
+            <p style={{ fontWeight:700,fontSize:16,color:TEXT,marginBottom:8 }}>Soporte humano</p>
             <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Describe tu problema…" rows={3} className="inp" style={{ resize:"none",marginBottom:8 }}/>
-            {sent?<p style={{ color:GREEN,fontSize:13,fontWeight:700 }}>✓ Mensaje enviado — responderemos en menos de 24hrs</p>
-              :<button onClick={()=>{ if(msg.trim()) setSent(true); }} className="btn-red" style={{ width:"100%",padding:"10px",fontSize:13 }}>Enviar mensaje</button>
+            {sent?<p style={{ color:GREEN,fontSize:16,fontWeight:700 }}>✓ Mensaje enviado — responderemos en menos de 24hrs</p>
+              :<button onClick={()=>{ if(msg.trim()) setSent(true); }} className="btn-red" style={{ width:"100%",padding:"10px",fontSize:16 }}>Enviar mensaje</button>
             }
           </div>
           <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20SpartsHub","_blank")}
-            style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"13px",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
+            style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"13px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
             <Ic n="wa" s={18} c="#fff"/>WhatsApp · +56 9 3268 9914
           </button>
         </div>
@@ -2499,10 +2515,10 @@ function AlertasPage({ user, profile }) {
   return (
     <div>
       <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Mis Alertas de Búsqueda</h2>
-      <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Recibe una notificación cuando se publique lo que estás buscando.</p>
+      <p style={{ color:MUTED,fontSize:16,marginBottom:24 }}>Recibe una notificación cuando se publique lo que estás buscando.</p>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,alignItems:"start" }}>
       <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:24,display:"flex",flexDirection:"column",gap:12 }}>
-        <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif" }}>Crear nueva alerta</p>
+        <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif" }}>Crear nueva alerta</p>
         <input className="inp" placeholder="Ej: Bomba hidráulica Rexroth A10V" value={alertForm.keyword} onChange={e=>setAlertForm(f=>({...f,keyword:e.target.value}))}/>
         <select className="inp" value={alertForm.cat} onChange={e=>setAlertForm(f=>({...f,cat:e.target.value}))}>
           {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
@@ -2512,14 +2528,14 @@ function AlertasPage({ user, profile }) {
           {[["email","Email"],["whatsapp","WhatsApp"]].map(([val,lbl])=>(
             <div key={val} onClick={()=>setAlertForm(f=>({...f,notifType:val}))}
               style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(255,140,0,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
-              <p style={{ fontSize:13,fontWeight:700,color:alertForm.notifType===val?RED:SUB,fontFamily:"Barlow Condensed,sans-serif" }}>{lbl}</p>
+              <p style={{ fontSize:16,fontWeight:700,color:alertForm.notifType===val?RED:SUB,fontFamily:"Barlow Condensed,sans-serif" }}>{lbl}</p>
             </div>
           ))}
         </div>
         {alertForm.notifType==="whatsapp"&&(
           <input className="inp" placeholder="+1 555 1234 / +56 9 1234" value={alertForm.wa||""} onChange={e=>setAlertForm(f=>({...f,wa:e.target.value}))}/>
         )}
-        {saved&&<p style={{ color:GREEN,fontSize:13,fontWeight:700 }}>✓ Alerta guardada — te avisaremos cuando haya coincidencias</p>}
+        {saved&&<p style={{ color:GREEN,fontSize:16,fontWeight:700 }}>✓ Alerta guardada — te avisaremos cuando haya coincidencias</p>}
         <button className="btn-red" onClick={saveAlert} style={{ padding:"13px" }}>
           <Ic n="bell" s={16} c="#fff"/> Activar alerta
         </button>
@@ -2529,18 +2545,18 @@ function AlertasPage({ user, profile }) {
         <div style={{ background:CARD,borderRadius:12,padding:40,textAlign:"center",border:`1px solid ${BORDER}` }}>
           <div style={{ fontSize:48,marginBottom:12 }}>🔔</div>
           <p className="bebas" style={{ fontSize:22,color:TEXT,marginBottom:6 }}>Sin alertas activas</p>
-          <p style={{ color:MUTED,fontSize:14 }}>Crea una alerta para recibir notificaciones automáticas</p>
+          <p style={{ color:MUTED,fontSize:16 }}>Crea una alerta para recibir notificaciones automáticas</p>
         </div>
       ) : (
         <div>
-          <p style={{ fontSize:11,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Alertas activas</p>
+          <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Alertas activas</p>
           {alerts.map(a=>(
             <div key={a.id} style={{ background:CARD,borderRadius:10,padding:"14px 16px",marginBottom:8,border:`1px solid ${BORDER}`,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
               <div>
-                <p style={{ fontWeight:600,fontSize:14,color:TEXT }}>{a.keyword}</p>
-                <p style={{ fontSize:12,color:MUTED }}>{CATS.find(c=>c.id===a.cat)?.label} · {a.email}</p>
+                <p style={{ fontWeight:600,fontSize:16,color:TEXT }}>{a.keyword}</p>
+                <p style={{ fontSize:16,color:MUTED }}>{CATS.find(c=>c.id===a.cat)?.label} · {a.email}</p>
               </div>
-              <button onClick={()=>setAlerts(x=>x.filter(i=>i.id!==a.id))} style={{ color:RED,fontSize:12,background:"none",border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>Eliminar</button>
+              <button onClick={()=>setAlerts(x=>x.filter(i=>i.id!==a.id))} style={{ color:RED,fontSize:16,background:"none",border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>Eliminar</button>
             </div>
           ))}
         </div>
@@ -2579,7 +2595,7 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
     cat:           listing.cat          || "min",
     condition:     listing.condition    || "Nuevo",
     price:         listing.price != null ? String(listing.price) : "",
-    currency:      listing.currency     || "USD",
+    currency:      listing.currency     || "CLP",
     stock:         listing.stock != null ? String(listing.stock) : "1",
     location:      listing.location     || "",
     phone:         listing.phone        || "",
@@ -2674,11 +2690,11 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
         </div>
 
         <div style={{ overflowY:"auto",flex:1,padding:"0 20px 40px",display:"flex",flexDirection:"column",gap:14 }}>
-          {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:DANGER }}>{err}</div>}
+          {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:16,color:DANGER }}>{err}</div>}
 
           {/* Photos */}
           <div>
-            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Fotos</p>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Fotos</p>
             <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
               <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple style={{ display:"none" }} onChange={handleNewPhotos}/>
               {existingPhotos.map((url,i)=>(
@@ -2701,7 +2717,7 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
                 <div onClick={()=>photoInputRef.current?.click()}
                   style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`1.5px dashed ${totalSlots===0?RED:BORDER}`,cursor:"pointer" }}>
                   <Ic n="camera" s={20} c={totalSlots===0?RED:MUTED}/>
-                  <span style={{ fontSize:10,color:totalSlots===0?RED:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>{totalSlots===0?"FOTO":"+ FOTO"}</span>
+                  <span style={{ fontSize:16,color:totalSlots===0?RED:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>{totalSlots===0?"FOTO":"+ FOTO"}</span>
                 </div>
               )}
             </div>
@@ -2709,37 +2725,37 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
 
           {/* Title */}
           <div>
-            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_title")}</p>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_title")}</p>
             <input className="inp" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)} placeholder={t("pub_title_ph")}/>
           </div>
 
           {/* Industry + Brand */}
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
             <div>
-              <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
               <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
                 {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
             <div>
-              <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_brand")}</p>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_brand")}</p>
               <input className="inp" value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)} placeholder={t("pub_brand_ph")}/>
             </div>
           </div>
 
           {/* Model */}
           <div>
-            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_model")}</p>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_model")}</p>
             <input className="inp" value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)} placeholder={t("pub_model_ph")}/>
           </div>
 
           {/* Condition */}
           <div>
-            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
             <div style={{ display:"flex",gap:8 }}>
               {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                 <button key={c} onClick={()=>upd("condition",c)}
-                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,140,0,.1)":CARD,fontWeight:700,fontSize:10,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,140,0,.1)":CARD,fontWeight:700,fontSize:16,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
                   {c}
                 </button>
               ))}
@@ -2748,32 +2764,32 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
 
           {/* Price */}
           <div>
-            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
             <div style={{ display:"flex",gap:8 }}>
               <div style={{ position:"relative",flex:1 }}>
                 <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
                 <input className="inp" type="number" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }} placeholder="0"/>
               </div>
               <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
-                {["USD","CLP","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
               </select>
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_description")}</p>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_description")}</p>
             <textarea className="inp" rows={3} value={f.description} maxLength={1000} onChange={e=>upd("description",e.target.value)} placeholder={t("pub_desc_ph")} style={{ resize:"none" }}/>
           </div>
 
           {/* Location */}
           <div>
-            <p style={{ fontSize:12,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_location")}</p>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_location")}</p>
             <input className="inp" value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)} placeholder={t("pub_location_ph")}/>
           </div>
 
           <button className="btn-red" onClick={save} disabled={loading||!f.title||!f.price}
-            style={{ marginTop:4,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:15 }}>
+            style={{ marginTop:4,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:16 }}>
             {loading?<Spin/>:"Guardar cambios"}
           </button>
         </div>
@@ -2834,11 +2850,11 @@ function MisPublicaciones({ user, onSelect }) {
     <div style={{ maxWidth:"100%" }}>
       <div style={{ display:"flex",gap:8,marginBottom:20 }}>
         <button onClick={()=>setSubTab("pubs")}
-          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="pubs"?RED:BORDER}`,background:subTab==="pubs"?"rgba(255,140,0,.1)":"transparent",color:subTab==="pubs"?RED:SUB,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="pubs"?RED:BORDER}`,background:subTab==="pubs"?"rgba(255,140,0,.1)":"transparent",color:subTab==="pubs"?RED:SUB,fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
           Mis Publicaciones
         </button>
         <button onClick={()=>setSubTab("solicitudes")}
-          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="solicitudes"?RED:BORDER}`,background:subTab==="solicitudes"?"rgba(255,140,0,.1)":"transparent",color:subTab==="solicitudes"?RED:SUB,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="solicitudes"?RED:BORDER}`,background:subTab==="solicitudes"?"rgba(255,140,0,.1)":"transparent",color:subTab==="solicitudes"?RED:SUB,fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
           Mis Solicitudes
         </button>
       </div>
@@ -2854,7 +2870,7 @@ function MisPublicaciones({ user, onSelect }) {
             <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
               <div style={{ fontSize:56,marginBottom:16 }}>📦</div>
               <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Todavía no publicaste nada</p>
-              <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Publicá tu primer producto o repuesto gratis</p>
+              <p style={{ color:MUTED,fontSize:16,marginBottom:24 }}>Publicá tu primer producto o repuesto gratis</p>
             </div>
           ) : (
             <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))",gap:12 }}>
@@ -2866,33 +2882,33 @@ function MisPublicaciones({ user, onSelect }) {
                   </div>
                   <div style={{ padding:"12px 14px 14px" }}>
                     <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
-                      <span className="tag t-dim" style={{ fontSize:9 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
-                      <span className="tag t-green" style={{ fontSize:9 }}>Activo</span>
+                      <span className="tag t-dim" style={{ fontSize:16 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
+                      <span className="tag t-green" style={{ fontSize:16 }}>Activo</span>
                     </div>
-                    <p style={{ fontWeight:700,fontSize:14,color:TEXT,marginBottom:3,lineHeight:1.3 }}>{l.title}</p>
-                    <p style={{ fontSize:11,color:MUTED,marginBottom:8 }}>{l.location} · {fmtTs(l.created_at)}</p>
+                    <p style={{ fontWeight:700,fontSize:16,color:TEXT,marginBottom:3,lineHeight:1.3 }}>{l.title}</p>
+                    <p style={{ fontSize:16,color:MUTED,marginBottom:8 }}>{l.location} · {fmtTs(l.created_at)}</p>
                     <p className="bebas" style={{ fontSize:18,color:RED,marginBottom:10 }}>{fmtPrice(l.price,l.currency)}</p>
 
                     {/* Edit / Delete buttons */}
                     {confirmDel===l.id ? (
                       <div style={{ display:"flex",gap:6 }}>
                         <button onClick={()=>setConfirmDel(null)}
-                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:12,cursor:"pointer",fontWeight:600 }}>
+                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:16,cursor:"pointer",fontWeight:600 }}>
                           Cancelar
                         </button>
                         <button onClick={()=>deleteListing(l.id)} disabled={deleting}
-                          style={{ flex:1,padding:"7px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:12,cursor:"pointer",fontWeight:700 }}>
+                          style={{ flex:1,padding:"7px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:16,cursor:"pointer",fontWeight:700 }}>
                           {deleting?"…":"Confirmar"}
                         </button>
                       </div>
                     ) : (
                       <div style={{ display:"flex",gap:6 }}>
                         <button onClick={()=>setEditListing(l)}
-                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:TEXT,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
+                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:TEXT,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
                           <Ic n="settings" s={13} c={MUTED}/>Editar
                         </button>
                         <button onClick={()=>setConfirmDel(l.id)}
-                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
+                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
                           <Ic n="trash" s={13} c={DANGER}/>Eliminar
                         </button>
                       </div>
@@ -2926,7 +2942,7 @@ function MisPublicaciones({ user, onSelect }) {
             <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
               <div style={{ fontSize:56,marginBottom:16 }}>🔍</div>
               <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>No tienes solicitudes activas</p>
-              <p style={{ color:MUTED,fontSize:14,marginBottom:24 }}>Pedí lo que necesitas y te avisamos cuando aparezca</p>
+              <p style={{ color:MUTED,fontSize:16,marginBottom:24 }}>Pedí lo que necesitas y te avisamos cuando aparezca</p>
             </div>
           ) : (
             <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
@@ -2934,20 +2950,20 @@ function MisPublicaciones({ user, onSelect }) {
                 <div key={r.id} className="card" style={{ padding:"14px 16px" }}>
                   <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,marginBottom:6 }}>
                     <div style={{ flex:1 }}>
-                      <p style={{ fontWeight:700,fontSize:15,color:TEXT,marginBottom:3 }}>{r.title}</p>
-                      <p style={{ fontSize:11,color:MUTED }}>{CATS.find(c=>c.id===r.cat)?.label||"—"} · {r.location||"—"} · {fmtTs(r.created_at)}</p>
+                      <p style={{ fontWeight:700,fontSize:16,color:TEXT,marginBottom:3 }}>{r.title}</p>
+                      <p style={{ fontSize:16,color:MUTED }}>{CATS.find(c=>c.id===r.cat)?.label||"—"} · {r.location||"—"} · {fmtTs(r.created_at)}</p>
                     </div>
-                    <span className="tag" style={{ fontSize:9, color:URGENCY_C[r.urgency]||MUTED, border:`1px solid ${URGENCY_C[r.urgency]||BORDER}`, background:"transparent" }}>
+                    <span className="tag" style={{ fontSize:16, color:URGENCY_C[r.urgency]||MUTED, border:`1px solid ${URGENCY_C[r.urgency]||BORDER}`, background:"transparent" }}>
                       {URGENCY_L[r.urgency]||"Normal"}
                     </span>
                   </div>
                   {(r.brand||r.model) && (
-                    <p style={{ fontSize:12,color:SUB,marginBottom:6 }}>
+                    <p style={{ fontSize:16,color:SUB,marginBottom:6 }}>
                       {[r.brand,r.model].filter(Boolean).join(" · ")}
                     </p>
                   )}
                   {r.description && (
-                    <p style={{ fontSize:12,color:MUTED,marginBottom:8,lineHeight:1.5 }}>{r.description}</p>
+                    <p style={{ fontSize:16,color:MUTED,marginBottom:8,lineHeight:1.5 }}>{r.description}</p>
                   )}
                   <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                     {r.budget ? (
@@ -2956,17 +2972,17 @@ function MisPublicaciones({ user, onSelect }) {
                     {confirmDelReq===r.id ? (
                       <div style={{ display:"flex",gap:6 }}>
                         <button onClick={()=>setConfirmDelReq(null)}
-                          style={{ padding:"6px 12px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:12,cursor:"pointer",fontWeight:600 }}>
+                          style={{ padding:"6px 12px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:16,cursor:"pointer",fontWeight:600 }}>
                           Cancelar
                         </button>
                         <button onClick={()=>deleteRequest(r.id)} disabled={deleting}
-                          style={{ padding:"6px 12px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:12,cursor:"pointer",fontWeight:700 }}>
+                          style={{ padding:"6px 12px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:16,cursor:"pointer",fontWeight:700 }}>
                           {deleting?"…":"Confirmar"}
                         </button>
                       </div>
                     ) : (
                       <button onClick={()=>setConfirmDelReq(r.id)}
-                        style={{ padding:"6px 12px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:12,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
+                        style={{ padding:"6px 12px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
                         <Ic n="trash" s={12} c={DANGER}/>Eliminar
                       </button>
                     )}
@@ -3086,7 +3102,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
     setTimeout(()=>{ onDone(); }, 3000);
   };
 
-  const INP = { background:"rgba(255,255,255,.07)", border:"1.5px solid rgba(255,255,255,.15)", borderRadius:8, padding:"11px 14px", fontSize:14, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
+  const INP = { background:"rgba(255,255,255,.07)", border:"1.5px solid rgba(255,255,255,.15)", borderRadius:8, padding:"11px 14px", fontSize:16, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={onClose}>
@@ -3096,7 +3112,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
         <div style={{ background:`linear-gradient(135deg,${RED},#C26800)`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
           <div>
             <p className="bebas" style={{ fontSize:24,color:"#fff",letterSpacing:.5 }}>{t("sol_title")}</p>
-            <p style={{ fontSize:13,color:"rgba(255,255,255,.75)",marginTop:2 }}>{t("sol_subtitle")}</p>
+            <p style={{ fontSize:16,color:"rgba(255,255,255,.75)",marginTop:2 }}>{t("sol_subtitle")}</p>
           </div>
           <button onClick={onClose} style={{ background:"rgba(255,255,255,.15)",border:"none",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1,width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center" }}>✕</button>
         </div>
@@ -3110,7 +3126,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
             {instantResults.length > 0 && (
               <div style={{ width:"100%", maxWidth:480, textAlign:"left" }}>
-                <p style={{ fontSize:13,fontWeight:700,color:TEXT,marginBottom:10,textAlign:"center" }}>
+                <p style={{ fontSize:16,fontWeight:700,color:TEXT,marginBottom:10,textAlign:"center" }}>
                   📦 Encontramos {instantResults.length} publicación{instantResults.length>1?"es":""} que podría{instantResults.length>1?"n":""} interesarte:
                 </p>
                 <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
@@ -3123,8 +3139,8 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                         <div style={{ width:48,height:48,borderRadius:8,background:BG3,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0 }}>{l.emoji||"📦"}</div>
                       )}
                       <div style={{ flex:1,minWidth:0 }}>
-                        <p style={{ fontSize:13,fontWeight:700,color:TEXT,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{l.title}</p>
-                        <p style={{ fontSize:12,color:RED,fontWeight:700 }}>{l.currency} {Number(l.price).toLocaleString()}</p>
+                        <p style={{ fontSize:16,fontWeight:700,color:TEXT,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{l.title}</p>
+                        <p style={{ fontSize:16,color:RED,fontWeight:700 }}>{l.currency} {Number(l.price).toLocaleString()}</p>
                       </div>
                       <Ic n="chevR" s={16} c={MUTED}/>
                     </div>
@@ -3136,58 +3152,58 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
             {solicitudMatches > 0 ? (
               <div style={{ background:"rgba(255,140,0,.1)",border:"1px solid rgba(255,140,0,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
                 <p className="bebas" style={{ fontSize:22,color:RED,marginBottom:6 }}>🤝 {solicitudMatches} MATCH{solicitudMatches>1?"ES":""} ENCONTRADO{solicitudMatches>1?"S":""}</p>
-                <p style={{ fontSize:14,color:TEXT,lineHeight:1.6 }}>¡Hay publicaciones que coinciden con tu búsqueda! Revisá tus mensajes para ver los contactos automáticos.</p>
+                <p style={{ fontSize:16,color:TEXT,lineHeight:1.6 }}>¡Hay publicaciones que coinciden con tu búsqueda! Revisá tus mensajes para ver los contactos automáticos.</p>
               </div>
             ) : (
-              <p style={{ fontSize:15,color:MUTED,lineHeight:1.7 }}>
+              <p style={{ fontSize:16,color:MUTED,lineHeight:1.7 }}>
                 Analizando el catálogo con IA… Te notificaremos por {[notif.email&&"email",notif.whatsapp&&"WhatsApp",notif.inapp&&"la app"].filter(Boolean).join(", ")} cuando haya un match.
               </p>
             )}
           </div>
         ) : (
           <div style={{ overflowY:"auto",flex:1,padding:"24px" }}>
-            {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:DANGER,marginBottom:16 }}>{err}</div>}
+            {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:16,color:DANGER,marginBottom:16 }}>{err}</div>}
 
             <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
 
               {/* Título */}
               <div>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>¿Qué estás buscando? *</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>¿Qué estás buscando? *</p>
                 <input style={{ ...INP,borderColor:f.title?"rgba(255,140,0,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
               </div>
 
               {/* Industria + Marca */}
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
                 <div>
-                  <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Industria</p>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Industria</p>
                   <select style={{ ...INP }} value={f.cat} onChange={e=>upd("cat",e.target.value)}>
                     {CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Marca <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Marca <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                   <input style={{ ...INP }} placeholder="Caterpillar, SKF, WEG…" value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)}/>
                 </div>
               </div>
 
               {/* Modelo */}
               <div>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Modelo <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Modelo <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <input style={{ ...INP }} placeholder="Ej: 3406E, A10V, 6205-2RS…" value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)}/>
               </div>
 
               {/* Números técnicos */}
               <div style={{ background:BG2,borderRadius:10,padding:"14px 16px",border:`1px solid ${BORDER}` }}>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:12,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Números de identificación <span style={{ fontWeight:400,textTransform:"none",letterSpacing:0 }}>(opcionales)</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:12,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Números de identificación <span style={{ fontWeight:400,textTransform:"none",letterSpacing:0 }}>(opcionales)</span></p>
                 <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                   {[["serial_number","N° de Serie","Nº serie del equipo"],["part_number","N° de Parte","Part number"],["engine_number","N° de Motor","Nº motor"],["chassis_number","N° de Chasis","Nº chasis"]].map(([key,label,ph])=>(
                     <div key={key} style={{ display:"grid",gridTemplateColumns:"120px 1fr",alignItems:"center",gap:10 }}>
-                      <p style={{ fontSize:12,color:MUTED }}>{label}</p>
+                      <p style={{ fontSize:16,color:MUTED }}>{label}</p>
                       <input style={{ ...INP,padding:"8px 12px" }} placeholder={ph} value={f[key]} maxLength={100} onChange={e=>upd(key,e.target.value)}/>
                     </div>
                   ))}
                   <div style={{ display:"grid",gridTemplateColumns:"120px 1fr",alignItems:"center",gap:10 }}>
-                    <p style={{ fontSize:12,color:MUTED }}>Horas de uso</p>
+                    <p style={{ fontSize:16,color:MUTED }}>Horas de uso</p>
                     <input style={{ ...INP,padding:"8px 12px" }} type="number" placeholder="Máx aceptable" value={f.hours} onChange={e=>upd("hours",e.target.value)}/>
                   </div>
                 </div>
@@ -3195,7 +3211,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
               {/* Condición */}
               <div>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Condición aceptada <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Condición aceptada <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <select style={{ ...INP }} value={f.condition} onChange={e=>upd("condition",e.target.value)}>
                   <option value="">Cualquier condición</option>
                   {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=><option key={c} value={c}>{c}</option>)}
@@ -3204,16 +3220,16 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
               {/* Descripción */}
               <div>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Descripción adicional <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Descripción adicional <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <textarea style={{ ...INP,resize:"none" }} rows={3} placeholder="Compatibilidad, aplicación, urgencia, detalles técnicos…" value={f.description} maxLength={1000} onChange={e=>upd("description",e.target.value)}/>
               </div>
 
               {/* Presupuesto */}
               <div>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Presupuesto máximo <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Presupuesto máximo <span style={{ fontWeight:400,textTransform:"none" }}>(opcional)</span></p>
                 <div style={{ display:"flex",gap:8 }}>
                   <div style={{ position:"relative",flex:1 }}>
-                    <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14,color:MUTED }}>$</span>
+                    <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
                     <input style={{ ...INP,paddingLeft:28 }} type="number" placeholder="0" value={f.budget} onChange={e=>upd("budget",e.target.value)}/>
                   </div>
                   <select style={{ ...INP,width:88 }} value={f.currency} onChange={e=>upd("currency",e.target.value)}>
@@ -3224,14 +3240,14 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
               {/* Urgencia */}
               <div>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Urgencia</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Urgencia</p>
                 <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
                   {URGENCY.map(([val,label])=>(
                     <div key={val} onClick={()=>upd("urgency",val)}
                       style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"255,140,0":val==="urgente"?"245,158,11":"59,130,246"},.15)`:"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <div style={{ width:10,height:10,borderRadius:"50%",background:URGENCY_C[val],flexShrink:0 }}/>
-                      <p style={{ fontSize:13,fontWeight:f.urgency===val?700:400,color:f.urgency===val?TEXT:SUB }}>{label}</p>
-                      {f.urgency===val&&<span style={{ marginLeft:"auto",fontSize:11,color:URGENCY_C[val] }}>✓</span>}
+                      <p style={{ fontSize:16,fontWeight:f.urgency===val?700:400,color:f.urgency===val?TEXT:SUB }}>{label}</p>
+                      {f.urgency===val&&<span style={{ marginLeft:"auto",fontSize:16,color:URGENCY_C[val] }}>✓</span>}
                     </div>
                   ))}
                 </div>
@@ -3240,26 +3256,26 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
               {/* Ubicación + contacto */}
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
                 <div>
-                  <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Ciudad / Región</p>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>Ciudad / Región</p>
                   <input style={{ ...INP }} placeholder="Santiago, Antofagasta…" value={f.location} onChange={e=>upd("location",e.target.value)}/>
                 </div>
                 <div>
-                  <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>WhatsApp</p>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>WhatsApp</p>
                   <input style={{ ...INP }} placeholder="+1 555 1234 / +56 9 1234" value={f.phone} onChange={e=>upd("phone",e.target.value)}/>
                 </div>
               </div>
 
               {/* Notificaciones */}
               <div style={{ background:BG2,borderRadius:10,padding:"16px",border:`1px solid ${BORDER}` }}>
-                <p style={{ fontSize:11,fontWeight:700,color:MUTED,marginBottom:12,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>¿Cómo querés recibir el aviso?</p>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:12,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>¿Cómo querés recibir el aviso?</p>
                 <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                   {[["email","📧","Email",user?.email||""],["whatsapp","💬","WhatsApp",f.phone||"Agrega tu número arriba"],["inapp","🔔","Notificación en la app","Cuando estés conectado"]].map(([key,icon,label,sub])=>(
                     <div key={key} onClick={()=>toggleNotif(key)}
                       style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(255,140,0,.2)":"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <span style={{ fontSize:18,flexShrink:0 }}>{icon}</span>
                       <div style={{ flex:1 }}>
-                        <p style={{ fontSize:13,fontWeight:notif[key]?700:400,color:notif[key]?TEXT:SUB }}>{label}</p>
-                        <p style={{ fontSize:11,color:MUTED }}>{sub}</p>
+                        <p style={{ fontSize:16,fontWeight:notif[key]?700:400,color:notif[key]?TEXT:SUB }}>{label}</p>
+                        <p style={{ fontSize:16,color:MUTED }}>{sub}</p>
                       </div>
                       <div style={{ width:20,height:20,borderRadius:4,border:`2px solid ${notif[key]?RED:BORDER}`,background:notif[key]?RED:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s" }}>
                         {notif[key]&&<Ic n="check" s={12} c="#fff"/>}
@@ -3270,10 +3286,10 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
               </div>
 
               {/* Submit */}
-              <button className="btn-red" onClick={submit} disabled={loading||!f.title} style={{ padding:"15px",fontSize:15,opacity:(!f.title||loading)?.5:1,marginTop:4 }}>
+              <button className="btn-red" onClick={submit} disabled={loading||!f.title} style={{ padding:"15px",fontSize:16,opacity:(!f.title||loading)?.5:1,marginTop:4 }}>
                 {loading ? <Spin/> : t("sol_submit")}
               </button>
-              <p style={{ textAlign:"center",fontSize:12,color:MUTED,marginTop:-8 }}>Te avisamos en cuanto alguien publique lo que buscás</p>
+              <p style={{ textAlign:"center",fontSize:16,color:MUTED,marginTop:-8 }}>Te avisamos en cuanto alguien publique lo que buscás</p>
             </div>
           </div>
         )}
@@ -3290,8 +3306,8 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 ══════════════════════════════════════════════════════════════ */
 function AppFooter() {
   const COL = { display:"flex",flexDirection:"column",gap:10 };
-  const LNK = { fontSize:13,color:SUB,cursor:"pointer",transition:"color .15s",textDecoration:"none",background:"none",border:"none",fontFamily:"inherit",textAlign:"left",padding:0 };
-  const HDR = { fontSize:10,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 };
+  const LNK = { fontSize:16,color:SUB,cursor:"pointer",transition:"color .15s",textDecoration:"none",background:"none",border:"none",fontFamily:"inherit",textAlign:"left",padding:0 };
+  const HDR = { fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 };
 
   return (
     <footer style={{ background:BG3,borderTop:`1px solid ${BORDER}`,marginTop:48,padding:"48px 0 0" }}>
@@ -3303,15 +3319,15 @@ function AppFooter() {
           {/* Brand column */}
           <div>
             <SpartsLogo size={34}/>
-            <p style={{ fontSize:15,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginTop:10,marginBottom:8 }}>
+            <p style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginTop:10,marginBottom:8 }}>
               No vendemos repuestos,<br/>conectamos personas.
             </p>
-            <p style={{ fontSize:13,color:MUTED,lineHeight:1.75,marginBottom:16,maxWidth:300 }}>
+            <p style={{ fontSize:16,color:MUTED,lineHeight:1.75,marginBottom:16,maxWidth:300 }}>
               El marketplace industrial P2P que conecta compradores y vendedores de equipos, partes y repuestos industriales a nivel global. Sin intermediarios. Sin comisiones.
             </p>
             <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
               {["P2P","0% Comisión","Global","Verificado"].map(tag=>(
-                <span key={tag} className="tag t-dim" style={{ fontSize:9 }}>{tag}</span>
+                <span key={tag} className="tag t-dim" style={{ fontSize:16 }}>{tag}</span>
               ))}
             </div>
           </div>
@@ -3341,19 +3357,19 @@ function AppFooter() {
             <p style={HDR}>Contacto</p>
             <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
               <div>
-                <p style={{ fontSize:11,color:MUTED,marginBottom:3 }}>Email general</p>
+                <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Email general</p>
                 <a href="mailto:contacto@spartshub.com" style={{ ...LNK,color:TEXT }}>contacto@spartshub.com</a>
               </div>
               <div>
-                <p style={{ fontSize:11,color:MUTED,marginBottom:3 }}>Soporte</p>
+                <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Soporte</p>
                 <a href="mailto:soporte@spartshub.com" style={{ ...LNK,color:TEXT }}>soporte@spartshub.com</a>
               </div>
               <div>
-                <p style={{ fontSize:11,color:MUTED,marginBottom:3 }}>WhatsApp</p>
+                <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>WhatsApp</p>
                 <a href="https://wa.me/56932689914" target="_blank" style={{ ...LNK,color:TEXT }}>+56 9 3268 9914</a>
               </div>
               <div>
-                <p style={{ fontSize:11,color:MUTED,marginBottom:3 }}>Ventas & Partnerships</p>
+                <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Ventas & Partnerships</p>
                 <a href="mailto:partners@spartshub.com" style={{ ...LNK,color:TEXT }}>partners@spartshub.com</a>
               </div>
             </div>
@@ -3366,18 +3382,18 @@ function AppFooter() {
         {/* Bottom bar */}
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,paddingBottom:24 }}>
           <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
-            <p style={{ fontSize:12,color:MUTED }}>
+            <p style={{ fontSize:16,color:MUTED }}>
               © {new Date().getFullYear()} SpartsHub™ — Todos los derechos reservados.
             </p>
-            <p style={{ fontSize:11,color:"rgba(255,255,255,.2)" }}>
+            <p style={{ fontSize:16,color:"rgba(255,255,255,.2)" }}>
               SpartsHub es una marca registrada. El nombre, logo y diseño son propiedad exclusiva de SpartsHub. Queda prohibida su reproducción sin autorización expresa.
             </p>
           </div>
           <div style={{ display:"flex",gap:16,alignItems:"center" }}>
-            <span style={{ fontSize:12,color:MUTED }}>Privacidad</span>
-            <span style={{ fontSize:12,color:MUTED }}>Términos</span>
-            <span style={{ fontSize:12,color:MUTED }}>Cookies</span>
-            <span style={{ fontSize:11,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>® & ™ SpartsHub</span>
+            <span style={{ fontSize:16,color:MUTED }}>Privacidad</span>
+            <span style={{ fontSize:16,color:MUTED }}>Términos</span>
+            <span style={{ fontSize:16,color:MUTED }}>Cookies</span>
+            <span style={{ fontSize:16,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>® & ™ SpartsHub</span>
           </div>
         </div>
       </div>
@@ -3405,7 +3421,7 @@ function MobileTabBar({ tab, setTab, onPublish }) {
           <div style={{ width:36,height:36,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,140,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
             <Ic n={tb.icon} s={20} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
           </div>
-          <span style={{ fontSize:10,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase" }}>{t(tb.key)}</span>
+          <span style={{ fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase" }}>{t(tb.key)}</span>
         </button>
       ))}
     </div>
@@ -3435,7 +3451,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT }}>
-      <style>{CSS_BASE}</style>
+      <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
       {/* Mobile header */}
       <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"8px 14px" }}>
@@ -3443,7 +3459,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
           <SpartsLogo size={24}/>
           <div style={{ display:"flex",gap:6,alignItems:"center" }}>
             {/* Lang switcher */}
-            <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:11,fontWeight:700 }}>
+            <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:16,fontWeight:700 }}>
               {["es","en"].map(l=>(
                 <button key={l} onClick={()=>setLang(l)} style={{ padding:"3px 8px",background:lang===l?RED:"transparent",color:lang===l?"#fff":MUTED,border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>{l.toUpperCase()}</button>
               ))}
@@ -3455,7 +3471,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
         <div style={{ display:"flex",alignItems:"center",gap:6 }}>
           <Ic n="map" s={13} c={RED}/>
           <select value={region} onChange={e=>setRegion(e.target.value)}
-            style={{ background:"transparent",border:"none",color:region!=="all"?RED:MUTED,fontSize:12,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,outline:"none",cursor:"pointer",flex:1,textTransform:"uppercase" }}>
+            style={{ background:"transparent",border:"none",color:region!=="all"?RED:MUTED,fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,outline:"none",cursor:"pointer",flex:1,textTransform:"uppercase" }}>
             {REGIONS.map(r=><option key={r.id} value={r.id} style={{ background:BG3,color:TEXT }}>{lang==="en"?r.label_en:r.label_es}</option>)}
           </select>
         </div>
@@ -3477,7 +3493,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Floating solicitud button — above tab bar */}
       {!showSolicitud&&!showPublish&&(
         <button onClick={()=>setShowSolicitud(true)}
-          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,140,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
+          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,140,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
           <Ic n="search" s={16} c="#fff"/>Solicita un repuesto
         </button>
       )}
@@ -3506,16 +3522,16 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
       <button onClick={e=>{ e.stopPropagation(); setOpen(v=>!v); }}
         style={{ display:"flex",alignItems:"center",gap:8,background:open?"rgba(255,140,0,.1)":CARD,border:`1px solid ${open?RED:BORDER}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",transition:"all .15s" }}>
         <div style={{ width:28,height:28,borderRadius:"50%",background:"rgba(255,140,0,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-          <span style={{ fontSize:11,fontWeight:700,color:RED,fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
+          <span style={{ fontSize:16,fontWeight:700,color:RED,fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
         </div>
-        <span style={{ fontSize:12,fontWeight:700,color:TEXT,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"Barlow Condensed,sans-serif" }}>{profile?.biz||profile?.name||"Mi cuenta"}</span>
+        <span style={{ fontSize:16,fontWeight:700,color:TEXT,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"Barlow Condensed,sans-serif" }}>{profile?.biz||profile?.name||"Mi cuenta"}</span>
         <Ic n="chevR" s={14} c={MUTED} style={{ transform:open?"rotate(90deg)":"rotate(0deg)",transition:"transform .15s" }}/>
       </button>
       {open&&(
         <div onClick={e=>e.stopPropagation()} style={{ position:"absolute",top:"calc(100% + 8px)",right:0,background:BG3,border:`1px solid ${BORDER2}`,borderRadius:10,padding:"6px",minWidth:200,zIndex:100,boxShadow:"0 8px 32px rgba(0,0,0,.5)",animation:"fadeIn .15s ease" }}>
           <div style={{ padding:"10px 12px",borderBottom:`1px solid ${BORDER}`,marginBottom:4 }}>
-            <p style={{ fontSize:13,fontWeight:700,color:TEXT }}>{profile?.name||"Usuario"}</p>
-            <p style={{ fontSize:11,color:MUTED }}>{profile?.biz||""}</p>
+            <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>{profile?.name||"Usuario"}</p>
+            <p style={{ fontSize:16,color:MUTED }}>{profile?.biz||""}</p>
           </div>
           {[
             {icon:"user",    label:"Mi perfil",          action:()=>{ onProfile("perfil"); setOpen(false); }},
@@ -3524,7 +3540,7 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
             {icon:"settings",label:"Configuración",       action:()=>{ onProfile("settings"); setOpen(false); }},
           ].map(({icon,label,action})=>(
             <button key={label} onClick={action}
-              style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:13,color:SUB,fontFamily:"inherit",transition:"all .15s" }}
+              style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:16,color:SUB,fontFamily:"inherit",transition:"all .15s" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,255,255,.05)"; e.currentTarget.style.color=TEXT; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="none"; e.currentTarget.style.color=SUB; }}>
               <Ic n={icon} s={15} c={MUTED}/>{label}
@@ -3532,7 +3548,7 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
           ))}
           <div style={{ height:1,background:BORDER,margin:"4px 0" }}/>
           <button onClick={()=>{ setOpen(false); onLogout(); }}
-            style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:13,color:RED,fontFamily:"inherit",transition:"all .15s" }}
+            style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:16,color:RED,fontFamily:"inherit",transition:"all .15s" }}
             onMouseEnter={e=>e.currentTarget.style.background="rgba(255,140,0,.08)"}
             onMouseLeave={e=>e.currentTarget.style.background="none"}>
             <Ic n="logout" s={15} c={RED}/>Cerrar sesión
@@ -3576,20 +3592,20 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
   return (
     <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column" }}>
-      <style>{CSS_BASE}</style>
+      <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
       {/* GLOBAL HEADER */}
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 28px" }}>
         <div style={{ display:"flex", alignItems:"center", height:56, gap:20 }}>
           <div style={{ display:"flex",flexDirection:"column",gap:2,flexShrink:0 }}>
             <SpartsLogo size={30}/>
-            <span style={{ fontSize:9,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
+            <span style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
           </div>
           <div style={{ width:1, height:32, background:BORDER }}/>
           <nav style={{ display:"flex", gap:4, flex:1 }}>
             {[{id:"home",key:"nav_home"},{id:"search",key:"nav_search"},{id:"profile",key:"nav_my_profile"},{id:"soporte",key:"nav_support"}].map((n,i)=>(
               <button key={i} onClick={()=>{ if(n.id==="soporte"){setShowSupport(true);return;} setTab(n.id); }}
-                style={{ padding:"7px 14px",borderRadius:7,background:tab===n.id?`rgba(255,140,0,.12)`:"none",border:tab===n.id?`1px solid rgba(255,140,0,.3)`:"1px solid transparent",cursor:"pointer",fontSize:13,fontWeight:700,color:tab===n.id?RED:TEXT,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase" }}
+                style={{ padding:"7px 14px",borderRadius:7,background:tab===n.id?`rgba(255,140,0,.12)`:"none",border:tab===n.id?`1px solid rgba(255,140,0,.3)`:"1px solid transparent",cursor:"pointer",fontSize:16,fontWeight:700,color:tab===n.id?RED:TEXT,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase" }}
                 onMouseEnter={e=>{ if(tab!==n.id) e.currentTarget.style.color=RED; }}
                 onMouseLeave={e=>{ e.currentTarget.style.color=tab===n.id?RED:TEXT; }}>
                 {t(n.key)}
@@ -3601,7 +3617,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           <div style={{ display:"flex",alignItems:"center",gap:6,borderRadius:7,border:`1px solid ${BORDER}`,padding:"6px 12px",background:region!=="all"?`rgba(255,140,0,.08)`:"transparent",transition:"all .15s",flexShrink:0 }}>
             <Ic n="location" s={14} c={region!=="all"?RED:MUTED}/>
             <select value={region} onChange={e=>setRegion(e.target.value)}
-              style={{ background:"transparent",border:"none",color:region!=="all"?RED:TEXT,fontSize:13,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.4,outline:"none",cursor:"pointer",textTransform:"uppercase",maxWidth:140 }}>
+              style={{ background:"transparent",border:"none",color:region!=="all"?RED:TEXT,fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.4,outline:"none",cursor:"pointer",textTransform:"uppercase",maxWidth:140 }}>
               {REGIONS.map(r=><option key={r.id} value={r.id} style={{ background:BG3,color:TEXT }}>{lang==="en"?r.label_en:r.label_es}</option>)}
             </select>
           </div>
@@ -3610,7 +3626,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           <div style={{ display:"flex",borderRadius:7,overflow:"hidden",border:`1px solid ${BORDER}`,flexShrink:0 }}>
             {["es","en"].map(l=>(
               <button key={l} onClick={()=>setLang(l)}
-                style={{ padding:"6px 14px",background:lang===l?RED:"transparent",color:lang===l?"#fff":TEXT,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}>
+                style={{ padding:"6px 14px",background:lang===l?RED:"transparent",color:lang===l?"#fff":TEXT,border:"none",cursor:"pointer",fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}>
                 {l.toUpperCase()}
               </button>
             ))}
@@ -3618,19 +3634,19 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
             <button onClick={()=>setShowSolicitud(true)}
-              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
+              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
               <Ic n="search" s={14} c={RED}/>{t("nav_request")}
             </button>
             <button onClick={()=>setShowPublish(true)}
-              style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"8px 16px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
+              style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"8px 16px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>e.currentTarget.style.background=RED2}
               onMouseLeave={e=>e.currentTarget.style.background=RED}>
               <Ic n="plus" s={14} c="#fff"/>{t("nav_publish_here")}
             </button>
             <button onClick={()=>setShowSupport(true)}
-              style={{ background:"none",color:TEXT,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"8px 12px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
+              style={{ background:"none",color:TEXT,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
               onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
               <Ic n="msg" s={14} c="currentColor"/>{t("nav_support")}
@@ -3653,9 +3669,9 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   setTab(n.id);
                   if (n.id!=="messages") setChatListing(null);
                 }}
-                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:14,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C26800)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(255,140,0,.35)" } : undefined}>
+                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:16,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C26800)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(255,140,0,.35)" } : undefined}>
                 <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{t(n.key)}
-                {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:10,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
+                {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:16,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
               </button>
             ))}
           </nav>
@@ -3663,8 +3679,8 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
             <div style={{ padding:"14px",borderTop:`1px solid ${BORDER}`,display:"flex",gap:10,alignItems:"center" }}>
               <Avatar name={profile.name||"U"} size={34}/>
               <div style={{ flex:1,minWidth:0 }}>
-                <p style={{ fontSize:13,fontWeight:700,color:TEXT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{profile.biz||profile.name||"Usuario"}</p>
-                <p style={{ fontSize:11,color:MUTED,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{session.user.email}</p>
+                <p style={{ fontSize:16,fontWeight:700,color:TEXT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{profile.biz||profile.name||"Usuario"}</p>
+                <p style={{ fontSize:16,color:MUTED,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{session.user.email}</p>
               </div>
             </div>
           )}
@@ -3726,7 +3742,7 @@ export default function SpartsHub() {
   if (!authReady) return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
       <div style={{ minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16 }}>
-        <style>{CSS_BASE}</style>
+        <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
         <SpartsLogo size={36}/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
       </div>
     </LangCtx.Provider>
