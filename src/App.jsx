@@ -456,7 +456,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       <section style={{ padding:"56px 32px", textAlign:"center" }}>
         <div style={{ maxWidth:700, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:32 }}>
           {[
-            { val:"0%",  label:"Comisión siempre" },
+            { val:"0%",  label:"Comisión" },
             { val:"P2P", label:"Contacto directo" },
             { val:"✓",   label:"Gratis para siempre" },
           ].map((s,i)=>(
@@ -724,9 +724,9 @@ function MiniCard({ l, onClick }) {
 /* ══════════════════════════════════════════════════════════════
    SEARCH PAGE
 ══════════════════════════════════════════════════════════════ */
-function SearchPage({ user, onSelect, region }) {
+function SearchPage({ user, onSelect, region, initQ="" }) {
   const { t, lang } = useLang();
-  const [q,          setQ]          = useState("");
+  const [q,          setQ]          = useState(initQ);
   const [cat,        setCat]        = useState("all");
   const [condition,  setCondition]  = useState("");
   const [marca,      setMarca]      = useState("");
@@ -3431,7 +3431,7 @@ function MobileTabBar({ tab, setTab, onPublish }) {
 /* ══════════════════════════════════════════════════════════════
    MOBILE LAYOUT
 ══════════════════════════════════════════════════════════════ */
-function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion }) {
+function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, onGuestLogin, onGuestRegister }) {
   const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
@@ -3477,14 +3477,23 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
         </div>
       </div>
 
+      {/* Guest banner */}
+      {guestMode && !session && (
+        <div style={{ position:"fixed", top:62, left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,140,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+          <p style={{ fontSize:13, color:SUB, flex:1 }}>Modo <strong style={{ color:RED }}>invitado</strong></p>
+          <button onClick={onGuestLogin} style={{ background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:6, padding:"5px 10px", fontSize:13, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Entrar</button>
+          <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:6, padding:"5px 10px", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Registrarse</button>
+        </div>
+      )}
+
       {/* Page content */}
-      <div style={{ paddingTop:72, paddingBottom:90 }}>
-        {tab==="home"    &&<HomePage    user={session.user} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
-        {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected} region={region}/>}
-        {tab==="messages"&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
-        {tab==="alertas" &&<AlertasPage  user={session.user} profile={profile} onSolicitud={()=>setShowSolicitud(true)}/>}
-        {tab==="profile" &&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
-        {tab==="mispubs" &&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
+      <div style={{ paddingTop: guestMode && !session ? 104 : 72, paddingBottom:90 }}>
+        {tab==="home"    &&<HomePage    user={session?.user||null} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
+        {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
+        {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
+        {tab==="alertas" &&session&&<AlertasPage  user={session.user} profile={profile} onSolicitud={()=>setShowSolicitud(true)}/>}
+        {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
+        {tab==="mispubs" &&session&&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
       </div>
 
       {/* Bottom tab bar */}
@@ -3562,7 +3571,7 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
 /* ══════════════════════════════════════════════════════════════
    DESKTOP LAYOUT
 ══════════════════════════════════════════════════════════════ */
-function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion }) {
+function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, onGuestLogin, onGuestRegister }) {
   const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
@@ -3686,20 +3695,31 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           )}
         </div>
 
+        {/* Guest banner */}
+        {guestMode && !session && (
+          <div style={{ background:"rgba(255,140,0,.1)", borderBottom:`1px solid rgba(255,140,0,.3)`, padding:"10px 32px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16 }}>
+            <p style={{ fontSize:16, color:TEXT }}>Estás navegando como <strong style={{ color:RED }}>invitado</strong> — para publicar, contactar vendedores o guardar búsquedas necesitas una cuenta.</p>
+            <div style={{ display:"flex", gap:8, flexShrink:0 }}>
+              <button onClick={onGuestLogin} style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:7, padding:"7px 16px", fontSize:15, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>Iniciar sesión</button>
+              <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:7, padding:"7px 16px", fontSize:15, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>Crear cuenta gratis →</button>
+            </div>
+          </div>
+        )}
+
         {/* Main */}
         <div style={{ flex:1,minWidth:0,overflowY:"auto",padding:"24px 32px 60px" }}>
-          {tab==="home"    &&<HomePage    user={session.user} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
-          {tab==="search"  &&<SearchPage  user={session.user} onSelect={setSelected} region={region}/>}
-          {tab==="messages"&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
-          {tab==="profile" &&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
-          {tab==="mispubs" &&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
+          {tab==="home"    &&<HomePage    user={session?.user||null} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
+          {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
+          {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
+          {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
+          {tab==="mispubs" &&session&&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
         </div>
       </div>
 
-      {selected&&<ListingDetail l={selected} user={session.user} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
-      {showPublish&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
+      {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
+      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
-      {showSolicitud&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
+      {showSolicitud&&session&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
 
 
     </div>
@@ -3713,6 +3733,8 @@ export default function SpartsHub() {
   const isMobile = useIsMobile();
   const [session,      setSession]      = useState(null);
   const [showAuthMode, setShowAuthMode] = useState("landing");
+  const [guestMode,    setGuestMode]    = useState(false);
+  const [guestSearch,  setGuestSearch]  = useState("");
   const [profile,      setProfile]      = useState(null);
   const [authReady,    setAuthReady]    = useState(false);
   const [tab,          setTab]          = useState("home");
@@ -3748,20 +3770,15 @@ export default function SpartsHub() {
     </LangCtx.Provider>
   );
 
-  if (!session) {
+  if (!session && !guestMode) {
     if (showAuthMode === "landing") return (
       <LangCtx.Provider value={{ lang, setLang, t }}>
         <LandingPage
           onLogin={()=>setShowAuthMode("login")}
           onRegister={()=>setShowAuthMode("register")}
-          onSearch={q=>{ setShowAuthMode("app"); setTimeout(()=>{ /* search handled after login */ }, 0); }}
-          onEnter={()=>setShowAuthMode("app")}
+          onSearch={q=>{ setGuestSearch(q); setGuestMode(true); setTab("search"); }}
+          onEnter={()=>{ setGuestMode(true); setTab("home"); }}
         />
-      </LangCtx.Provider>
-    );
-    if (showAuthMode === "app") return (
-      <LangCtx.Provider value={{ lang, setLang, t }}>
-        <AuthScreen initialMode="login" onAuth={()=>sb.auth.getSession().then(({ data })=>setSession(data.session))} onBack={()=>setShowAuthMode("landing")}/>
       </LangCtx.Provider>
     );
     return (
@@ -3779,6 +3796,9 @@ export default function SpartsHub() {
       chatListing={chatListing} setChatListing={setChatListing}
       openChat={openChat} logout={logout}
       region={region} setRegion={setRegion}
+      guestMode={guestMode} guestSearch={guestSearch}
+      onGuestLogin={()=>{ setGuestMode(false); setShowAuthMode("login"); }}
+      onGuestRegister={()=>{ setGuestMode(false); setShowAuthMode("register"); }}
     />
     </LangCtx.Provider>
   );
@@ -3791,6 +3811,9 @@ export default function SpartsHub() {
       chatListing={chatListing} setChatListing={setChatListing}
       openChat={openChat} logout={logout}
       region={region} setRegion={setRegion}
+      guestMode={guestMode} guestSearch={guestSearch}
+      onGuestLogin={()=>{ setGuestMode(false); setShowAuthMode("login"); }}
+      onGuestRegister={()=>{ setGuestMode(false); setShowAuthMode("register"); }}
     />
     </LangCtx.Provider>
   );
