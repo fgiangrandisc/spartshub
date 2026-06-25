@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 import { sb } from "./supabase.js";
-import LandingPage from "./LandingPage.jsx";
 import { T, CSS_BASE } from "./theme.js";
 import { LangCtx, useLang, REGIONS, makeT } from "./i18n.js";
 
@@ -335,12 +334,197 @@ function PhotoPlaceholder({ emoji="📦", h=160, url }) {
 
 
 /* ══════════════════════════════════════════════════════════════
+   LANDING PAGE
+══════════════════════════════════════════════════════════════ */
+function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
+  const [searchQ, setSearchQ] = useState("");
+
+  const handleSearch = () => {
+    if (searchQ.trim()) onSearch?.(searchQ.trim());
+    else onEnter?.();
+  };
+
+  return (
+    <div style={{ minHeight:"100vh", background:BG, color:TEXT, fontFamily:"'Barlow', sans-serif" }}>
+      <style>{CSS_BASE}</style>
+
+      {/* HEADER */}
+      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 32px", position:"sticky", top:0, zIndex:50 }}>
+        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", alignItems:"center", height:64, gap:24 }}>
+          <SpartsLogo size={32}/>
+          <div style={{ flex:1 }}/>
+          <button onClick={onLogin}
+            style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"9px 20px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}
+            onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
+            onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
+            Iniciar Sesión
+          </button>
+          <button onClick={onRegister}
+            style={{ background:RED, border:"none", borderRadius:8, padding:"9px 24px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.background=RED2}
+            onMouseLeave={e=>e.currentTarget.style.background=RED}>
+            Registrarse →
+          </button>
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section style={{ padding:"80px 32px 64px", textAlign:"center", maxWidth:820, margin:"0 auto" }}>
+        <div style={{ marginBottom:24 }}>
+          <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px, 3.5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase", marginBottom:0 }}>
+            No vendemos repuestos.
+          </p>
+          <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px, 3.5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase" }}>
+            Conectamos personas.
+          </p>
+        </div>
+        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(44px, 7vw, 72px)", lineHeight:1.05, color:TEXT, marginBottom:16 }}>
+          Todo lo que necesitas<br/><span style={{ color:RED }}>para tu operación o faena.</span>
+        </h1>
+        <p style={{ fontSize:19, color:SUB, lineHeight:1.7, marginBottom:40, fontWeight:400, maxWidth:620, margin:"0 auto 40px" }}>
+          Repuestos, equipos, maquinaria, herramientas y más — encuentra lo que necesitas para que tu operación no se detenga. Sin intermediarios. Sin comisiones.
+        </p>
+        <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(255,140,0,.1)", border:"1px solid rgba(255,140,0,.3)", borderRadius:20, padding:"6px 16px", marginBottom:32 }}>
+          <span style={{ fontSize:13, fontWeight:700, color:RED, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5 }}>✓ GRATIS · SIN COMISIONES · CONTACTO DIRECTO</span>
+        </div>
+
+        {/* Search bar */}
+        <div style={{ display:"flex", gap:0, maxWidth:580, margin:"0 auto 20px", borderRadius:10, overflow:"hidden", border:`2px solid ${RED}`, background:BG3 }}>
+          <input
+            value={searchQ}
+            onChange={e=>setSearchQ(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&handleSearch()}
+            placeholder="¿Qué necesitas para tu faena u operación?"
+            style={{ flex:1, padding:"16px 20px", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}
+          />
+          <button onClick={handleSearch}
+            style={{ background:RED, border:"none", padding:"16px 28px", fontSize:15, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.background=RED2}
+            onMouseLeave={e=>e.currentTarget.style.background=RED}>
+            Buscar →
+          </button>
+        </div>
+
+        {/* CTA buttons */}
+        <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", marginBottom:20 }}>
+          <button onClick={onRegister}
+            style={{ background:RED, border:"none", borderRadius:10, padding:"14px 32px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.background=RED2}
+            onMouseLeave={e=>e.currentTarget.style.background=RED}>
+            Crear cuenta gratis →
+          </button>
+          <button onClick={onEnter}
+            style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:10, padding:"14px 28px", fontSize:16, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s" }}
+            onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
+            onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
+            Explorar publicaciones
+          </button>
+        </div>
+        <p style={{ fontSize:13, color:MUTED }}>✓ Sin tarjeta de crédito &nbsp;&nbsp; ✓ Activa en minutos &nbsp;&nbsp; ✓ Gratis para siempre</p>
+      </section>
+
+      {/* CÓMO FUNCIONA */}
+      <section style={{ padding:"56px 32px", background:BG2, borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}` }}>
+        <div style={{ maxWidth:900, margin:"0 auto" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:38, color:TEXT, textAlign:"center", marginBottom:40 }}>¿Cómo funciona?</h2>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:20 }}>
+            {[
+              { icon:"📢", title:"1. Publica o busca",      desc:"Publica lo que vendes o pide lo que necesitas. Es gratis y toma menos de 2 minutos." },
+              { icon:"🤖", title:"2. La IA busca matches",  desc:"Nuestro sistema analiza el catálogo y te avisa cuando hay una coincidencia con tu búsqueda." },
+              { icon:"🤝", title:"3. Contacto directo",     desc:"Hablas directamente con el comprador o vendedor. Sin intermediarios, sin comisiones." },
+            ].map((s,i)=>(
+              <div key={i} style={{ background:CARD, borderRadius:14, padding:"32px 24px", border:`1px solid ${BORDER}`, textAlign:"center" }}>
+                <div style={{ fontSize:44, marginBottom:16 }}>{s.icon}</div>
+                <h3 style={{ fontSize:17, fontWeight:700, color:TEXT, marginBottom:10, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3 }}>{s.title}</h3>
+                <p style={{ fontSize:14, color:SUB, lineHeight:1.7 }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* STATS */}
+      <section style={{ padding:"56px 32px", textAlign:"center" }}>
+        <div style={{ maxWidth:700, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:32 }}>
+          {[
+            { val:"0%",  label:"Comisión siempre" },
+            { val:"P2P", label:"Contacto directo" },
+            { val:"✓",   label:"Gratis para siempre" },
+          ].map((s,i)=>(
+            <div key={i}>
+              <div style={{ fontFamily:"Bebas Neue, sans-serif", fontSize:56, color:RED, lineHeight:1 }}>{s.val}</div>
+              <div style={{ fontSize:15, color:SUB, marginTop:8, fontWeight:600 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* INDUSTRIAS */}
+      <section style={{ padding:"56px 32px", background:BG2, borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}` }}>
+        <div style={{ maxWidth:900, margin:"0 auto", textAlign:"center" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:38, color:TEXT, marginBottom:12 }}>Industrias que cubrimos</h2>
+          <p style={{ fontSize:15, color:SUB, marginBottom:36 }}>Repuestos y equipos para toda la industria</p>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:10, justifyContent:"center" }}>
+            {["⚙️ Minería","🌲 Forestal","🏗️ Construcción","⚡ Energía","🚛 Transporte","🌾 Agroindustrial","🔧 Herramientas","💧 Sanitarias","🍎 Alimentos","🛣️ Rutas y Caminos"].map((ind,i)=>(
+              <button key={i} onClick={onEnter}
+                style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:24, padding:"10px 20px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3, transition:"all .15s" }}
+                onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; e.currentTarget.style.background="rgba(255,140,0,.08)"; }}
+                onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=TEXT; e.currentTarget.style.background=CARD; }}>
+                {ind}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section style={{ padding:"80px 32px", textAlign:"center" }}>
+        <div style={{ maxWidth:560, margin:"0 auto" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(36px, 6vw, 56px)", color:TEXT, lineHeight:1.1, marginBottom:16 }}>
+            Empieza hoy.<br/><span style={{ color:RED }}>Es completamente gratis.</span>
+          </h2>
+          <p style={{ fontSize:16, color:SUB, marginBottom:36, lineHeight:1.6 }}>
+            Únete a esta comunidad. Busca, encuentra, vende y compra lo que necesitas para que tu negocio siga operando.
+          </p>
+          <button onClick={onRegister}
+            style={{ background:RED, border:"none", borderRadius:10, padding:"16px 40px", fontSize:17, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.background=RED2}
+            onMouseLeave={e=>e.currentTarget.style.background=RED}>
+            Crear cuenta gratis →
+          </button>
+          <p style={{ fontSize:13, color:MUTED, marginTop:16 }}>Sin tarjeta de crédito · Sin comisiones · Sin contratos</p>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ background:BG3, borderTop:`1px solid ${BORDER}`, padding:"32px", textAlign:"center" }}>
+        <div style={{ maxWidth:900, margin:"0 auto" }}>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}>
+            <SpartsLogo size={28}/>
+          </div>
+          <p style={{ fontSize:15, color:RED, marginBottom:16, fontFamily:"Bebas Neue, sans-serif", letterSpacing:1.5, textTransform:"uppercase" }}>No vendemos repuestos. Conectamos personas.</p>
+          <div style={{ display:"flex", gap:24, justifyContent:"center", flexWrap:"wrap", marginBottom:20 }}>
+            {["Términos y condiciones","Política de privacidad","Contacto"].map((link,i)=>(
+              <span key={i} style={{ fontSize:13, color:MUTED, cursor:"pointer", transition:"color .15s" }}
+                onMouseEnter={e=>e.currentTarget.style.color=TEXT}
+                onMouseLeave={e=>e.currentTarget.style.color=MUTED}>
+                {link}
+              </span>
+            ))}
+          </div>
+          <p style={{ fontSize:12, color:MUTED }}>© {new Date().getFullYear()} SpartsHub™ · fgiangrandisc@gmail.com · +56 9 3268 9914</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    AUTH SCREEN
 ══════════════════════════════════════════════════════════════ */
 function AuthScreen({ initialMode="login", onAuth, onBack }) {
   const { t, lang } = useLang();
   const [mode, setMode]     = useState(initialMode);
-  const [step, setStep]     = useState(0);
   const [f, setF]           = useState({ email:"", pass:"", name:"", biz:"", phone:"", location:"" });
   const [loading, setLoading] = useState(false);
   const [err, setErr]       = useState("");
@@ -367,52 +551,17 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
       if (data.user) {
         await sb.from("profiles").upsert({ id:data.user.id, name, biz, phone:f.phone.trim(), location:f.location.trim() });
         alert("¡Cuenta creada! Revisa tu email para confirmar.");
-        setMode("login"); setStep(1);
+        setMode("login");
       }
     }
     setLoading(false);
   };
 
-  /* Welcome screen */
-  if (step === 0) return (
-    <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column", position:"relative", overflow:"hidden" }}>
-      <style>{CSS_BASE}</style>
-      <div style={{ position:"absolute", inset:0, backgroundImage:`url('https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=60')`, backgroundSize:"cover", backgroundPosition:"center", opacity:.25 }}/>
-      <div style={{ position:"absolute", inset:0, background:`linear-gradient(to bottom, transparent 20%, ${BG} 70%)` }}/>
-
-      <div style={{ position:"relative", flex:1, display:"flex", flexDirection:"column", padding:28, paddingTop:80 }}>
-        <div style={{ display:"flex", gap:8, marginBottom:16 }}>
-          {["P2P","INDUSTRIAL","GLOBAL"].map(tag=><span key={tag} className="tag t-dim" style={{ fontSize:9 }}>{tag}</span>)}
-        </div>
-        <SpartsLogo size={38}/>
-        <div style={{ marginTop:32, marginBottom:8 }}>
-          <p className="bebas" style={{ fontSize:36, color:TEXT, lineHeight:1.1, marginBottom:8 }}>
-            Conectamos personas,<br/><span style={{ color:RED }}>no repuestos.</span>
-          </p>
-          <p style={{ fontSize:15, color:SUB, marginBottom:32, lineHeight:1.6 }}>El marketplace industrial global.</p>
-          <div style={{ display:"flex", gap:8, marginBottom:40, flexWrap:"wrap" }}>
-            {["✓ Verificado","0% Comisión","Trade IA"].map(tag=>(
-              <span key={tag} className="tag t-dim">{tag}</span>
-            ))}
-          </div>
-        </div>
-        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          <button className="btn-red" onClick={()=>{ setMode("register"); setStep(1); }} style={{ fontSize:16, padding:"16px 24px" }}>
-            Comenzar →
-          </button>
-          <button className="btn-ol" onClick={()=>{ setMode("login"); setStep(1); }} style={{ fontSize:14, padding:"14px 24px" }}>
-            Ya tengo cuenta · Iniciar sesión
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column" }}>
       <style>{CSS_BASE}</style>
       <div style={{ padding:"56px 20px 20px", display:"flex", alignItems:"center", gap:12 }}>
-        <button className="btn-ghost" onClick={()=>setStep(0)}><Ic n="chevL" s={22} c={TEXT}/></button>
+        <button className="btn-ghost" onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
         <SpartsLogo size={36}/>
       </div>
 
@@ -3584,14 +3733,19 @@ export default function SpartsHub() {
   );
 
   if (!session) {
-    if (showAuthMode==="landing") return (
+    if (showAuthMode === "landing") return (
       <LangCtx.Provider value={{ lang, setLang, t }}>
-        <LandingPage 
-          onRegister={()=>setShowAuthMode("register")} 
-          onLogin={()=>setShowAuthMode("login")} 
-          onEnter={()=>setShowAuthMode("login")}
-          onSearch={(q)=>{ setShowAuthMode("login"); }}
-          lang={lang} setLang={setLang}/>
+        <LandingPage
+          onLogin={()=>setShowAuthMode("login")}
+          onRegister={()=>setShowAuthMode("register")}
+          onSearch={q=>{ setShowAuthMode("app"); setTimeout(()=>{ /* search handled after login */ }, 0); }}
+          onEnter={()=>setShowAuthMode("app")}
+        />
+      </LangCtx.Provider>
+    );
+    if (showAuthMode === "app") return (
+      <LangCtx.Provider value={{ lang, setLang, t }}>
+        <AuthScreen initialMode="login" onAuth={()=>sb.auth.getSession().then(({ data })=>setSession(data.session))} onBack={()=>setShowAuthMode("landing")}/>
       </LangCtx.Provider>
     );
     return (
