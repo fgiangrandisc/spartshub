@@ -1456,39 +1456,45 @@ function PublishSheet({ user, profile, onClose, onDone }) {
 
           {step===1&&type==="producto"&&(
             <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
-              {/* Photo upload row */}
-              <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
-                <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple style={{ display:"none" }} onChange={handlePhotoChange}/>
-                {/* Filled preview slots */}
-                {previews.map((url,i)=>(
-                  <div key={i} style={{ position:"relative",flexShrink:0 }}>
-                    <img src={url} alt="" style={{ width:80,height:80,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${BORDER}` }}/>
-                    <button onClick={()=>removePhoto(i)}
-                      style={{ position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,color:MUTED,fontSize:16,lineHeight:"20px",textAlign:"center",cursor:"pointer",padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
-                      <Ic n="x" s={10} c="#fff"/>
-                    </button>
+              {/* Photo upload area */}
+              <input ref={photoInputRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={handlePhotoChange}/>
+
+              {previews.length === 0 ? (
+                /* Empty state — big tap target */
+                <div onClick={()=>photoInputRef.current?.click()}
+                  style={{ border:`2px dashed ${RED}`, borderRadius:14, padding:"32px 20px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, cursor:"pointer", background:"rgba(255,140,0,.04)", transition:"background .15s" }}
+                  onMouseEnter={e=>e.currentTarget.style.background="rgba(255,140,0,.09)"}
+                  onMouseLeave={e=>e.currentTarget.style.background="rgba(255,140,0,.04)"}>
+                  <Ic n="camera" s={36} c={RED}/>
+                  <p style={{ fontSize:17, fontWeight:700, color:RED, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", margin:0 }}>Agregar fotos</p>
+                  <p style={{ fontSize:14, color:MUTED, margin:0, textAlign:"center" }}>Toca para seleccionar · Hasta 4 fotos · Puedes elegir varias a la vez</p>
+                </div>
+              ) : (
+                /* Filled — thumbnail row + add more */
+                <div>
+                  <div style={{ display:"flex", gap:10, overflowX:"auto", paddingBottom:6 }}>
+                    {previews.map((url,i)=>(
+                      <div key={i} style={{ position:"relative", flexShrink:0 }}>
+                        <img src={url} alt="" style={{ width:88, height:88, borderRadius:10, objectFit:"cover", display:"block", border:`1.5px solid ${BORDER}` }}/>
+                        <button onClick={()=>removePhoto(i)}
+                          style={{ position:"absolute", top:-7, right:-7, width:22, height:22, borderRadius:"50%", background:"#111", border:`1px solid ${BORDER}`, color:"#fff", fontSize:14, cursor:"pointer", padding:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                          <Ic n="x" s={11} c="#fff"/>
+                        </button>
+                      </div>
+                    ))}
+                    {previews.length < 4 && (
+                      <div onClick={()=>photoInputRef.current?.click()}
+                        style={{ width:88, height:88, background:BG2, borderRadius:10, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, flexShrink:0, border:`2px dashed ${BORDER}`, cursor:"pointer", transition:"border-color .15s" }}
+                        onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
+                        onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>
+                        <Ic n="camera" s={20} c={MUTED}/>
+                        <span style={{ fontSize:13, color:MUTED, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif" }}>+ FOTO</span>
+                      </div>
+                    )}
                   </div>
-                ))}
-                {/* Add slot — show if fewer than 4 photos */}
-                {previews.length < 4 && (
-                  <div onClick={()=>photoInputRef.current?.click()}
-                    style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`1.5px dashed ${previews.length===0?RED:BORDER}`,cursor:"pointer",transition:"border-color .15s" }}
-                    onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
-                    onMouseLeave={e=>e.currentTarget.style.borderColor=previews.length===0?RED:BORDER}>
-                    <Ic n="camera" s={previews.length===0?22:18} c={previews.length===0?RED:MUTED}/>
-                    <span style={{ fontSize:16,color:previews.length===0?RED:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>
-                      {previews.length===0?"FOTO":"+ FOTO"}
-                    </span>
-                  </div>
-                )}
-                {/* Empty decorative slots */}
-                {Array.from({length:Math.max(0, 3-previews.length)}).map((_,i)=>(
-                  <div key={"e"+i} onClick={()=>photoInputRef.current?.click()}
-                    style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:`1.5px dashed ${BORDER}`,cursor:"pointer",opacity:.4 }}>
-                    <Ic n="img" s={16} c={MUTED}/>
-                  </div>
-                ))}
-              </div>
+                  <p style={{ fontSize:13, color:MUTED, marginTop:4 }}>{previews.length}/4 fotos · {4-previews.length>0?`Puedes agregar ${4-previews.length} más`:"Máximo alcanzado"}</p>
+                </div>
+              )}
 
               {err&&<div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:16,color:DANGER }}>{err}</div>}
 
@@ -2695,32 +2701,47 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
           {/* Photos */}
           <div>
             <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Fotos</p>
-            <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:4 }}>
-              <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple style={{ display:"none" }} onChange={handleNewPhotos}/>
-              {existingPhotos.map((url,i)=>(
-                <div key={"ex"+i} style={{ position:"relative",flexShrink:0 }}>
-                  <img src={url} alt="" style={{ width:80,height:80,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${BORDER}` }}/>
-                  <button onClick={()=>removeExisting(i)} style={{ position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
-                    <Ic n="x" s={10} c="#fff"/>
-                  </button>
+            <input ref={photoInputRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={handleNewPhotos}/>
+
+            {totalSlots === 0 ? (
+              <div onClick={()=>photoInputRef.current?.click()}
+                style={{ border:`2px dashed ${RED}`, borderRadius:14, padding:"28px 20px", display:"flex", flexDirection:"column", alignItems:"center", gap:10, cursor:"pointer", background:"rgba(255,140,0,.04)" }}>
+                <Ic n="camera" s={32} c={RED}/>
+                <p style={{ fontSize:16, fontWeight:700, color:RED, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", margin:0 }}>Agregar fotos</p>
+                <p style={{ fontSize:13, color:MUTED, margin:0, textAlign:"center" }}>Toca para seleccionar · Hasta 4 fotos · Puedes elegir varias a la vez</p>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:6 }}>
+                  {existingPhotos.map((url,i)=>(
+                    <div key={"ex"+i} style={{ position:"relative",flexShrink:0 }}>
+                      <img src={url} alt="" style={{ width:88,height:88,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${BORDER}` }}/>
+                      <button onClick={()=>removeExisting(i)} style={{ position:"absolute",top:-7,right:-7,width:22,height:22,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                        <Ic n="x" s={11} c="#fff"/>
+                      </button>
+                    </div>
+                  ))}
+                  {newPreviews.map((url,i)=>(
+                    <div key={"nw"+i} style={{ position:"relative",flexShrink:0 }}>
+                      <img src={url} alt="" style={{ width:88,height:88,borderRadius:10,objectFit:"cover",display:"block",border:`2px solid ${RED}`,opacity:.9 }}/>
+                      <button onClick={()=>removeNew(i)} style={{ position:"absolute",top:-7,right:-7,width:22,height:22,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                        <Ic n="x" s={11} c="#fff"/>
+                      </button>
+                    </div>
+                  ))}
+                  {totalSlots < 4 && (
+                    <div onClick={()=>photoInputRef.current?.click()}
+                      style={{ width:88,height:88,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`2px dashed ${BORDER}`,cursor:"pointer",transition:"border-color .15s" }}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>
+                      <Ic n="camera" s={20} c={MUTED}/>
+                      <span style={{ fontSize:13,color:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>+ FOTO</span>
+                    </div>
+                  )}
                 </div>
-              ))}
-              {newPreviews.map((url,i)=>(
-                <div key={"nw"+i} style={{ position:"relative",flexShrink:0 }}>
-                  <img src={url} alt="" style={{ width:80,height:80,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${RED}`,opacity:.9 }}/>
-                  <button onClick={()=>removeNew(i)} style={{ position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
-                    <Ic n="x" s={10} c="#fff"/>
-                  </button>
-                </div>
-              ))}
-              {totalSlots < 4 && (
-                <div onClick={()=>photoInputRef.current?.click()}
-                  style={{ width:80,height:80,background:BG2,borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,border:`1.5px dashed ${totalSlots===0?RED:BORDER}`,cursor:"pointer" }}>
-                  <Ic n="camera" s={20} c={totalSlots===0?RED:MUTED}/>
-                  <span style={{ fontSize:16,color:totalSlots===0?RED:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>{totalSlots===0?"FOTO":"+ FOTO"}</span>
-                </div>
-              )}
-            </div>
+                <p style={{ fontSize:13,color:MUTED,marginTop:4 }}>{totalSlots}/4 fotos · {totalSlots<4?`Puedes agregar ${4-totalSlots} más`:"Máximo alcanzado"}</p>
+              </div>
+            )}
           </div>
 
           {/* Title */}
