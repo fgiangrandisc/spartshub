@@ -2850,6 +2850,7 @@ function MisPublicaciones({ user, onSelect }) {
   const [editListing, setEditListing] = useState(null);   // listing being edited
   const [confirmDel,  setConfirmDel]  = useState(null);   // id being confirmed for delete
   const [confirmDelReq, setConfirmDelReq] = useState(null);
+  const [editingRequest, setEditingRequest] = useState(null);
   const [deleting,    setDeleting]    = useState(false);
 
   const reload = useCallback(() => {
@@ -3022,10 +3023,16 @@ function MisPublicaciones({ user, onSelect }) {
                         </button>
                       </div>
                     ) : (
-                      <button onClick={()=>setConfirmDelReq(r.id)}
-                        style={{ padding:"6px 12px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
-                        <Ic n="trash" s={12} c={DANGER}/>Eliminar
-                      </button>
+                      <div style={{ display:"flex",gap:6 }}>
+                        <button onClick={()=>setEditingRequest(r)}
+                          style={{ padding:"6px 12px",borderRadius:7,border:`1px solid ${BORDER}`,background:BG2,color:TEXT,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
+                          <Ic n="edit" s={12} c={TEXT}/>Editar
+                        </button>
+                        <button onClick={()=>setConfirmDelReq(r.id)}
+                          style={{ padding:"6px 12px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
+                          <Ic n="trash" s={12} c={DANGER}/>Eliminar
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -3034,13 +3041,151 @@ function MisPublicaciones({ user, onSelect }) {
           )}
         </>
       )}
+
+      {editingRequest && (
+        <EditSolicitudSheet
+          request={editingRequest}
+          user={user}
+          profile={profile}
+          onClose={()=>setEditingRequest(null)}
+          onSaved={updated=>{ setRequests(prev=>prev.map(r=>r.id===updated.id?updated:r)); setEditingRequest(null); }}
+        />
+      )}
+    </div>
+  );
+}
+══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   EDIT SOLICITUD SHEET
+══════════════════════════════════════════════════════════════ */
+function EditSolicitudSheet({ request:req, user, profile, onClose, onSaved }) {
+  const { t } = useLang();
+  const [loading, setLoading] = useState(false);
+  const [err,     setErr]     = useState("");
+  const URGENCY = [["normal","Normal"],["urgente","Urgente"],["critico","Crítico"]];
+  const URGENCY_C = { normal:BLUE, urgente:GOLD, critico:RED };
+
+  const [f, setF] = useState({
+    title:          req.title          || "",
+    brand:          req.brand          || "",
+    model:          req.model          || "",
+    cat:            req.cat            || "min",
+    serial_number:  req.serial_number  || "",
+    part_number:    req.part_number    || "",
+    engine_number:  req.engine_number  || "",
+    chassis_number: req.chassis_number || "",
+    hours:          req.hours          || "",
+    condition:      req.condition      || "",
+    description:    req.description    || "",
+    location:       req.location       || profile?.location || "",
+    phone:          req.phone          || profile?.phone    || "",
+    budget:         req.budget         || "",
+    currency:       req.currency       || "CLP",
+    urgency:        req.urgency        || "normal",
+  });
+  const upd = (k,v) => setF(p=>({...p,[k]:v}));
+
+  const save = async () => {
+    if (!f.title) { setErr("El título es obligatorio."); return; }
+    setLoading(true); setErr("");
+    const { data, error } = await sb.from("requests").update({
+      title: f.title, brand: f.brand, model: f.model, cat: f.cat,
+      serial_number: f.serial_number, part_number: f.part_number,
+      engine_number: f.engine_number, chassis_number: f.chassis_number,
+      hours: f.hours, condition: f.condition, description: f.description,
+      location: f.location, phone: f.phone,
+      budget: f.budget ? Number(f.budget) : null,
+      currency: f.currency, urgency: f.urgency,
+    }).eq("id", req.id).select().single();
+    setLoading(false);
+    if (error) { setErr(error.message); return; }
+    onSaved(data);
+  };
+
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:200,display:"flex",alignItems:"flex-end",background:"rgba(0,0,0,.6)" }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{ width:"100%",maxWidth:620,margin:"0 auto",background:BG,borderRadius:"18px 18px 0 0",maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden" }}>
+        <div style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px" }}>
+          <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
+        </div>
+        <div style={{ padding:"8px 20px 12px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+          <h3 className="bebas" style={{ fontSize:22,color:TEXT }}>Editar solicitud</h3>
+          <button className="btn-ghost" onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
+        </div>
+        <div style={{ overflowY:"auto",flex:1,padding:"0 20px 40px",display:"flex",flexDirection:"column",gap:14 }}>
+          {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:16,color:DANGER }}>{err}</div>}
+          <div>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Qué necesitas *</p>
+            <input className="inp" placeholder="Ej: Bomba hidráulica Rexroth A10V..." value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
+          </div>
+          <div>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Industria / Categoría</p>
+            <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
+              {CATS.map(c=><option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
+            </select>
+          </div>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Marca</p>
+              <input className="inp" placeholder="Ej: Caterpillar" value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)}/>
+            </div>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Modelo</p>
+              <input className="inp" placeholder="Ej: 320D" value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)}/>
+            </div>
+          </div>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° Parte</p>
+              <input className="inp" placeholder="Ej: 3306-A" value={f.part_number} maxLength={100} onChange={e=>upd("part_number",e.target.value)}/>
+            </div>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° Serie</p>
+              <input className="inp" placeholder="Ej: SN-00123" value={f.serial_number} maxLength={100} onChange={e=>upd("serial_number",e.target.value)}/>
+            </div>
+          </div>
+          <div>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Descripción adicional</p>
+            <textarea className="inp" rows={3} placeholder="Detalles relevantes..." value={f.description} maxLength={1000} onChange={e=>upd("description",e.target.value)} style={{ resize:"none" }}/>
+          </div>
+          <div>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Urgencia</p>
+            <div style={{ display:"flex",gap:8 }}>
+              {URGENCY.map(([val,lbl])=>(
+                <button key={val} onClick={()=>upd("urgency",val)}
+                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`${URGENCY_C[val]}18`:CARD,fontWeight:700,fontSize:16,color:f.urgency===val?URGENCY_C[val]:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Presupuesto máximo (opcional)</p>
+            <div style={{ display:"flex",gap:8 }}>
+              <div style={{ position:"relative",flex:1 }}>
+                <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
+                <input className="inp" type="number" placeholder="0" value={f.budget} onChange={e=>upd("budget",e.target.value)} style={{ paddingLeft:30 }}/>
+              </div>
+              <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
+                {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Ubicación</p>
+            <input className="inp" placeholder="Ej: Antofagasta, Chile" value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)}/>
+          </div>
+          <button className="btn-red" onClick={save} disabled={loading||!f.title}
+            style={{ marginTop:8,opacity:(!f.title||loading)?.5:1,padding:"15px",fontSize:16 }}>
+            {loading ? "Guardando…" : "Guardar cambios"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   SOLICITUD SHEET — Botón flotante
-══════════════════════════════════════════════════════════════ */
 function SolicitudSheet({ user, profile, onClose, onDone }) {
   const { t } = useLang();
   const [step,    setStep]    = useState(0);
