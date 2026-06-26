@@ -26,6 +26,45 @@ function useIsMobile() {
   return mobile;
 }
 
+/* ── Swipe-to-close hook for bottom sheets ──────────────────────
+   Returns drag handlers + live translateY. Dragging the handle down
+   past a threshold (or with enough velocity) triggers onClose.
+──────────────────────────────────────────────────────────────── */
+function useSwipeToClose(onClose) {
+  const [dragY, setDragY] = useState(0);
+  const start  = useRef(null);
+  const startT = useRef(0);
+
+  const onTouchStart = e => {
+    start.current  = e.touches[0].clientY;
+    startT.current = Date.now();
+  };
+  const onTouchMove = e => {
+    if (start.current == null) return;
+    const dy = e.touches[0].clientY - start.current;
+    if (dy > 0) setDragY(dy); // only allow dragging down
+  };
+  const onTouchEnd = () => {
+    if (start.current == null) return;
+    const dt = Date.now() - startT.current;
+    const velocity = dragY / Math.max(dt, 1); // px per ms
+    if (dragY > 110 || velocity > 0.55) {
+      setDragY(window.innerHeight); // slide out
+      setTimeout(() => { onClose(); setDragY(0); }, 180);
+    } else {
+      setDragY(0); // snap back
+    }
+    start.current = null;
+  };
+
+  const handleProps = { onTouchStart, onTouchMove, onTouchEnd };
+  const sheetStyle = {
+    transform: `translateY(${dragY}px)`,
+    transition: start.current == null ? "transform .22s cubic-bezier(.2,.8,.2,1)" : "none",
+  };
+  return { handleProps, sheetStyle, dragY };
+}
+
 /* ══════════════════════════════════════════════════════════════
    MATCH ENGINE — IA analiza similitud entre publicación y solicitud
 ══════════════════════════════════════════════════════════════ */
@@ -303,8 +342,7 @@ const fmtPrice = (p, cur) => {
   if (cur === "NEG") return "A convenir";
   const n = Number(p);
   if (!cur || isNaN(n)) return "—";
-  const fmt = n >= 1000 ? `${(n / 1000).toFixed(0)}k` : n.toLocaleString("es-CL");
-  return `${cur} ${fmt}`;
+  return `${cur} ${n.toLocaleString("es-CL")}`;
 };
 
 /* ── Shared hook: unread message count ──────────────────────── */
@@ -1176,6 +1214,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
   const [showEdit,    setShowEdit]    = useState(false);
   const [confirmDel,  setConfirmDel]  = useState(false);
   const [deleting,    setDeleting]    = useState(false);
+  const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const isOwner = user && l.user_id === user.id;
 
   const deleteListing = async () => {
@@ -1192,8 +1231,8 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
   };
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:60,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
-      <div className="sheet sheet-up" style={{ maxHeight:"92vh",overflow:"hidden",display:"flex",flexDirection:"column" }} onClick={e=>e.stopPropagation()}>
-        <div style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px" }}>
+      <div className="sheet sheet-up" style={{ maxHeight:"92vh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
+        <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
         <div style={{ padding:"8px 20px 14px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
@@ -1315,6 +1354,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
 ══════════════════════════════════════════════════════════════ */
 function PublishSheet({ user, profile, onClose, onDone }) {
   const { t } = useLang();
+  const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [step,          setStep]          = useState(0);
   const [type,          setType]          = useState("producto");
   const [loading,       setLoading]       = useState(false);
@@ -1423,8 +1463,8 @@ function PublishSheet({ user, profile, onClose, onDone }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:60,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
-      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column" }} onClick={e=>e.stopPropagation()}>
-        <div style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px" }}>
+      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
+        <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
         <div style={{ padding:"8px 20px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
@@ -2591,6 +2631,7 @@ function AlertasPage({ user, profile }) {
 ══════════════════════════════════════════════════════════════ */
 function EditListingSheet({ user, listing, onClose, onSaved }) {
   const { t } = useLang();
+  const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [loading, setLoading]   = useState(false);
   const [err,     setErr]       = useState("");
   const photoInputRef           = useRef();
@@ -2697,8 +2738,8 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:90,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
-      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column" }} onClick={e=>e.stopPropagation()}>
-        <div style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px" }}>
+      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
+        <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
         <div style={{ padding:"8px 20px 12px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
@@ -3060,6 +3101,7 @@ function MisPublicaciones({ user, onSelect }) {
 ══════════════════════════════════════════════════════════════ */
 function EditSolicitudSheet({ request:req, user, profile, onClose, onSaved }) {
   const { t } = useLang();
+  const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [loading, setLoading] = useState(false);
   const [err,     setErr]     = useState("");
   const URGENCY = [["normal","Normal"],["urgente","Urgente"],["critico","Crítico"]];
@@ -3105,8 +3147,8 @@ function EditSolicitudSheet({ request:req, user, profile, onClose, onSaved }) {
   return (
     <div style={{ position:"fixed",inset:0,zIndex:200,display:"flex",alignItems:"flex-end",background:"rgba(0,0,0,.6)" }} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()}
-        style={{ width:"100%",maxWidth:620,margin:"0 auto",background:BG,borderRadius:"18px 18px 0 0",maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden" }}>
-        <div style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px" }}>
+        style={{ width:"100%",maxWidth:620,margin:"0 auto",background:BG,borderRadius:"18px 18px 0 0",maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden",...sheetStyle }}>
+        <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
         <div style={{ padding:"8px 20px 12px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
@@ -3188,6 +3230,7 @@ function EditSolicitudSheet({ request:req, user, profile, onClose, onSaved }) {
 
 function SolicitudSheet({ user, profile, onClose, onDone }) {
   const { t } = useLang();
+  const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [step,    setStep]    = useState(0);
   const [loading, setLoading] = useState(false);
   const [err,          setErr]          = useState("");
@@ -3291,11 +3334,16 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
   const INP = { background:"rgba(255,255,255,.07)", border:"1.5px solid rgba(255,255,255,.15)", borderRadius:8, padding:"11px 14px", fontSize:16, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
 
   return (
-    <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:80,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:20,width:"100%",maxWidth:580,maxHeight:"92vh",display:"flex",flexDirection:"column",border:`1px solid rgba(255,140,0,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,140,0,.15)",overflow:"hidden",animation:"slideUp .3s ease" }}>
+    <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:80,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:0 }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:580,maxHeight:"92vh",display:"flex",flexDirection:"column",border:`1px solid rgba(255,140,0,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,140,0,.15)",overflow:"hidden",...sheetStyle }}>
+
+        {/* Drag handle */}
+        <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"10px 0 2px",cursor:"grab",touchAction:"none",background:"#171D24" }}>
+          <div style={{ width:36,height:4,background:"rgba(255,255,255,.3)",borderRadius:2 }}/>
+        </div>
 
         {/* Header */}
-        <div style={{ background:`linear-gradient(135deg,${RED},#C26800)`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
+        <div style={{ background:`linear-gradient(135deg,${RED},#C26800)`,padding:"18px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
           <div>
             <p className="bebas" style={{ fontSize:24,color:"#fff",letterSpacing:.5 }}>{t("sol_title")}</p>
             <p style={{ fontSize:16,color:"rgba(255,255,255,.75)",marginTop:2 }}>{t("sol_subtitle")}</p>
