@@ -607,15 +607,7 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
   return (
     <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column" }}>
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
-      <style>{`
-        *, *::before, *::after { box-sizing: border-box; }
-        .inp { font-size: 16px !important; padding: 12px 16px !important; }
-        .btn-red, .btn-ol, .btn-ghost { font-size: 15px !important; }
-        .tag { font-size: 12px !important; }
-        .sidebar-btn { font-size: 15px !important; }
-        .bebas { letter-spacing: 0.5px; }
-        select, input, textarea { font-size: 16px !important; }
-      `}</style>
+      <div style={{ padding:"56px 20px 20px", display:"flex", alignItems:"center", gap:12 }}>
         <button className="btn-ghost" onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
         <SpartsLogo size={36}/>
       </div>
@@ -3095,7 +3087,7 @@ function MisPublicaciones({ user, onSelect }) {
     </div>
   );
 }
-══════════════════════════════════════════════════════════════ */
+
 /* ══════════════════════════════════════════════════════════════
    EDIT SOLICITUD SHEET
 ══════════════════════════════════════════════════════════════ */
