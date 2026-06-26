@@ -300,6 +300,7 @@ const fmtTs = ts => {
   return `${Math.floor(diff / 31536000)} año`;
 };
 const fmtPrice = (p, cur) => {
+  if (cur === "NEG") return "A convenir";
   const n = Number(p);
   if (!cur || isNaN(n)) return "—";
   const fmt = n >= 1000 ? `${(n / 1000).toFixed(0)}k` : n.toLocaleString("es-CL");
@@ -1382,7 +1383,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
   };
 
   const submit = async () => {
-    if (!f.title || !f.price) { setErr(t("pub_error_required")); return; }
+    if (!f.title || (!f.price && f.currency !== "NEG")) { setErr(t("pub_error_required")); return; }
     setLoading(true); setErr("");
     const { data:inserted, error } = await sb.from("listings").insert({
       user_id:user.id, title:f.title, brand:f.brand||null, model:f.model||null,
@@ -1552,15 +1553,25 @@ function PublishSheet({ user, profile, onClose, onDone }) {
 
               <div>
                 <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
-                <div style={{ display:"flex",gap:8 }}>
-                  <div style={{ position:"relative",flex:1 }}>
-                    <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
-                    <input className="inp" type="number" placeholder="0" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }}/>
+                {/* A convenir toggle */}
+                <button onClick={()=>upd("currency", f.currency==="NEG"?"CLP":"NEG")}
+                  style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,background:"none",border:"none",cursor:"pointer",padding:0 }}>
+                  <div style={{ width:38,height:22,borderRadius:11,background:f.currency==="NEG"?RED:BG3,border:`1.5px solid ${f.currency==="NEG"?RED:BORDER}`,position:"relative",transition:"all .2s",flexShrink:0 }}>
+                    <div style={{ width:16,height:16,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:f.currency==="NEG"?18:2,transition:"left .2s" }}/>
                   </div>
-                  <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
-                    {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
-                  </select>
-                </div>
+                  <span style={{ fontSize:15,color:f.currency==="NEG"?RED:MUTED,fontWeight:600 }}>Precio a convenir</span>
+                </button>
+                {f.currency !== "NEG" && (
+                  <div style={{ display:"flex",gap:8 }}>
+                    <div style={{ position:"relative",flex:1 }}>
+                      <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
+                      <input className="inp" type="number" placeholder="0" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }}/>
+                    </div>
+                    <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
+                      {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1573,8 +1584,8 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                 <input className="inp" placeholder={t("pub_location_ph")} value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)}/>
               </div>
 
-              <button className="btn-red" onClick={submit} disabled={loading||!f.title||!f.price}
-                style={{ marginTop:8,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:16 }}>
+              <button className="btn-red" onClick={submit} disabled={loading||!f.title||(!f.price&&f.currency!=="NEG")}
+                style={{ marginTop:8,opacity:(!f.title||(!f.price&&f.currency!=="NEG")||loading)?.5:1,padding:"15px",fontSize:16 }}>
                 {loading?<Spin/>:t("pub_submit")}
               </button>
             </div>
@@ -2653,7 +2664,7 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
   };
 
   const save = async () => {
-    if (!f.title || !f.price) { setErr(t("pub_error_required")); return; }
+    if (!f.title || (!f.price && f.currency !== "NEG")) { setErr(t("pub_error_required")); return; }
     setLoading(true); setErr("");
     const uploadedUrls = await uploadNewPhotos();
     const allPhotos = [...existingPhotos, ...uploadedUrls];
@@ -2786,15 +2797,24 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
           {/* Price */}
           <div>
             <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
-            <div style={{ display:"flex",gap:8 }}>
-              <div style={{ position:"relative",flex:1 }}>
-                <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
-                <input className="inp" type="number" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }} placeholder="0"/>
+            <button onClick={()=>upd("currency", f.currency==="NEG"?"CLP":"NEG")}
+              style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,background:"none",border:"none",cursor:"pointer",padding:0 }}>
+              <div style={{ width:38,height:22,borderRadius:11,background:f.currency==="NEG"?RED:BG3,border:`1.5px solid ${f.currency==="NEG"?RED:BORDER}`,position:"relative",transition:"all .2s",flexShrink:0 }}>
+                <div style={{ width:16,height:16,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:f.currency==="NEG"?18:2,transition:"left .2s" }}/>
               </div>
-              <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
-                {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
-              </select>
-            </div>
+              <span style={{ fontSize:15,color:f.currency==="NEG"?RED:MUTED,fontWeight:600 }}>Precio a convenir</span>
+            </button>
+            {f.currency !== "NEG" && (
+              <div style={{ display:"flex",gap:8 }}>
+                <div style={{ position:"relative",flex:1 }}>
+                  <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
+                  <input className="inp" type="number" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }} placeholder="0"/>
+                </div>
+                <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
+                  {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -2809,8 +2829,8 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
             <input className="inp" value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)} placeholder={t("pub_location_ph")}/>
           </div>
 
-          <button className="btn-red" onClick={save} disabled={loading||!f.title||!f.price}
-            style={{ marginTop:4,opacity:(!f.title||!f.price||loading)?.5:1,padding:"15px",fontSize:16 }}>
+          <button className="btn-red" onClick={save} disabled={loading||!f.title||(!f.price&&f.currency!=="NEG")}
+            style={{ marginTop:4,opacity:(!f.title||(!f.price&&f.currency!=="NEG")||loading)?.5:1,padding:"15px",fontSize:16 }}>
             {loading?<Spin/>:"Guardar cambios"}
           </button>
         </div>
