@@ -2021,6 +2021,141 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   MATCHES PAGE — Dashboard de coincidencias del MatchEngine
+══════════════════════════════════════════════════════════════ */
+function MatchesPage({ user, onSelect, onChat }) {
+  const [matches,  setMatches]  = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [filter,   setFilter]   = useState("all"); // all | selling | buying
+
+  const loadMatches = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Matches where the user is on either side
+      const { data, error } = await sb.from("matches")
+        .select("*")
+        .or(`listing_user_id.eq.${user.id},request_user_id.eq.${user.id}`)
+        .order("notified_at", { ascending:false })
+        .limit(100);
+      if (error) { setMatches([]); setLoading(false); return; }
+
+      // Hydrate each match with its listing + request + the other user's profile
+      const enriched = await Promise.all((data||[]).map(async m => {
+        const iAmSeller = m.listing_user_id === user.id;
+        const otherUserId = iAmSeller ? m.request_user_id : m.listing_user_id;
+        const [lRes, rRes, pRes] = await Promise.all([
+          m.listing_id ? sb.from("listings").select("*").eq("id", m.listing_id).maybeSingle() : Promise.resolve({ data:null }),
+          m.request_id ? sb.from("requests").select("*").eq("id", m.request_id).maybeSingle() : Promise.resolve({ data:null }),
+          otherUserId ? sb.from("profiles").select("*").eq("id", otherUserId).maybeSingle() : Promise.resolve({ data:null }),
+        ]);
+        return { ...m, iAmSeller, otherUserId, listing:lRes.data, request:rRes.data, otherProfile:pRes.data };
+      }));
+      setMatches(enriched);
+    } catch(_) { setMatches([]); }
+    setLoading(false);
+  }, [user.id]);
+
+  useEffect(()=>{
+    loadMatches();
+    // Realtime: refresh when a new match involving this user is inserted
+    const ch = sb.channel("matches-"+user.id)
+      .on("postgres_changes", { event:"INSERT", schema:"public", table:"matches" }, payload => {
+        const m = payload.new;
+        if (m.listing_user_id === user.id || m.request_user_id === user.id) loadMatches();
+      })
+      .subscribe();
+    return ()=>sb.removeChannel(ch);
+  }, [loadMatches, user.id]);
+
+  const filtered = matches.filter(m => {
+    if (filter === "selling") return m.iAmSeller;
+    if (filter === "buying")  return !m.iAmSeller;
+    return true;
+  });
+
+  const scoreColor = s => s >= 90 ? GREEN : s >= 80 ? GOLD : RED;
+
+  return (
+    <div>
+      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:10 }}>
+        <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Mis Matches</h2>
+        <button onClick={loadMatches} style={{ background:"none",border:`1px solid ${BORDER}`,borderRadius:7,padding:"6px 12px",color:SUB,fontSize:15,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:6 }}>
+          <Ic n="search" s={14} c={SUB}/> Actualizar
+        </button>
+      </div>
+      <p style={{ color:MUTED,fontSize:16,marginBottom:20 }}>Coincidencias que la IA encontró entre publicaciones y solicitudes.</p>
+
+      {/* Filters */}
+      <div style={{ display:"flex",gap:8,marginBottom:20,flexWrap:"wrap" }}>
+        {[["all","Todos"],["selling","Vendo (mis publicaciones)"],["buying","Busco (mis solicitudes)"]].map(([val,lbl])=>(
+          <button key={val} onClick={()=>setFilter(val)}
+            style={{ padding:"8px 16px",borderRadius:20,border:`1.5px solid ${filter===val?RED:BORDER}`,background:filter===val?"rgba(255,140,0,.1)":CARD,color:filter===val?RED:SUB,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3 }}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div style={{ display:"flex",justifyContent:"center",paddingTop:40 }}><Spin size={26}/></div>
+      ) : filtered.length === 0 ? (
+        <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
+          <div style={{ fontSize:56,marginBottom:16 }}>🤝</div>
+          <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Aún no hay matches</p>
+          <p style={{ color:MUTED,fontSize:16 }}>Cuando publiques o solicites algo, la IA buscará coincidencias automáticamente y aparecerán aquí.</p>
+        </div>
+      ) : (
+        <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+          {filtered.map(m => {
+            const item = m.iAmSeller ? m.request : m.listing;   // what the other side has/wants
+            const mine = m.iAmSeller ? m.listing : m.request;   // my side
+            const itemTitle = item?.title || mine?.title || "Publicación";
+            return (
+              <div key={m.id} className="card" style={{ padding:"16px 18px",borderLeft:`3px solid ${scoreColor(m.score)}` }}>
+                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:8 }}>
+                  <div style={{ flex:1,minWidth:0 }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap" }}>
+                      <span className="tag" style={{ fontSize:13,color:m.iAmSeller?BLUE:GOLD,border:`1px solid ${m.iAmSeller?BLUE:GOLD}`,background:"transparent" }}>
+                        {m.iAmSeller ? "Alguien busca lo que vendes" : "Encontramos lo que buscas"}
+                      </span>
+                      <span style={{ fontSize:14,color:MUTED }}>{fmtTs(m.notified_at)}</span>
+                    </div>
+                    <p style={{ fontWeight:700,fontSize:17,color:TEXT,marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{itemTitle}</p>
+                    {m.otherProfile && (
+                      <p style={{ fontSize:15,color:SUB }}>{m.otherProfile.biz || m.otherProfile.name || "Usuario"}{m.otherProfile.location?` · ${m.otherProfile.location}`:""}</p>
+                    )}
+                  </div>
+                  <div style={{ textAlign:"center",flexShrink:0 }}>
+                    <div className="bebas" style={{ fontSize:30,color:scoreColor(m.score),lineHeight:1 }}>{m.score}</div>
+                    <div style={{ fontSize:12,color:MUTED,letterSpacing:.5 }}>SCORE</div>
+                  </div>
+                </div>
+                {m.reason && (
+                  <p style={{ fontSize:15,color:MUTED,marginBottom:12,lineHeight:1.5,fontStyle:"italic" }}>"{m.reason}"</p>
+                )}
+                <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+                  {(m.iAmSeller ? m.listing : m.listing) && onSelect && m.listing && (
+                    <button onClick={()=>onSelect(m.listing)}
+                      style={{ padding:"8px 14px",borderRadius:8,border:`1px solid ${BORDER}`,background:BG2,color:TEXT,fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6 }}>
+                      <Ic n="box" s={14} c={TEXT}/> Ver publicación
+                    </button>
+                  )}
+                  {m.otherProfile && onChat && m.listing && (
+                    <button onClick={()=>onChat(m.listing, m.otherProfile)}
+                      style={{ padding:"8px 14px",borderRadius:8,border:"none",background:RED,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6 }}>
+                      <Ic n="msg" s={14} c="#fff"/> Contactar
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    PROFILE PAGE
 ══════════════════════════════════════════════════════════════ */
 function ProfilePage({ user, profile, onLogout }) {
@@ -3636,6 +3771,7 @@ function MobileTabBar({ tab, setTab, onPublish }) {
     { id:"home",    icon:"home",  key:"nav_home" },
     { id:"search",  icon:"search",key:"nav_search" },
     { id:"publish", icon:"plus",  key:"nav_publish", accent:true },
+    { id:"matches", icon:"check", key:"nav_matches", label:"Matches" },
     { id:"messages",icon:"msg",   key:"nav_messages" },
     { id:"profile", icon:"user",  key:"nav_my_profile" },
   ];
@@ -3647,7 +3783,7 @@ function MobileTabBar({ tab, setTab, onPublish }) {
           <div style={{ width:36,height:36,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,140,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
             <Ic n={tb.icon} s={20} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
           </div>
-          <span style={{ fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase" }}>{t(tb.key)}</span>
+          <span style={{ fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase" }}>{tb.label||t(tb.key)}</span>
         </button>
       ))}
     </div>
@@ -3716,6 +3852,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       <div style={{ paddingTop: guestMode && !session ? 104 : 72, paddingBottom:90 }}>
         {tab==="home"    &&<HomePage    user={session?.user||null} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
+        {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
         {tab==="alertas" &&session&&<AlertasPage  user={session.user} profile={profile} onSolicitud={()=>setShowSolicitud(true)}/>}
         {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
@@ -3820,6 +3957,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
     { id:"publish",     icon:"plus",    key:"nav_publish",  accent:true },
     { id:"solicitud",   icon:"search",  key:"nav_request",  solicitud:true, featured:true },
     { id:"search",      icon:"search",  key:"nav_explore" },
+    { id:"matches",     icon:"check",   key:"nav_matches", label:"Matches" },
     { id:"messages",    icon:"msg",     key:"nav_messages", badge:true },
     { id:"mispubs",     icon:"box",     key:"nav_my_listings" },
     { id:"profile",     icon:"user",    key:"nav_my_profile" },
@@ -3905,7 +4043,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   if (n.id!=="messages") setChatListing(null);
                 }}
                 style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:16,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C26800)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(255,140,0,.35)" } : undefined}>
-                <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{t(n.key)}
+                <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{n.label||t(n.key)}
                 {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:16,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
               </button>
             ))}
@@ -3936,6 +4074,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
         <div style={{ flex:1,minWidth:0,overflowY:"auto",padding:"24px 32px 60px" }}>
           {tab==="home"    &&<HomePage    user={session?.user||null} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
           {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
+          {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
           {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
           {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
           {tab==="mispubs" &&session&&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
