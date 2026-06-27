@@ -380,6 +380,57 @@ const fmtPrice = (p, cur) => {
   return `${cur} ${n.toLocaleString("es-CL")}`;
 };
 
+/* ── Búsqueda tolerante: sin acentos, minúsculas, sin signos ──────
+   normaliza("Camión") === normaliza("camion") === "camion"
+──────────────────────────────────────────────────────────────── */
+const normalizar = (s) =>
+  (s || "")
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")   // quita acentos/diacríticos
+    .replace(/[^a-z0-9\s]/g, " ")      // signos → espacio
+    .replace(/\s+/g, " ")
+    .trim();
+
+/* Distancia de Levenshtein (para tolerar faltas de ortografía leves) */
+const levenshtein = (a, b) => {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 0; i < a.length; i++) {
+    let cur = [i + 1];
+    for (let j = 0; j < b.length; j++) {
+      cur[j + 1] = a[i] === b[j]
+        ? prev[j]
+        : 1 + Math.min(prev[j], prev[j + 1], cur[j]);
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+};
+
+/* ¿El texto del item coincide con la consulta? Tolerante a acentos y typos.
+   - Coincidencia directa de substring (rápida)
+   - Por cada palabra de la consulta, busca una palabra parecida en el texto
+     (Levenshtein ≤ 1 para palabras cortas, ≤ 2 para largas) */
+const coincideBusqueda = (texto, consulta) => {
+  const t = normalizar(texto);
+  const c = normalizar(consulta);
+  if (!c) return true;
+  if (t.includes(c)) return true;
+  const palabrasTexto = t.split(" ").filter(Boolean);
+  const palabrasConsulta = c.split(" ").filter(Boolean);
+  return palabrasConsulta.every(pc => {
+    if (t.includes(pc)) return true;
+    const tol = pc.length <= 4 ? 1 : 2;
+    return palabrasTexto.some(pt =>
+      pt.includes(pc) || pc.includes(pt) || levenshtein(pt, pc) <= tol
+    );
+  });
+};
+
 /* ── Shared hook: unread message count ──────────────────────── */
 function useUnreadCount(userId) {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -795,7 +846,8 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
     let query = sb.from("listings").select("*").order(col, {ascending: asc});
 
     if (cat !== "all")         query = query.eq("cat", cat);
-    if (q)                     query = query.ilike("title", `%${q}%`);
+    // NOTA: el texto libre (q) ya NO se filtra en Supabase con ilike
+    // (no maneja acentos ni typos). Se filtra en cliente más abajo.
     if (condition)             query = query.eq("condition", condition);
     if (marca)                 query = query.ilike("brand", `%${marca}%`);
     if (modelo)                query = query.ilike("model", `%${modelo}%`);
@@ -822,7 +874,17 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
     if (verified)              query = query.eq("verified", true);
 
     const { data } = await query;
-    setListings(data || []);
+    let resultados = data || [];
+    // Filtro de texto libre tolerante a acentos y faltas de ortografía
+    if (q && q.trim()) {
+      resultados = resultados.filter(l =>
+        coincideBusqueda(
+          [l.title, l.brand, l.model, l.description].filter(Boolean).join(" "),
+          q
+        )
+      );
+    }
+    setListings(resultados);
     setLoading(false);
   }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, horasMin, horasMax,
       ubicacion, tipo, priceMin, priceMax, priceCur, sortBy, verified, region]);
@@ -4109,20 +4171,24 @@ function AppFooter() {
 /* ══════════════════════════════════════════════════════════════
    MOBILE TAB BAR
 ══════════════════════════════════════════════════════════════ */
-function MobileTabBar({ tab, setTab, onPublish }) {
+function MobileTabBar({ tab, setTab, onPublish, session, onGuestAction }) {
   const { t } = useLang();
   const TABS = [
     { id:"search",  icon:"home",  key:"nav_explore", label:"Explorar" },
-    { id:"publish", icon:"plus",  key:"nav_publish", accent:true },
-    { id:"matches", icon:"check", key:"nav_matches", label:"Matches" },
-    { id:"messages",icon:"msg",   key:"nav_messages" },
-    { id:"profile", icon:"user",  key:"nav_my_profile" },
+    { id:"publish", icon:"plus",  key:"nav_publish", accent:true, needsAuth:true },
+    { id:"matches", icon:"check", key:"nav_matches", label:"Matches", needsAuth:true },
+    { id:"messages",icon:"msg",   key:"nav_messages", needsAuth:true },
+    { id:"profile", icon:"user",  key:"nav_my_profile", needsAuth:true },
   ];
   return (
     <div style={{ position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(20px)",borderTop:`1px solid ${BORDER}`,display:"flex",alignItems:"center",padding:"6px 0 18px" }}>
       {TABS.map(tb=>(
-        <button key={tb.id} onClick={()=>{ if(tb.id==="publish"){onPublish();return;} setTab(tb.id); }}
-          style={{ flex:1,minWidth:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 2px",background:"none",border:"none",cursor:"pointer" }}>
+        <button key={tb.id} onClick={()=>{
+            if(tb.needsAuth && !session){ onGuestAction?.(); return; }
+            if(tb.id==="publish"){onPublish();return;}
+            setTab(tb.id);
+          }}
+          style={{ flex:1,minWidth:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 2px",background:"none",border:"none",cursor:"pointer",opacity:(tb.needsAuth&&!session)?.45:1 }}>
           <div style={{ width:34,height:34,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,140,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",flexShrink:0 }}>
             <Ic n={tb.icon} s={19} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
           </div>
@@ -4401,10 +4467,10 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       </div>
 
       {/* Bottom tab bar */}
-      <MobileTabBar tab={tab} setTab={setTab} onPublish={()=>setShowPublish(true)}/>
+      <MobileTabBar tab={tab} setTab={setTab} onPublish={()=>setShowPublish(true)} session={session} onGuestAction={onGuestRegister}/>
 
-      {/* Floating solicitud button — above tab bar */}
-      {!showSolicitud&&!showPublish&&(
+      {/* Floating solicitud button — above tab bar (logged-in only) */}
+      {session&&!showSolicitud&&!showPublish&&(
         <button onClick={()=>setShowSolicitud(true)}
           style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,140,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
           <Ic n="search" s={16} c="#fff"/>Solicita un repuesto
@@ -4522,18 +4588,18 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
               onMouseLeave={e=>{ e.currentTarget.style.color=tab==="search"?RED:TEXT; }}>
               {t("nav_explore")}
             </button>
-            <button onClick={()=>setShowSolicitud(true)}
+            {session && <button onClick={()=>setShowSolicitud(true)}
               style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
               <Ic n="search" s={14} c={RED}/>{t("nav_request")}
-            </button>
-            <button onClick={()=>setShowPublish(true)}
+            </button>}
+            {session && <button onClick={()=>setShowPublish(true)}
               style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
               <Ic n="plus" s={14} c={RED}/>{t("nav_publish_here")}
-            </button>
+            </button>}
           </nav>
 
           {/* ── Right side: Support + Language ── */}
