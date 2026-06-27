@@ -61,6 +61,35 @@ function useIsMobile() {
   return mobile;
 }
 
+/* ── Botón "atrás" del navegador para overlays ──────────────────
+   Cuando un overlay (detalle, sheet, chat) está abierto, empuja una
+   entrada al historial. Si el usuario toca "atrás" en el navegador,
+   en vez de salir del sitio se cierra el overlay.
+   `isOpen`: si el overlay está abierto. `onClose`: cómo cerrarlo.
+──────────────────────────────────────────────────────────────── */
+function useBackButton(isOpen, onClose) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const poppedRef = useRef(false);
+  useEffect(()=>{
+    if (!isOpen) return;
+    poppedRef.current = false;
+    window.history.pushState({ shOverlay: true }, "");
+    const handlePop = () => {
+      poppedRef.current = true;   // el usuario usó "atrás"; ya se consumió la entrada
+      onCloseRef.current?.();
+    };
+    window.addEventListener("popstate", handlePop);
+    return () => {
+      window.removeEventListener("popstate", handlePop);
+      // Si se cerró con un botón (no con "atrás"), consumimos la entrada extra
+      if (!poppedRef.current) {
+        window.history.back();
+      }
+    };
+  }, [isOpen]);
+}
+
 /* ── Swipe-to-close hook for bottom sheets ──────────────────────
    Returns drag handlers + live translateY. Dragging the handle down
    past a threshold (or with enough velocity) triggers onClose.
@@ -4411,6 +4440,11 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
   const [showSolicitud, setShowSolicitud] = useState(false);
   const unreadCount = useUnreadCount(session?.user?.id);
 
+  // El botón "atrás" del navegador cierra los paneles abiertos
+  useBackButton(showPublish,   ()=>setShowPublish(false));
+  useBackButton(showSolicitud, ()=>setShowSolicitud(false));
+  useBackButton(showSupport,   ()=>setShowSupport(false));
+
   useEffect(()=>{
     const onKey = e => {
       if (e.key !== "Escape") return;
@@ -4477,10 +4511,10 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
         </button>
       )}
 
-      {selected&&<ListingDetail l={selected} user={session.user} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
-      {showPublish&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
+      {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
+      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
-      {showSolicitud&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
+      {showSolicitud&&session&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
     </div>
   );
 }
@@ -4547,6 +4581,11 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
   const unreadCount = useUnreadCount(session?.user?.id);
+
+  // El botón "atrás" del navegador cierra los paneles abiertos
+  useBackButton(showPublish,   ()=>setShowPublish(false));
+  useBackButton(showSolicitud, ()=>setShowSolicitud(false));
+  useBackButton(showSupport,   ()=>setShowSupport(false));
 
   useEffect(()=>{
     const onKey = e => {
@@ -4722,6 +4761,10 @@ export default function SpartsHub() {
 
   const logout   = async ()=>{ await sb.auth.signOut(); setSession(null); };
   const openChat = l=>{ if(l.user_id===session?.user?.id) return; setChatListing(l); setTab("messages"); setSelected(null); };
+
+  // El botón "atrás" del navegador cierra el detalle de publicación
+  // en vez de sacar al usuario del sitio.
+  useBackButton(!!selected, ()=>setSelected(null));
 
   if (!authReady) return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
