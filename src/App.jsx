@@ -417,7 +417,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       </header>
 
       {/* HERO */}
-      <section style={{ padding:"80px 32px 64px", textAlign:"center", maxWidth:820, margin:"0 auto" }}>
+      <section style={{ padding:"clamp(48px,8vw,80px) clamp(16px,4vw,32px) clamp(40px,6vw,64px)", textAlign:"center", maxWidth:820, margin:"0 auto" }}>
         <div style={{ marginBottom:24 }}>
           <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px, 3.5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase", marginBottom:0 }}>
             No vendemos repuestos.
@@ -472,10 +472,10 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       </section>
 
       {/* CÓMO FUNCIONA */}
-      <section style={{ padding:"56px 32px", background:BG2, borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}` }}>
+      <section style={{ padding:"clamp(36px,6vw,56px) clamp(16px,4vw,32px)", background:BG2, borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}` }}>
         <div style={{ maxWidth:900, margin:"0 auto" }}>
           <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:38, color:TEXT, textAlign:"center", marginBottom:40 }}>¿Cómo funciona?</h2>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:20 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:20 }}>
             {[
               { icon:"📢", title:"1. Publica o busca",      desc:"Publica lo que vendes o pide lo que necesitas. Es gratis y toma menos de 2 minutos." },
               { icon:"🤖", title:"2. La IA busca matches",  desc:"Nuestro sistema analiza el catálogo y te avisa cuando hay una coincidencia con tu búsqueda." },
@@ -492,8 +492,8 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       </section>
 
       {/* STATS */}
-      <section style={{ padding:"56px 32px", textAlign:"center" }}>
-        <div style={{ maxWidth:700, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:32 }}>
+      <section style={{ padding:"clamp(36px,6vw,56px) clamp(16px,4vw,32px)", textAlign:"center" }}>
+        <div style={{ maxWidth:700, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(160px, 1fr))", gap:32 }}>
           {[
             { val:"0%",  label:"Comisión" },
             { val:"P2P", label:"Contacto directo" },
@@ -508,7 +508,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       </section>
 
       {/* CTA FINAL */}
-      <section style={{ padding:"80px 32px", textAlign:"center" }}>
+      <section style={{ padding:"clamp(48px,8vw,80px) clamp(16px,4vw,32px)", textAlign:"center" }}>
         <div style={{ maxWidth:560, margin:"0 auto" }}>
           <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(36px, 6vw, 56px)", color:TEXT, lineHeight:1.1, marginBottom:16 }}>
             Empieza hoy.<br/><span style={{ color:RED }}>Es completamente gratis.</span>
@@ -666,7 +666,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
         <span style={{ fontSize:16,fontWeight:700,color:RED,cursor:"pointer" }} onClick={onGoSearch}>{t("home_see_all")}</span>
       </div>
       {loading ? (
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24 }}>
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(150px, 1fr))",gap:12,marginBottom:24 }}>
           {[0,1,2,3].map(i=><div key={i} style={{ height:220,background:CARD,borderRadius:10 }}/>)}
         </div>
       ) : listings.length === 0 ? (
@@ -676,7 +676,7 @@ function HomePage({ user, onSelect, onGoSearch }) {
           <p style={{ color:MUTED,fontSize:16 }}>Explora todo el catálogo o publica algo nuevo</p>
         </div>
       ) : (
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24 }}>
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(150px, 1fr))",gap:12,marginBottom:24 }}>
           {listings.slice(0,8).map(l=>(
             <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
               <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
@@ -2110,7 +2110,7 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
   const waLink = other.phone ? `https://wa.me/${other.phone.replace(/[^0-9]/g,"")}` : null;
 
   return (
-    <div style={{ height:"100vh",display:"flex",flexDirection:"column",background:BG }}>
+    <div style={{ height:"100dvh",display:"flex",flexDirection:"column",background:BG }}>
       {/* Header — full contact info */}
       <div style={{ padding:"56px 16px 14px",borderBottom:`0.5px solid ${BORDER}`,display:"flex",gap:12,alignItems:"flex-start",flexShrink:0,background:BG3 }}>
         <button className="btn-ghost" style={{ padding:"6px 8px",marginTop:2 }} onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
@@ -2520,7 +2520,7 @@ function ProfilePage({ user, profile, onLogout }) {
                 {editMode?t("profile_cancel"):t("profile_edit")}
               </button>
             </div>
-            <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:24 }}>
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(140px, 1fr))",gap:12,marginBottom:24 }}>
               {[["Publicaciones",listings.length]].map(([k,v])=>(
                 <div key={k} style={{ background:CARD,borderRadius:10,padding:"16px",border:`1px solid ${BORDER}`,textAlign:"center" }}>
                   <p className="bebas" style={{ fontSize:26,color:RED }}>{v}</p>
@@ -2851,8 +2851,8 @@ function SupportPanel({ onClose }) {
   };
 
   return (
-    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"flex-end",padding:24 }} onClick={onClose}>
-      <div style={{ background:CARD,borderRadius:16,width:400,maxHeight:"80vh",display:"flex",flexDirection:"column",border:`1px solid ${BORDER2}`,boxShadow:"0 20px 60px rgba(0,0,0,.5)",overflow:"hidden" }} onClick={e=>e.stopPropagation()}>
+    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"flex-end",padding:16 }} onClick={onClose}>
+      <div style={{ background:CARD,borderRadius:16,width:"100%",maxWidth:400,maxHeight:"80vh",display:"flex",flexDirection:"column",border:`1px solid ${BORDER2}`,boxShadow:"0 20px 60px rgba(0,0,0,.5)",overflow:"hidden" }} onClick={e=>e.stopPropagation()}>
         <div style={{ background:RED,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <div>
             <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:2 }}><svg width={22} height={22} viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.2)"/><text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white">S</text></svg><p className="bebas" style={{ fontSize:18,color:"#fff",letterSpacing:.5 }}>SOPORTE</p></div>
@@ -2898,6 +2898,7 @@ function SupportPanel({ onClose }) {
    ALERTAS PAGE
 ══════════════════════════════════════════════════════════════ */
 function AlertasPage({ user, profile }) {
+  const isMobile = useIsMobile();
   const [alertForm, setAlertForm] = useState({ keyword:"", cat:"all", email:user?.email||"", notifType:"email", wa:"" });
   const [alerts,    setAlerts]    = useState([]);
   const [saved,     setSaved]     = useState(false);
@@ -2913,7 +2914,7 @@ function AlertasPage({ user, profile }) {
     <div>
       <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Mis Alertas de Búsqueda</h2>
       <p style={{ color:MUTED,fontSize:16,marginBottom:24 }}>Recibe una notificación cuando se publique lo que estás buscando.</p>
-      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,alignItems:"start" }}>
+      <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:24,alignItems:"start" }}>
       <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:24,display:"flex",flexDirection:"column",gap:12 }}>
         <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif" }}>Crear nueva alerta</p>
         <input className="inp" placeholder="Ej: Bomba hidráulica Rexroth A10V" value={alertForm.keyword} onChange={e=>setAlertForm(f=>({...f,keyword:e.target.value}))}/>
@@ -4041,14 +4042,14 @@ function MobileTabBar({ tab, setTab, onPublish }) {
     { id:"profile", icon:"user",  key:"nav_my_profile" },
   ];
   return (
-    <div style={{ position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(20px)",borderTop:`1px solid ${BORDER}`,display:"flex",alignItems:"center",padding:"8px 0 20px" }}>
+    <div style={{ position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(20px)",borderTop:`1px solid ${BORDER}`,display:"flex",alignItems:"center",padding:"6px 0 18px" }}>
       {TABS.map(tb=>(
         <button key={tb.id} onClick={()=>{ if(tb.id==="publish"){onPublish();return;} setTab(tb.id); }}
-          style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 0",background:"none",border:"none",cursor:"pointer" }}>
-          <div style={{ width:36,height:36,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,140,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s" }}>
-            <Ic n={tb.icon} s={20} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
+          style={{ flex:1,minWidth:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 2px",background:"none",border:"none",cursor:"pointer" }}>
+          <div style={{ width:34,height:34,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,140,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",flexShrink:0 }}>
+            <Ic n={tb.icon} s={19} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
           </div>
-          <span style={{ fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase" }}>{tb.label||t(tb.key)}</span>
+          <span style={{ fontSize:10,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.2,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%" }}>{tb.label||t(tb.key)}</span>
         </button>
       ))}
     </div>
