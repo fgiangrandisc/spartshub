@@ -4,7 +4,19 @@ import { sb } from "./supabase.js";
 import { T, CSS_BASE } from "./theme.js";
 import { LangCtx, useLang, REGIONS, makeT } from "./i18n.js";
 
-const { RED, RED2, GOLD, BLUE, GREEN, DANGER, PUR, BG, BG2, BG3, CARD, SURF, BORDER, BORDER2, TEXT, SUB, MUTED } = T;
+const { RED, RED2, GOLD, BLUE, GREEN, DANGER, PUR, BG, BG2, BG3, CARD, SURF, BORDER: BORDER_RAW, BORDER2: BORDER2_RAW, TEXT, SUB: SUB_RAW, MUTED: MUTED_RAW } = T;
+
+/* ── Contrast overrides (UX/accessibility) ───────────────────────
+   Los textos secundarios y bordes del theme original tenían bajo
+   contraste sobre el fondo oscuro (usuarios reportaron dificultad
+   para leer). Subimos SUB y MUTED a tonos más claros y los bordes
+   a algo más visible, sin tocar la identidad de marca (naranja/fondos).
+   Objetivo: cumplir WCAG AA (≥4.5:1 para texto normal).
+──────────────────────────────────────────────────────────────── */
+const SUB     = "#C7CDD4";   // texto secundario — antes muy tenue
+const MUTED   = "#9AA3AD";   // texto terciario / metadatos — legible
+const BORDER  = "rgba(255,255,255,.12)";   // bordes más visibles
+const BORDER2 = "rgba(255,255,255,.18)";
 
 const CSS_OVERRIDE = `
   .inp { font-size: 16px !important; padding: 12px 16px !important; }
@@ -13,6 +25,26 @@ const CSS_OVERRIDE = `
   .sidebar-btn { font-size: 15px !important; gap: 10px !important; }
   select { font-size: 16px !important; }
   textarea { font-size: 16px !important; }
+
+  /* ── Accessibility & readability ── */
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  /* Visible focus ring for keyboard navigation (was invisible) */
+  button:focus-visible, a:focus-visible, input:focus-visible,
+  select:focus-visible, textarea:focus-visible {
+    outline: 2px solid ${RED};
+    outline-offset: 2px;
+  }
+  /* Inputs get a clear focus border too */
+  .inp:focus, input:focus, select:focus, textarea:focus {
+    border-color: ${RED} !important;
+  }
+  /* Slightly more readable body line-height & letter spacing */
+  body { letter-spacing: 0.1px; }
+  /* Tags: ensure the dim variant is still legible */
+  .tag.t-dim { color: #B8C0C8 !important; }
+  /* Links and clickable rows show pointer affordance */
+  .photo-card { transition: transform .12s ease, box-shadow .12s ease; }
+  .photo-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
 `;
 
 /* ── Mobile detection hook ──────────────────────────────────── */
@@ -1024,11 +1056,11 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
                     <span className="tag t-dim" style={{ fontSize:16 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
                     {l.verified && <span className="tag t-green" style={{ fontSize:16 }}>✓</span>}
                   </div>
-                  <p style={{ fontSize:16, fontWeight:600, lineHeight:1.3, marginBottom:3, color:TEXT }}>{l.title}</p>
-                  <p style={{ fontSize:16, color:MUTED, marginBottom:2 }}>{l.biz}</p>
-                  {l.location && <p style={{ fontSize:16, color:MUTED, marginBottom:6 }}>📍 {l.location}</p>}
-                  {l.brand && <p style={{ fontSize:16, color:MUTED, marginBottom:6 }}>🏷️ {l.brand}</p>}
-                  <p className="bebas" style={{ fontSize:16, color:RED }}>{fmtPrice(l.price, l.currency)}</p>
+                  <p style={{ fontSize:17, fontWeight:700, lineHeight:1.3, marginBottom:4, color:TEXT }}>{l.title}</p>
+                  <p style={{ fontSize:15, color:SUB, marginBottom:2 }}>{l.biz}</p>
+                  {l.location && <p style={{ fontSize:15, color:MUTED, marginBottom:5 }}>📍 {l.location}</p>}
+                  {l.brand && <p style={{ fontSize:15, color:MUTED, marginBottom:5 }}>🏷️ {l.brand}</p>}
+                  <p className="bebas" style={{ fontSize:20, color:RED, marginTop:2 }}>{fmtPrice(l.price, l.currency)}</p>
                 </div>
               </div>
             ))}
