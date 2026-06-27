@@ -433,21 +433,22 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
 
       {/* HEADER */}
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(12px,4vw,32px)", position:"sticky", top:0, zIndex:50, overflow:"hidden" }}>
-        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", alignItems:"center", minHeight:60, gap:10, flexWrap:"wrap", paddingTop:8, paddingBottom:8 }}>
-          <SpartsLogo size={28}/>
-          <div style={{ flex:1, minWidth:8 }}/>
-          <button onClick={onLogin}
-            style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 14px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
-            onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
-            onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
-            Iniciar Sesión
-          </button>
-          <button onClick={onRegister}
-            style={{ background:RED, border:"none", borderRadius:8, padding:"8px 16px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
-            onMouseEnter={e=>e.currentTarget.style.background=RED2}
-            onMouseLeave={e=>e.currentTarget.style.background=RED}>
-            Registrarse →
-          </button>
+        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:60, gap:8 }}>
+          <div style={{ flexShrink:0 }}><SpartsLogo size={28}/></div>
+          <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+            <button onClick={onLogin}
+              style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 12px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
+              onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
+              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
+              Iniciar Sesión
+            </button>
+            <button onClick={onRegister}
+              style={{ background:RED, border:"none", borderRadius:8, padding:"8px 14px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
+              onMouseEnter={e=>e.currentTarget.style.background=RED2}
+              onMouseLeave={e=>e.currentTarget.style.background=RED}>
+              Registrarse →
+            </button>
+          </div>
         </div>
       </header>
 
