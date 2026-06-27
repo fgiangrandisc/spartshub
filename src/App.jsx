@@ -693,13 +693,6 @@ function HomePage({ user, onSelect, onGoSearch }) {
         </div>
       )}
 
-      {/* Destacados list — 2 columns */}
-      {listings.length > 0 && <>
-        <p className="bebas" style={{ fontSize:22,color:TEXT,marginBottom:14 }}>🔥 Destacados de la semana</p>
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
-          {listings.slice(0,6).map(l=><MiniCard key={l.id} l={l} onClick={()=>onSelect(l)}/>)}
-        </div>
-      </>}
     </div>
   );
 }
@@ -708,7 +701,9 @@ function MiniCard({ l, onClick }) {
   return (
     <div onClick={onClick} style={{ display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderBottom:`0.5px solid ${BORDER}`,cursor:"pointer",borderRadius:8,transition:"background .15s" }} onMouseEnter={e=>e.currentTarget.style.background=BG2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
       <div style={{ width:64, height:64, borderRadius:10, overflow:"hidden", background:BG2, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28 }}>
-        {l.emoji||"📦"}
+        {l.photos?.[0]
+          ? <img src={l.photos[0]} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+          : (l.emoji||"📦")}
       </div>
       <div style={{ flex:1, minWidth:0 }}>
         <p style={{ fontSize:16, fontWeight:600, lineHeight:1.3, marginBottom:3, color:TEXT }}>{l.title}</p>
@@ -1768,8 +1763,15 @@ function MessagesPage({ user, initListing, onClear }) {
     e?.stopPropagation();
     setDeleting(true);
     // Delete all messages in both directions with this contact
-    await sb.from("messages").delete()
+    const { error } = await sb.from("messages").delete()
       .or(`and(from_id.eq.${user.id},to_id.eq.${contactId}),and(from_id.eq.${contactId},to_id.eq.${user.id})`);
+    if (error) {
+      console.error("Error al borrar conversación:", error);
+      alert("No se pudo borrar la conversación: " + error.message);
+      setDeleting(false);
+      setConfirmDel(null);
+      return;
+    }
     setContacts(prev => prev.filter(c => c.id !== contactId));
     setConfirmDel(null);
     setDeleting(false);
@@ -2058,7 +2060,14 @@ function MatchesPage({ user, onSelect, onChat }) {
 
   const deleteMatch = async (id) => {
     setDeleting(true);
-    await sb.from("matches").delete().eq("id", id);
+    const { error } = await sb.from("matches").delete().eq("id", id);
+    if (error) {
+      console.error("Error al borrar match:", error);
+      alert("No se pudo borrar el match: " + error.message);
+      setDeleting(false);
+      setConfirmDel(null);
+      return;
+    }
     setMatches(prev => prev.filter(m => m.id !== id));
     setConfirmDel(null);
     setDeleting(false);
@@ -2390,7 +2399,6 @@ function ProfilePage({ user, profile, onLogout }) {
                   <p style={{ fontWeight:600,fontSize:16,color:TEXT }}>{l.title}</p>
                   <p className="bebas" style={{ fontSize:16,color:RED }}>{fmtPrice(l.price,l.currency)}</p>
                 </div>
-                <span className="tag t-green" style={{ fontSize:16 }}>Activo</span>
               </div>
             ))}
           </div>
@@ -2803,12 +2811,26 @@ function AlertasPage({ user, profile }) {
 /* ══════════════════════════════════════════════════════════════
    EDIT LISTING SHEET
 ══════════════════════════════════════════════════════════════ */
-function EditListingSheet({ user, listing, onClose, onSaved }) {
+function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
   const { t } = useLang();
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [loading, setLoading]   = useState(false);
   const [err,     setErr]       = useState("");
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const photoInputRef           = useRef();
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const { error } = await sb.from("listings").delete().eq("id", listing.id);
+    if (error) {
+      console.error("Error al borrar publicación:", error);
+      alert("No se pudo borrar la publicación: " + error.message);
+      setDeleting(false);
+      return;
+    }
+    onDeleted?.(listing.id);
+  };
 
   // Existing remote photos (URLs already saved)
   const [existingPhotos, setExistingPhotos] = useState(listing.photos || []);
@@ -3048,6 +3070,28 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
             style={{ marginTop:4,opacity:(!f.title||(!f.price&&f.currency!=="NEG")||loading)?.5:1,padding:"15px",fontSize:16 }}>
             {loading?<Spin/>:"Guardar cambios"}
           </button>
+
+          {/* Delete section */}
+          {confirmDel ? (
+            <div style={{ marginTop:4,padding:"14px",borderRadius:10,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)" }}>
+              <p style={{ fontSize:16,color:TEXT,marginBottom:10,textAlign:"center" }}>¿Seguro que quieres eliminar esta publicación?</p>
+              <div style={{ display:"flex",gap:8 }}>
+                <button onClick={()=>setConfirmDel(false)} disabled={deleting}
+                  style={{ flex:1,padding:"12px",borderRadius:8,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:16,cursor:"pointer",fontWeight:600 }}>
+                  Cancelar
+                </button>
+                <button onClick={handleDelete} disabled={deleting}
+                  style={{ flex:1,padding:"12px",borderRadius:8,border:"none",background:DANGER,color:"#fff",fontSize:16,cursor:"pointer",fontWeight:700 }}>
+                  {deleting?"Eliminando…":"Sí, eliminar"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={()=>setConfirmDel(true)}
+              style={{ marginTop:4,padding:"13px",borderRadius:8,border:`1px solid rgba(220,38,38,.35)`,background:"transparent",color:DANGER,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%" }}>
+              <Ic n="trash" s={15} c={DANGER}/>Eliminar publicación
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -3057,8 +3101,8 @@ function EditListingSheet({ user, listing, onClose, onSaved }) {
 /* ══════════════════════════════════════════════════════════════
    MIS PUBLICACIONES
 ══════════════════════════════════════════════════════════════ */
-function MisPublicaciones({ user, onSelect }) {
-  const [subTab,      setSubTab]      = useState("pubs"); // "pubs" | "solicitudes"
+function MisPublicaciones({ user, onSelect, initSubTab="pubs" }) {
+  const [subTab,      setSubTab]      = useState(initSubTab); // "pubs" | "solicitudes"
   const [listings,    setListings]    = useState([]);
   const [requests,    setRequests]    = useState([]);
   const [loading,     setLoading]     = useState(true);
@@ -3084,7 +3128,14 @@ function MisPublicaciones({ user, onSelect }) {
 
   const deleteListing = async id => {
     setDeleting(true);
-    await sb.from("listings").delete().eq("id", id);
+    const { error } = await sb.from("listings").delete().eq("id", id);
+    if (error) {
+      console.error("Error al borrar publicación:", error);
+      alert("No se pudo borrar la publicación: " + error.message);
+      setDeleting(false);
+      setConfirmDel(null);
+      return;
+    }
     setListings(prev => prev.filter(l => l.id !== id));
     setConfirmDel(null);
     setDeleting(false);
@@ -3092,7 +3143,14 @@ function MisPublicaciones({ user, onSelect }) {
 
   const deleteRequest = async id => {
     setDeleting(true);
-    await sb.from("requests").delete().eq("id", id);
+    const { error } = await sb.from("requests").delete().eq("id", id);
+    if (error) {
+      console.error("Error al borrar solicitud:", error);
+      alert("No se pudo borrar la solicitud: " + error.message);
+      setDeleting(false);
+      setConfirmDelReq(null);
+      return;
+    }
     setRequests(prev => prev.filter(r => r.id !== id));
     setConfirmDelReq(null);
     setDeleting(false);
@@ -3140,36 +3198,16 @@ function MisPublicaciones({ user, onSelect }) {
                   <div style={{ padding:"12px 14px 14px" }}>
                     <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
                       <span className="tag t-dim" style={{ fontSize:16 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
-                      <span className="tag t-green" style={{ fontSize:16 }}>Activo</span>
                     </div>
                     <p style={{ fontWeight:700,fontSize:16,color:TEXT,marginBottom:3,lineHeight:1.3 }}>{l.title}</p>
                     <p style={{ fontSize:16,color:MUTED,marginBottom:8 }}>{l.location} · {fmtTs(l.created_at)}</p>
                     <p className="bebas" style={{ fontSize:18,color:RED,marginBottom:10 }}>{fmtPrice(l.price,l.currency)}</p>
 
-                    {/* Edit / Delete buttons */}
-                    {confirmDel===l.id ? (
-                      <div style={{ display:"flex",gap:6 }}>
-                        <button onClick={()=>setConfirmDel(null)}
-                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:16,cursor:"pointer",fontWeight:600 }}>
-                          Cancelar
-                        </button>
-                        <button onClick={()=>deleteListing(l.id)} disabled={deleting}
-                          style={{ flex:1,padding:"7px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:16,cursor:"pointer",fontWeight:700 }}>
-                          {deleting?"…":"Confirmar"}
-                        </button>
-                      </div>
-                    ) : (
-                      <div style={{ display:"flex",gap:6 }}>
-                        <button onClick={()=>setEditListing(l)}
-                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:TEXT,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
-                          <Ic n="settings" s={13} c={MUTED}/>Editar
-                        </button>
-                        <button onClick={()=>setConfirmDel(l.id)}
-                          style={{ flex:1,padding:"7px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
-                          <Ic n="trash" s={13} c={DANGER}/>Eliminar
-                        </button>
-                      </div>
-                    )}
+                    {/* Edit button (delete is inside the edit sheet) */}
+                    <button onClick={()=>setEditListing(l)}
+                      style={{ padding:"7px 16px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:TEXT,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:5 }}>
+                      <Ic n="settings" s={13} c={MUTED}/>Editar
+                    </button>
                   </div>
                 </div>
               ))}
@@ -3183,6 +3221,10 @@ function MisPublicaciones({ user, onSelect }) {
               onClose={()=>setEditListing(null)}
               onSaved={updated=>{
                 setListings(prev => prev.map(l => l.id===updated.id ? updated : l));
+                setEditListing(null);
+              }}
+              onDeleted={id=>{
+                setListings(prev => prev.filter(l => l.id !== id));
                 setEditListing(null);
               }}
             />
@@ -3226,29 +3268,10 @@ function MisPublicaciones({ user, onSelect }) {
                     {r.budget ? (
                       <p className="bebas" style={{ fontSize:16,color:RED }}>{r.currency} {Number(r.budget).toLocaleString()}</p>
                     ) : <span/>}
-                    {confirmDelReq===r.id ? (
-                      <div style={{ display:"flex",gap:6 }}>
-                        <button onClick={()=>setConfirmDelReq(null)}
-                          style={{ padding:"6px 12px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:16,cursor:"pointer",fontWeight:600 }}>
-                          Cancelar
-                        </button>
-                        <button onClick={()=>deleteRequest(r.id)} disabled={deleting}
-                          style={{ padding:"6px 12px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:16,cursor:"pointer",fontWeight:700 }}>
-                          {deleting?"…":"Confirmar"}
-                        </button>
-                      </div>
-                    ) : (
-                      <div style={{ display:"flex",gap:6 }}>
-                        <button onClick={()=>setEditingRequest(r)}
-                          style={{ padding:"6px 12px",borderRadius:7,border:`1px solid ${BORDER}`,background:BG2,color:TEXT,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
-                          <Ic n="edit" s={12} c={TEXT}/>Editar
-                        </button>
-                        <button onClick={()=>setConfirmDelReq(r.id)}
-                          style={{ padding:"6px 12px",borderRadius:7,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
-                          <Ic n="trash" s={12} c={DANGER}/>Eliminar
-                        </button>
-                      </div>
-                    )}
+                    <button onClick={()=>setEditingRequest(r)}
+                      style={{ padding:"6px 14px",borderRadius:7,border:`1px solid ${BORDER}`,background:BG2,color:TEXT,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
+                      <Ic n="edit" s={12} c={TEXT}/>Editar
+                    </button>
                   </div>
                 </div>
               ))}
@@ -3264,6 +3287,7 @@ function MisPublicaciones({ user, onSelect }) {
           profile={profile}
           onClose={()=>setEditingRequest(null)}
           onSaved={updated=>{ setRequests(prev=>prev.map(r=>r.id===updated.id?updated:r)); setEditingRequest(null); }}
+          onDeleted={id=>{ setRequests(prev=>prev.filter(r=>r.id!==id)); setEditingRequest(null); }}
         />
       )}
     </div>
@@ -3273,13 +3297,27 @@ function MisPublicaciones({ user, onSelect }) {
 /* ══════════════════════════════════════════════════════════════
    EDIT SOLICITUD SHEET
 ══════════════════════════════════════════════════════════════ */
-function EditSolicitudSheet({ request:req, user, profile, onClose, onSaved }) {
+function EditSolicitudSheet({ request:req, user, profile, onClose, onSaved, onDeleted }) {
   const { t } = useLang();
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [loading, setLoading] = useState(false);
   const [err,     setErr]     = useState("");
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const URGENCY = [["normal","Normal"],["urgente","Urgente"],["critico","Crítico"]];
   const URGENCY_C = { normal:BLUE, urgente:GOLD, critico:RED };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const { error } = await sb.from("requests").delete().eq("id", req.id);
+    if (error) {
+      console.error("Error al borrar solicitud:", error);
+      alert("No se pudo borrar la solicitud: " + error.message);
+      setDeleting(false);
+      return;
+    }
+    onDeleted?.(req.id);
+  };
 
   const [f, setF] = useState({
     title:          req.title          || "",
@@ -3396,6 +3434,28 @@ function EditSolicitudSheet({ request:req, user, profile, onClose, onSaved }) {
             style={{ marginTop:8,opacity:(!f.title||loading)?.5:1,padding:"15px",fontSize:16 }}>
             {loading ? "Guardando…" : "Guardar cambios"}
           </button>
+
+          {/* Delete section */}
+          {confirmDel ? (
+            <div style={{ marginTop:4,padding:"14px",borderRadius:10,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)" }}>
+              <p style={{ fontSize:16,color:TEXT,marginBottom:10,textAlign:"center" }}>¿Seguro que quieres eliminar esta solicitud?</p>
+              <div style={{ display:"flex",gap:8 }}>
+                <button onClick={()=>setConfirmDel(false)} disabled={deleting}
+                  style={{ flex:1,padding:"12px",borderRadius:8,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:16,cursor:"pointer",fontWeight:600 }}>
+                  Cancelar
+                </button>
+                <button onClick={handleDelete} disabled={deleting}
+                  style={{ flex:1,padding:"12px",borderRadius:8,border:"none",background:DANGER,color:"#fff",fontSize:16,cursor:"pointer",fontWeight:700 }}>
+                  {deleting?"Eliminando…":"Sí, eliminar"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={()=>setConfirmDel(true)}
+              style={{ marginTop:4,padding:"13px",borderRadius:8,border:`1px solid rgba(220,38,38,.35)`,background:"transparent",color:DANGER,fontSize:16,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%" }}>
+              <Ic n="trash" s={15} c={DANGER}/>Eliminar solicitud
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -3864,7 +3924,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
       {/* Mobile header */}
       <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"8px 14px" }}>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4 }}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <SpartsLogo size={24}/>
           <div style={{ display:"flex",gap:6,alignItems:"center" }}>
             {/* Lang switcher */}
@@ -3876,19 +3936,11 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
             <button className="btn-ghost" style={{ padding:"5px" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={18} c={MUTED}/></button>
           </div>
         </div>
-        {/* Region selector row */}
-        <div style={{ display:"flex",alignItems:"center",gap:6 }}>
-          <Ic n="map" s={13} c={RED}/>
-          <select value={region} onChange={e=>setRegion(e.target.value)}
-            style={{ background:"transparent",border:"none",color:region!=="all"?RED:MUTED,fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,outline:"none",cursor:"pointer",flex:1,textTransform:"uppercase" }}>
-            {REGIONS.map(r=><option key={r.id} value={r.id} style={{ background:BG3,color:TEXT }}>{lang==="en"?r.label_en:r.label_es}</option>)}
-          </select>
-        </div>
       </div>
 
       {/* Guest banner */}
       {guestMode && !session && (
-        <div style={{ position:"fixed", top:62, left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,140,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+        <div style={{ position:"fixed", top:46, left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,140,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
           <p style={{ fontSize:13, color:SUB, flex:1 }}>Modo <strong style={{ color:RED }}>invitado</strong></p>
           <button onClick={onGuestLogin} style={{ background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:6, padding:"5px 10px", fontSize:13, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Entrar</button>
           <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:6, padding:"5px 10px", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Registrarse</button>
@@ -3896,7 +3948,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       )}
 
       {/* Page content */}
-      <div style={{ paddingTop: guestMode && !session ? 104 : 72, paddingBottom:90 }}>
+      <div style={{ paddingTop: guestMode && !session ? 86 : 54, paddingBottom:90 }}>
         {tab==="home"    &&<HomePage    user={session?.user||null} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
@@ -4005,6 +4057,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
     { id:"matches",     icon:"check",   key:"nav_matches", label:"Matches" },
     { id:"messages",    icon:"msg",     key:"nav_messages", badge:true },
     { id:"mispubs",     icon:"box",     key:"nav_my_listings" },
+    { id:"missolicitudes", icon:"search", key:"nav_my_requests", label:"Mis Solicitudes" },
     { id:"profile",     icon:"user",    key:"nav_my_profile" },
   ];
 
@@ -4031,25 +4084,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
             ))}
           </nav>
 
-          {/* ── Region selector ── */}
-          <div style={{ display:"flex",alignItems:"center",gap:6,borderRadius:7,border:`1px solid ${BORDER}`,padding:"6px 12px",background:region!=="all"?`rgba(255,140,0,.08)`:"transparent",transition:"all .15s",flexShrink:0 }}>
-            <Ic n="location" s={14} c={region!=="all"?RED:MUTED}/>
-            <select value={region} onChange={e=>setRegion(e.target.value)}
-              style={{ background:"transparent",border:"none",color:region!=="all"?RED:TEXT,fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.4,outline:"none",cursor:"pointer",textTransform:"uppercase",maxWidth:140 }}>
-              {REGIONS.map(r=><option key={r.id} value={r.id} style={{ background:BG3,color:TEXT }}>{lang==="en"?r.label_en:r.label_es}</option>)}
-            </select>
-          </div>
-
-          {/* ── Language switcher ── */}
-          <div style={{ display:"flex",borderRadius:7,overflow:"hidden",border:`1px solid ${BORDER}`,flexShrink:0 }}>
-            {["es","en"].map(l=>(
-              <button key={l} onClick={()=>setLang(l)}
-                style={{ padding:"6px 14px",background:lang===l?RED:"transparent",color:lang===l?"#fff":TEXT,border:"none",cursor:"pointer",fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}>
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
+          {/* ── Action buttons ── */}
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
             <button onClick={()=>setShowSolicitud(true)}
               style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
@@ -4069,6 +4104,16 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
               onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
               <Ic n="msg" s={14} c="currentColor"/>{t("nav_support")}
             </button>
+
+            {/* ── Language switcher (far right) ── */}
+            <div style={{ display:"flex",borderRadius:7,overflow:"hidden",border:`1px solid ${BORDER}`,flexShrink:0,marginLeft:4 }}>
+              {["es","en"].map(l=>(
+                <button key={l} onClick={()=>setLang(l)}
+                  style={{ padding:"6px 14px",background:lang===l?RED:"transparent",color:lang===l?"#fff":TEXT,border:"none",cursor:"pointer",fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}>
+                  {l.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>
@@ -4122,7 +4167,8 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
           {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
           {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
-          {tab==="mispubs" &&session&&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
+          {tab==="mispubs" &&session&&<MisPublicaciones key="pubs" user={session.user} onSelect={setSelected}/>}
+          {tab==="missolicitudes" &&session&&<MisPublicaciones key="sols" user={session.user} onSelect={setSelected} initSubTab="solicitudes"/>}
         </div>
       </div>
 
