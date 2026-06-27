@@ -507,24 +507,6 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
         </div>
       </section>
 
-      {/* INDUSTRIAS */}
-      <section style={{ padding:"56px 32px", background:BG2, borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}` }}>
-        <div style={{ maxWidth:900, margin:"0 auto", textAlign:"center" }}>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:38, color:TEXT, marginBottom:12 }}>Industrias que cubrimos</h2>
-          <p style={{ fontSize:16, color:SUB, marginBottom:36 }}>Repuestos y equipos para toda la industria</p>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:10, justifyContent:"center" }}>
-            {["⚙️ Minería","🌲 Forestal","🏗️ Construcción","⚡ Energía","🚛 Transporte","🌾 Agroindustrial","🔧 Herramientas","💧 Sanitarias","🍎 Alimentos","🛣️ Rutas y Caminos"].map((ind,i)=>(
-              <button key={i} onClick={onEnter}
-                style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:24, padding:"10px 20px", fontSize:16, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3, transition:"all .15s" }}
-                onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; e.currentTarget.style.background="rgba(255,140,0,.08)"; }}
-                onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=TEXT; e.currentTarget.style.background=CARD; }}>
-                {ind}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA FINAL */}
       <section style={{ padding:"80px 32px", textAlign:"center" }}>
         <div style={{ maxWidth:560, margin:"0 auto" }}>
@@ -686,18 +668,6 @@ function HomePage({ user, onSelect, onGoSearch }) {
 
 
 
-      {/* Category pills */}
-      <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
-        {CATS.slice(1).map(c=>(
-          <button key={c.id} onClick={onGoSearch}
-            style={{ padding:"7px 14px",borderRadius:20,fontSize:16,fontWeight:700,border:`1px solid ${BORDER}`,background:CARD,color:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}
-            onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
-            onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=SUB; }}>
-            {c.emoji} {c.label}
-          </button>
-        ))}
-      </div>
-
       {/* Featured grid — 4 columns */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
         <span className="bebas" style={{ fontSize:22,color:TEXT }}>{t("home_top")}</span>
@@ -777,6 +747,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
   const [listings,   setListings]   = useState([]);
   const [loading,    setLoading]    = useState(false);
   const [viewMode,   setViewMode]   = useState("grid");
+  const [showFilters,setShowFilters]= useState(false);
 
   const MARCAS = ["","Caterpillar","Komatsu","Rexroth","Parker","WEG","ABB","Siemens","SKF","Cummins","Fleetguard","Gates","SEW","Atlas Copco","Bosch","NSK","FAG","Timken"];
 
@@ -855,25 +826,43 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
   const LABEL = { fontSize:16, fontWeight:700, color:MUTED, letterSpacing:1.2, textTransform:"uppercase", marginBottom:8, fontFamily:"Barlow Condensed,sans-serif" };
   const SEL   = (active) => ({ background:SURF, border:`1px solid ${active?RED:BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:16, color:active?RED:TEXT, width:"100%", outline:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:active?700:400, transition:"border-color .2s" });
   const INP   = { background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"9px 12px", fontSize:16, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
-  const DIV   = { height:1, background:BORDER, margin:"14px 0" };
-
   const isMobile = useIsMobile();
 
   return (
-    <div style={{ display:isMobile?"block":"flex", gap:24, alignItems:"flex-start" }}>
-
-      {/* ══ FILTER SIDEBAR ══ */}
-      <div style={{ width:isMobile?"100%":232, flexShrink:0, background:BG3, borderRadius:12, border:`1px solid ${BORDER}`, padding:"18px 16px", position:isMobile?"relative":"sticky", top:0, maxHeight:isMobile?"none":"calc(100vh - 100px)", overflowY:"auto", marginBottom:isMobile?16:0 }}>
-
-        {/* Header */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-          <p className="bebas" style={{ fontSize:18, color:TEXT, letterSpacing:.5 }}>{t("search_filters")}</p>
-          {activeFilters > 0 && <span style={{ background:RED, color:"#fff", fontSize:16, fontWeight:700, borderRadius:10, padding:"2px 8px", fontFamily:"Barlow Condensed,sans-serif" }}>{activeFilters}</span>}
+    <div>
+      {/* ══ SEARCH BAR (always on top) ══ */}
+      <div style={{ display:"flex", gap:10, marginBottom:12, alignItems:"center", flexWrap:"wrap" }}>
+        <div className="search-bar" style={{ flex:1, minWidth:200 }}>
+          <Ic n="search" s={16} c={MUTED}/>
+          <input placeholder={t("search_placeholder")} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} autoFocus/>
+          {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
         </div>
+        <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
+          style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:16, color:TEXT, outline:"none", cursor:"pointer", fontFamily:"inherit" }}>
+          {[["newest","Más recientes"],["price_asc","Menor precio"],["price_desc","Mayor precio"],["a_z","A → Z"],["z_a","Z → A"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+        </select>
+        <div style={{ display:"flex", gap:4 }}>
+          <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="grid"?RED:MUTED }} onClick={()=>setViewMode("grid")}><Ic n="grid" s={18}/></button>
+          <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="list"?RED:MUTED }} onClick={()=>setViewMode("list")}><Ic n="box" s={18}/></button>
+        </div>
+      </div>
+
+      {/* ══ FILTERS TOGGLE BUTTON ══ */}
+      <button onClick={()=>setShowFilters(s=>!s)}
+        style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 16px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,140,0,.08)":SURF, color:activeFilters>0?RED:TEXT, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", marginBottom:14, transition:"all .15s" }}>
+        <Ic n="settings" s={16} c={activeFilters>0?RED:TEXT}/>
+        {t("search_filters")}
+        {activeFilters > 0 && <span style={{ background:RED, color:"#fff", fontSize:14, fontWeight:700, borderRadius:10, padding:"1px 8px", fontFamily:"Barlow Condensed,sans-serif" }}>{activeFilters}</span>}
+        <span style={{ marginLeft:4, transform:showFilters?"rotate(180deg)":"none", transition:"transform .2s", display:"inline-flex" }}><Ic n="chevR" s={14} c={activeFilters>0?RED:MUTED} style={{ transform:"rotate(90deg)" }}/></span>
+      </button>
+
+      {/* ══ COLLAPSIBLE FILTER PANEL ══ */}
+      {showFilters && (
+      <div style={{ background:BG3, borderRadius:12, border:`1px solid ${BORDER}`, padding:"18px 16px", marginBottom:18, display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(auto-fit, minmax(220px, 1fr))", gap:"4px 20px", alignItems:"start" }}>
 
         {/* Global region badge */}
         {region && region !== "all" && ubicacion === "all" && (
-          <div style={{ marginBottom:12, padding:"5px 9px", background:"rgba(255,140,0,.08)", borderRadius:7, border:"1px solid rgba(255,140,0,.2)", display:"flex", alignItems:"center", gap:6 }}>
+          <div style={{ gridColumn:"1/-1", marginBottom:4, padding:"5px 9px", background:"rgba(255,140,0,.08)", borderRadius:7, border:"1px solid rgba(255,140,0,.2)", display:"flex", alignItems:"center", gap:6 }}>
             <Ic n="map" s={11} c={RED}/>
             <span style={{ fontSize:16, color:RED, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
               {lang==="en" ? REGIONS.find(r=>r.id===region)?.label_en : REGIONS.find(r=>r.id===region)?.label_es}
@@ -896,8 +885,6 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
           </div>
         </div>
 
-        <div style={DIV}/>
-
         {/* 2. INDUSTRIA */}
         <div style={{ marginBottom:14 }}>
           <p style={LABEL}>Industria</p>
@@ -905,8 +892,6 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
             {CATS.map(c=><option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
           </select>
         </div>
-
-        <div style={DIV}/>
 
         {/* 3. ESTADO */}
         <div style={{ marginBottom:14 }}>
@@ -916,8 +901,6 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
             {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=><option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-
-        <div style={DIV}/>
 
         {/* 4. UBICACIÓN */}
         <div style={{ marginBottom:14 }}>
@@ -929,14 +912,12 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
           </select>
         </div>
 
-        <div style={DIV}/>
-
         {/* 5. RANGO DE PRECIO */}
         <div style={{ marginBottom:14 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
             <p style={{ ...LABEL, marginBottom:0 }}>Precio</p>
             <div style={{ display:"flex", background:BG2, borderRadius:5, overflow:"hidden", border:`1px solid ${BORDER}` }}>
-              {["USD","CLP","EUR"].map(c=>(
+              {["CLP","USD","EUR"].map(c=>(
                 <button key={c} onClick={()=>setPriceCur(c)}
                   style={{ padding:"2px 7px", fontSize:16, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", transition:"all .12s",
                     background: priceCur===c ? RED : "transparent",
@@ -953,8 +934,6 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
           </div>
         </div>
 
-        <div style={DIV}/>
-
         {/* 6. MARCA */}
         <div style={{ marginBottom:14 }}>
           <p style={LABEL}>{t("search_brand")}</p>
@@ -970,9 +949,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
             style={{ ...INP, border:`1px solid ${modelo?RED:BORDER}`, color:modelo?RED:TEXT, fontWeight:modelo?700:400 }}/>
         </div>
 
-        <div style={DIV}/>
-
-        {/* 8. N° TÉCNICOS (collapsed section) */}
+        {/* 8. N° TÉCNICOS */}
         <div style={{ marginBottom:14 }}>
           <p style={LABEL}>Números técnicos</p>
           <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
@@ -992,8 +969,6 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
           </div>
         </div>
 
-        <div style={DIV}/>
-
         {/* 10. VERIFICADOS */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, cursor:"pointer" }} onClick={()=>setVerified(v=>!v)}>
           <p style={{ fontSize:16, color:verified?TEXT:SUB, fontWeight:verified?700:400 }}>Solo verificados ✓</p>
@@ -1004,30 +979,14 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
 
         {/* CLEAR ALL FILTERS */}
         <button onClick={resetFilters}
-          style={{ width:"100%", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,140,0,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
+          style={{ gridColumn:"1/-1", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,140,0,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
           {activeFilters > 0 ? `✕ Limpiar filtros (${activeFilters})` : "Sin filtros activos"}
         </button>
       </div>
+      )}
 
       {/* ── Resultados ── */}
-      <div style={{ flex:1, minWidth:0 }}>
-        {/* Search bar + sort */}
-        <div style={{ display:"flex", gap:10, marginBottom:14, alignItems:"center" }}>
-          <div className="search-bar" style={{ flex:1 }}>
-            <Ic n="search" s={16} c={MUTED}/>
-            <input placeholder={t("search_placeholder")} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} autoFocus/>
-            {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
-          </div>
-          <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
-            style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:16, color:TEXT, outline:"none", cursor:"pointer", fontFamily:"inherit" }}>
-            {[["newest","Más recientes"],["price_asc","Menor precio"],["price_desc","Mayor precio"],["a_z","A → Z"],["z_a","Z → A"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
-          </select>
-          <div style={{ display:"flex", gap:4 }}>
-            <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="grid"?RED:MUTED }} onClick={()=>setViewMode("grid")}><Ic n="grid" s={18}/></button>
-            <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="list"?RED:MUTED }} onClick={()=>setViewMode("list")}><Ic n="box" s={18}/></button>
-          </div>
-        </div>
-
+      <div style={{ minWidth:0 }}>
         {/* Active filter chips */}
         {activeFilters > 0 && (
           <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
@@ -1363,7 +1322,7 @@ function PublishSheet({ user, profile, onClose, onDone }) {
   const photoInputRef = useRef();
   const [f, setF] = useState({
     title:"", brand:"", model:"", serial_number:"", part_number:"",
-    engine_number:"", hours:"", cat:"min",
+    engine_number:"", hours:"", cat:"all",
     condition:"Nuevo", price:"", currency:"CLP", stock:"1",
     location:profile?.location||"", phone:profile?.phone||"",
     biz:profile?.biz||"", description:"", emoji:"📦"
@@ -3457,7 +3416,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
   const [viewListing, setViewListing] = useState(null);
   const [notif,   setNotif]   = useState({ email:true, whatsapp:false, inapp:true });
   const [f, setF] = useState({
-    title:"", brand:"", model:"", cat:"min",
+    title:"", brand:"", model:"", cat:"all",
     serial_number:"", part_number:"", engine_number:"", chassis_number:"",
     hours:"", condition:"", description:"",
     location: profile?.location||"",
@@ -4042,8 +4001,6 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
   const SIDEBAR = [
     { id:"home",        icon:"home",    key:"nav_home" },
-    { id:"publish",     icon:"plus",    key:"nav_publish",  accent:true },
-    { id:"solicitud",   icon:"search",  key:"nav_request",  solicitud:true, featured:true },
     { id:"search",      icon:"search",  key:"nav_explore" },
     { id:"matches",     icon:"check",   key:"nav_matches", label:"Matches" },
     { id:"messages",    icon:"msg",     key:"nav_messages", badge:true },
