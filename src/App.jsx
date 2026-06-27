@@ -4760,11 +4760,57 @@ export default function SpartsHub() {
   },[session]);
 
   const logout   = async ()=>{ await sb.auth.signOut(); setSession(null); };
+
+  /* ── Navegación con historial del navegador ──────────────────────
+     Modelo: la navegación de la app es una pila de "vistas". Cada
+     avance (cambiar de sección, abrir un detalle o un chat) empuja una
+     entrada al historial del navegador. Las flechas atrás/adelante del
+     navegador disparan `popstate`, y ahí restauramos exactamente el
+     estado que se guardó en esa entrada. Así las flechas recorren los
+     pasos dentro de la app en lugar de salir del sitio.
+
+     Guardamos el objeto completo (no solo el id) dentro de history.state,
+     para poder re-hidratar el detalle/chat al ir hacia adelante.
+  ──────────────────────────────────────────────────────────────── */
+  const isPopRef = useRef(false);   // true mientras aplicamos un popstate (no re-empujar)
+  const initedRef = useRef(false);
+
   const openChat = l=>{ if(l.user_id===session?.user?.id) return; setChatListing(l); setTab("messages"); setSelected(null); };
 
-  // El botón "atrás" del navegador cierra el detalle de publicación
-  // en vez de sacar al usuario del sitio.
-  useBackButton(!!selected, ()=>setSelected(null));
+  // Empuja/reemplaza la entrada de historial cuando cambia la navegación
+  useEffect(()=>{
+    const snap = { sh: true, tab, selected, chatListing };
+    if (isPopRef.current) {           // el cambio vino de atrás/adelante: no re-empujar
+      isPopRef.current = false;
+      return;
+    }
+    if (!initedRef.current) {         // primer render: reemplaza la entrada inicial
+      initedRef.current = true;
+      window.history.replaceState(snap, "");
+      return;
+    }
+    window.history.pushState(snap, "");
+  }, [tab, selected, chatListing]);
+
+  // Atrás/adelante del navegador → restaura el estado de esa entrada
+  useEffect(()=>{
+    const onPop = (e) => {
+      const snap = e.state;
+      if (snap && snap.shOverlay) return;   // entrada de un panel modal: la maneja useBackButton
+      isPopRef.current = true;
+      if (snap && snap.sh) {
+        setTab(snap.tab ?? "search");
+        setSelected(snap.selected ?? null);
+        setChatListing(snap.chatListing ?? null);
+      } else {
+        // Entrada inicial sin nuestro estado: volvemos a la vista base
+        setSelected(null);
+        setChatListing(null);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return ()=>window.removeEventListener("popstate", onPop);
+  }, []);
 
   if (!authReady) return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
