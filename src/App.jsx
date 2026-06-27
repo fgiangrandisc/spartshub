@@ -28,6 +28,9 @@ const CSS_OVERRIDE = `
 
   /* ── Accessibility & readability ── */
   * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  /* Prevent horizontal overflow on mobile (no sideways scroll) */
+  html, body { max-width: 100%; overflow-x: hidden; }
+  *, *::before, *::after { box-sizing: border-box; }
   /* Visible focus ring for keyboard navigation (was invisible) */
   button:focus-visible, a:focus-visible, input:focus-visible,
   select:focus-visible, textarea:focus-visible {
@@ -429,18 +432,18 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
       {/* HEADER */}
-      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 32px", position:"sticky", top:0, zIndex:50 }}>
-        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", alignItems:"center", height:64, gap:24 }}>
-          <SpartsLogo size={32}/>
-          <div style={{ flex:1 }}/>
+      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(12px,4vw,32px)", position:"sticky", top:0, zIndex:50, overflow:"hidden" }}>
+        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", alignItems:"center", minHeight:60, gap:10, flexWrap:"wrap", paddingTop:8, paddingBottom:8 }}>
+          <SpartsLogo size={28}/>
+          <div style={{ flex:1, minWidth:8 }}/>
           <button onClick={onLogin}
-            style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"9px 20px", fontSize:16, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}
+            style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 14px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
             onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
             Iniciar Sesión
           </button>
           <button onClick={onRegister}
-            style={{ background:RED, border:"none", borderRadius:8, padding:"9px 24px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}
+            style={{ background:RED, border:"none", borderRadius:8, padding:"8px 16px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>e.currentTarget.style.background=RED2}
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
             Registrarse →
@@ -449,23 +452,23 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       </header>
 
       {/* HERO */}
-      <section style={{ padding:"clamp(48px,8vw,80px) clamp(16px,4vw,32px) clamp(40px,6vw,64px)", textAlign:"center", maxWidth:820, margin:"0 auto" }}>
+      <section style={{ padding:"clamp(36px,8vw,80px) clamp(16px,4vw,32px) clamp(40px,6vw,64px)", textAlign:"center", maxWidth:820, margin:"0 auto", overflow:"hidden" }}>
         <div style={{ marginBottom:24 }}>
-          <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px, 3.5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase", marginBottom:0 }}>
+          <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(20px, 5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase", marginBottom:0 }}>
             No vendemos repuestos.
           </p>
-          <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px, 3.5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase" }}>
+          <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(20px, 5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase" }}>
             Conectamos personas.
           </p>
         </div>
-        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(44px, 7vw, 72px)", lineHeight:1.05, color:TEXT, marginBottom:16 }}>
+        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(32px, 9vw, 72px)", lineHeight:1.05, color:TEXT, marginBottom:16, overflowWrap:"break-word" }}>
           Todo lo que necesitas<br/><span style={{ color:RED }}>para tu operación o faena.</span>
         </h1>
-        <p style={{ fontSize:19, color:SUB, lineHeight:1.7, marginBottom:40, fontWeight:400, maxWidth:620, margin:"0 auto 40px" }}>
+        <p style={{ fontSize:"clamp(16px,4vw,19px)", color:SUB, lineHeight:1.6, marginBottom:32, fontWeight:400, maxWidth:620, margin:"0 auto 32px" }}>
           Repuestos, equipos, maquinaria, herramientas y más — encuentra lo que necesitas para que tu operación no se detenga. Sin intermediarios. Sin comisiones.
         </p>
-        <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(255,140,0,.1)", border:"1px solid rgba(255,140,0,.3)", borderRadius:20, padding:"6px 16px", marginBottom:32 }}>
-          <span style={{ fontSize:16, fontWeight:700, color:RED, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5 }}>✓ GRATIS · SIN COMISIONES · CONTACTO DIRECTO</span>
+        <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(255,140,0,.1)", border:"1px solid rgba(255,140,0,.3)", borderRadius:20, padding:"6px 16px", marginBottom:32, maxWidth:"100%" }}>
+          <span style={{ fontSize:"clamp(12px,3vw,16px)", fontWeight:700, color:RED, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>✓ GRATIS · SIN COMISIONES · CONTACTO DIRECTO</span>
         </div>
 
         {/* Search bar */}
@@ -474,11 +477,11 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
             value={searchQ}
             onChange={e=>setSearchQ(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&handleSearch()}
-            placeholder="¿Qué necesitas para tu faena u operación?"
-            style={{ flex:1, padding:"16px 20px", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}
+            placeholder="¿Qué necesitas?"
+            style={{ flex:1, minWidth:0, padding:"15px 16px", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}
           />
           <button onClick={handleSearch}
-            style={{ background:RED, border:"none", padding:"16px 28px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s" }}
+            style={{ background:RED, border:"none", padding:"15px clamp(16px,5vw,28px)", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s", flexShrink:0 }}
             onMouseEnter={e=>e.currentTarget.style.background=RED2}
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
             Buscar →
@@ -1047,7 +1050,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
             <button className="btn-ol" onClick={resetFilters} style={{ fontSize:16 }}>Limpiar filtros</button>
           </div>
         ) : viewMode === "grid" ? (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:14 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(155px, 1fr))", gap:12 }}>
             {listings.map(l=>(
               <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
                 <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
@@ -4385,7 +4388,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       )}
 
       {/* Page content */}
-      <div style={{ paddingTop: guestMode && !session ? 86 : 54, paddingBottom:90 }}>
+      <div style={{ paddingTop: guestMode && !session ? 86 : 54, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
