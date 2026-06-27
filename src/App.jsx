@@ -4489,10 +4489,10 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
               <Ic n="search" s={14} c={RED}/>{t("nav_request")}
             </button>
             <button onClick={()=>setShowPublish(true)}
-              style={{ background:RED,color:"#fff",border:"none",borderRadius:7,padding:"8px 16px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
-              onMouseEnter={e=>e.currentTarget.style.background=RED2}
-              onMouseLeave={e=>e.currentTarget.style.background=RED}>
-              <Ic n="plus" s={14} c="#fff"/>{t("nav_publish_here")}
+              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+              onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
+              <Ic n="plus" s={14} c={RED}/>{t("nav_publish_here")}
             </button>
             <button onClick={()=>setShowSupport(true)}
               style={{ background:"none",color:TEXT,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
