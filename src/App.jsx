@@ -3106,7 +3106,7 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
       hours:          f.hours   ? Number(f.hours)  : null,
       cat:            f.cat,
       condition:      f.condition,
-      price:          Number(f.price),
+      price:          f.currency==="NEG" ? 0 : Number(f.price),
       currency:       f.currency,
       stock:          Number(f.stock) || 1,
       location:       f.location,
@@ -3209,6 +3209,30 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
             <input className="inp" value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)} placeholder={t("pub_model_ph")}/>
           </div>
 
+          {/* Technical numbers: Serial + Part */}
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Serie</p>
+              <input className="inp" value={f.serial_number} maxLength={100} onChange={e=>upd("serial_number",e.target.value)} placeholder="N° serie del equipo"/>
+            </div>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Parte</p>
+              <input className="inp" value={f.part_number} maxLength={100} onChange={e=>upd("part_number",e.target.value)} placeholder="Part number"/>
+            </div>
+          </div>
+
+          {/* Engine number + Hours */}
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Motor</p>
+              <input className="inp" value={f.engine_number} maxLength={100} onChange={e=>upd("engine_number",e.target.value)} placeholder="N° motor"/>
+            </div>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Horas de Uso</p>
+              <input className="inp" type="number" min="0" value={f.hours} onChange={e=>upd("hours",e.target.value)} placeholder="Ej: 4500"/>
+            </div>
+          </div>
+
           {/* Condition */}
           <div>
             <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
@@ -3255,6 +3279,24 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
           <div>
             <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_location")}</p>
             <input className="inp" value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)} placeholder={t("pub_location_ph")}/>
+          </div>
+
+          {/* Stock */}
+          <div>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Stock disponible</p>
+            <input className="inp" type="number" min="1" value={f.stock} onChange={e=>upd("stock",e.target.value)} placeholder="1"/>
+          </div>
+
+          {/* Contact: Phone + Company */}
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Teléfono</p>
+              <input className="inp" value={f.phone} maxLength={30} onChange={e=>upd("phone",e.target.value)} placeholder="+56 9 ..."/>
+            </div>
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Empresa</p>
+              <input className="inp" value={f.biz} maxLength={100} onChange={e=>upd("biz",e.target.value)} placeholder="Nombre de tu empresa"/>
+            </div>
           </div>
 
           <button className="btn-red" onClick={save} disabled={loading||!f.title||(!f.price&&f.currency!=="NEG")}
@@ -4469,19 +4511,13 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
             <span style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
           </div>
           <div style={{ width:1, height:32, background:BORDER }}/>
-          <nav style={{ display:"flex", gap:4, flex:1 }}>
-            {[{id:"search",key:"nav_explore"},{id:"profile",key:"nav_my_profile"},{id:"soporte",key:"nav_support"}].map((n,i)=>(
-              <button key={i} onClick={()=>{ if(n.id==="soporte"){setShowSupport(true);return;} setTab(n.id); }}
-                style={{ padding:"7px 14px",borderRadius:7,background:tab===n.id?`rgba(255,140,0,.12)`:"none",border:tab===n.id?`1px solid rgba(255,140,0,.3)`:"1px solid transparent",cursor:"pointer",fontSize:16,fontWeight:700,color:tab===n.id?RED:TEXT,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase" }}
-                onMouseEnter={e=>{ if(tab!==n.id) e.currentTarget.style.color=RED; }}
-                onMouseLeave={e=>{ e.currentTarget.style.color=tab===n.id?RED:TEXT; }}>
-                {t(n.key)}
-              </button>
-            ))}
-          </nav>
-
-          {/* ── Action buttons ── */}
-          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+          <nav style={{ display:"flex", gap:8, flex:1, alignItems:"center" }}>
+            <button onClick={()=>setTab("search")}
+              style={{ padding:"7px 14px",borderRadius:7,background:tab==="search"?`rgba(255,140,0,.12)`:"none",border:tab==="search"?`1px solid rgba(255,140,0,.3)`:"1px solid transparent",cursor:"pointer",fontSize:16,fontWeight:700,color:tab==="search"?RED:TEXT,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase" }}
+              onMouseEnter={e=>{ if(tab!=="search") e.currentTarget.style.color=RED; }}
+              onMouseLeave={e=>{ e.currentTarget.style.color=tab==="search"?RED:TEXT; }}>
+              {t("nav_explore")}
+            </button>
             <button onClick={()=>setShowSolicitud(true)}
               style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
@@ -4494,6 +4530,10 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
               onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
               <Ic n="plus" s={14} c={RED}/>{t("nav_publish_here")}
             </button>
+          </nav>
+
+          {/* ── Right side: Support + Language ── */}
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
             <button onClick={()=>setShowSupport(true)}
               style={{ background:"none",color:TEXT,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
