@@ -650,32 +650,30 @@ function HomePage({ user, onSelect, onGoSearch }) {
   const [loading,  setLoading]  = useState(true);
 
   useEffect(()=>{
-    sb.from("listings").select("*").order("created_at",{ascending:false}).limit(20)
+    const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    sb.from("listings").select("*")
+      .gte("created_at", weekAgo)
+      .order("created_at",{ascending:false})
+      .limit(20)
       .then(({ data })=>{ setListings(data||[]); setLoading(false); });
   },[]);
 
   return (
     <div>
-      {/* Top stats bar */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:24 }}>
-        {[[listings.length||"—",t("home_active")],["0%",t("home_commission")],["P2P",t("home_p2p")],["✓",t("home_verified")]].map(([v,l])=>(
-          <div key={l} style={{ background:CARD,borderRadius:10,padding:"16px 20px",border:`1px solid ${BORDER}`,display:"flex",alignItems:"center",gap:14 }}>
-            <p className="bebas" style={{ fontSize:28,color:RED,lineHeight:1 }}>{v}</p>
-            <p style={{ fontSize:16,color:MUTED,lineHeight:1.4 }}>{l}</p>
-          </div>
-        ))}
-      </div>
-
-
-
       {/* Featured grid — 4 columns */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-        <span className="bebas" style={{ fontSize:22,color:TEXT }}>{t("home_top")}</span>
+        <span className="bebas" style={{ fontSize:22,color:TEXT }}>Publicaciones recientes</span>
         <span style={{ fontSize:16,fontWeight:700,color:RED,cursor:"pointer" }} onClick={onGoSearch}>{t("home_see_all")}</span>
       </div>
       {loading ? (
         <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24 }}>
           {[0,1,2,3].map(i=><div key={i} style={{ height:220,background:CARD,borderRadius:10 }}/>)}
+        </div>
+      ) : listings.length === 0 ? (
+        <div style={{ background:CARD,borderRadius:12,padding:"48px 24px",textAlign:"center",border:`1px solid ${BORDER}`,marginBottom:24 }}>
+          <div style={{ fontSize:48,marginBottom:12 }}>📦</div>
+          <p className="bebas" style={{ fontSize:22,color:TEXT,marginBottom:6 }}>Sin publicaciones esta semana</p>
+          <p style={{ color:MUTED,fontSize:16 }}>Explora todo el catálogo o publica algo nuevo</p>
         </div>
       ) : (
         <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24 }}>
