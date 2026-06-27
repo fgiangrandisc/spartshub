@@ -1801,7 +1801,20 @@ function MessagesPage({ user, initListing, onClear }) {
   const [active,   setActive]   = useState(null);
   const [filter,   setFilter]   = useState("Todas");
   const [viewListing, setViewListing] = useState(null);
+  const [confirmDel, setConfirmDel] = useState(null);
+  const [deleting,   setDeleting]   = useState(false);
   const FILTERS = ["Todas","Interesado","Negociación","Vendido"];
+
+  const deleteConversation = async (contactId, e) => {
+    e?.stopPropagation();
+    setDeleting(true);
+    // Delete all messages in both directions with this contact
+    await sb.from("messages").delete()
+      .or(`and(from_id.eq.${user.id},to_id.eq.${contactId}),and(from_id.eq.${contactId},to_id.eq.${user.id})`);
+    setContacts(prev => prev.filter(c => c.id !== contactId));
+    setConfirmDel(null);
+    setDeleting(false);
+  };
 
   const openListing = async (listingId) => {
     if (!listingId) return;
@@ -1916,7 +1929,25 @@ function MessagesPage({ user, initListing, onClear }) {
               )}
               {!lastMsg && <p style={{ fontSize:16,color:MUTED }}>{c.location||"—"}</p>}
             </div>
-            <Ic n="chevR" s={16} c={MUTED}/>
+            {confirmDel===c.id ? (
+              <div style={{ display:"flex",gap:6,flexShrink:0 }} onClick={e=>e.stopPropagation()}>
+                <button onClick={()=>setConfirmDel(null)}
+                  style={{ padding:"7px 11px",borderRadius:7,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:14,cursor:"pointer",fontWeight:600 }}>
+                  Cancelar
+                </button>
+                <button onClick={(e)=>deleteConversation(c.id,e)} disabled={deleting}
+                  style={{ padding:"7px 11px",borderRadius:7,border:"none",background:DANGER,color:"#fff",fontSize:14,cursor:"pointer",fontWeight:700 }}>
+                  {deleting?"…":"Eliminar"}
+                </button>
+              </div>
+            ) : (
+              <button onClick={(e)=>{ e.stopPropagation(); setConfirmDel(c.id); }} title="Eliminar conversación"
+                style={{ flexShrink:0,padding:"7px",borderRadius:7,border:"none",background:"transparent",color:MUTED,cursor:"pointer",display:"flex",alignItems:"center" }}
+                onMouseEnter={e=>e.currentTarget.style.color=DANGER}
+                onMouseLeave={e=>e.currentTarget.style.color=MUTED}>
+                <Ic n="trash" s={16} c="currentColor"/>
+              </button>
+            )}
           </div>
         )})}
       </div>
@@ -1935,7 +1966,9 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
     const { data } = await sb.from("messages").select("*")
       .or(`and(from_id.eq.${user.id},to_id.eq.${other.id}),and(from_id.eq.${other.id},to_id.eq.${user.id})`)
       .order("created_at",{ascending:true});
-    setMsgs(data||[]); setLoading(false);
+    // Hide auto-generated match notification messages from the chat thread
+    const visible = (data||[]).filter(m => !(m.body||"").startsWith("🤝 ¡Match automático!"));
+    setMsgs(visible); setLoading(false);
   },[user.id,other.id]);
 
   useEffect(()=>{
@@ -1961,26 +1994,60 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
     load();
   };
 
+  const waLink = other.phone ? `https://wa.me/${other.phone.replace(/[^0-9]/g,"")}` : null;
+
   return (
     <div style={{ height:"100vh",display:"flex",flexDirection:"column",background:BG }}>
-      {/* Header */}
-      <div style={{ padding:"56px 16px 12px",borderBottom:`0.5px solid ${BORDER}`,display:"flex",gap:12,alignItems:"center",flexShrink:0,background:BG3 }}>
-        <button className="btn-ghost" style={{ padding:"6px 8px" }} onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
-        <Avatar name={other.biz||other.name||"U"} size={40}/>
-        <div style={{ flex:1 }}>
-          <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>{other.biz||other.name}</p>
-          <p style={{ fontSize:16,color:MUTED,fontWeight:500 }}>{other.location||"SpartsHub"}</p>
-        </div>
-        <Ic n="phone" s={20} c={RED}/>
-      </div>
-      {listing&&(
-        <div style={{ padding:"10px 16px",background:BG2,borderBottom:`0.5px solid ${BORDER}`,display:"flex",gap:10,alignItems:"center" }}>
-          <span style={{ fontSize:20 }}>{listing.emoji||"📦"}</span>
-          <div>
-            <p style={{ fontSize:16,color:MUTED }}>Consulta sobre</p>
-            <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{listing.title}</p>
+      {/* Header — full contact info */}
+      <div style={{ padding:"56px 16px 14px",borderBottom:`0.5px solid ${BORDER}`,display:"flex",gap:12,alignItems:"flex-start",flexShrink:0,background:BG3 }}>
+        <button className="btn-ghost" style={{ padding:"6px 8px",marginTop:2 }} onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
+        <Avatar name={other.biz||other.name||"U"} size={44}/>
+        <div style={{ flex:1,minWidth:0 }}>
+          <p style={{ fontSize:17,fontWeight:700,color:TEXT,lineHeight:1.2 }}>{other.name||other.biz||"Usuario"}</p>
+          {other.biz && other.name && (
+            <p style={{ fontSize:15,color:SUB,fontWeight:600 }}>{other.biz}</p>
+          )}
+          {other.location && (
+            <p style={{ fontSize:14,color:MUTED,marginTop:2 }}>📍 {other.location}</p>
+          )}
+          {/* Contact buttons */}
+          <div style={{ display:"flex",gap:8,marginTop:10,flexWrap:"wrap" }}>
+            {waLink ? (
+              <a href={waLink} target="_blank" rel="noopener noreferrer"
+                style={{ display:"flex",alignItems:"center",gap:6,background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 14px",fontSize:14,fontWeight:700,textDecoration:"none",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3 }}>
+                <Ic n="wa" s={15} c="#fff"/> WhatsApp
+              </a>
+            ) : (
+              <span style={{ display:"flex",alignItems:"center",gap:6,background:BG2,color:MUTED,borderRadius:8,padding:"7px 14px",fontSize:14,fontWeight:600,border:`1px solid ${BORDER}` }}>
+                <Ic n="wa" s={15} c={MUTED}/> Sin WhatsApp
+              </span>
+            )}
+            {other.phone && (
+              <a href={`tel:${other.phone}`}
+                style={{ display:"flex",alignItems:"center",gap:6,background:BG2,color:TEXT,borderRadius:8,padding:"7px 14px",fontSize:14,fontWeight:600,textDecoration:"none",border:`1px solid ${BORDER}`,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3 }}>
+                <Ic n="phone" s={14} c={TEXT}/> {other.phone}
+              </a>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Listing card — the publication that matched */}
+      {listing&&(
+        <button onClick={()=>onViewListing?.(listing.id)}
+          style={{ padding:"12px 16px",background:BG2,borderBottom:`0.5px solid ${BORDER}`,display:"flex",gap:12,alignItems:"center",width:"100%",border:"none",cursor:"pointer",textAlign:"left" }}>
+          {listing.photos?.[0] ? (
+            <img src={listing.photos[0]} alt="" style={{ width:48,height:48,borderRadius:8,objectFit:"cover",flexShrink:0 }}/>
+          ) : (
+            <div style={{ width:48,height:48,borderRadius:8,background:BG3,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:22 }}>{listing.emoji||"📦"}</div>
+          )}
+          <div style={{ flex:1,minWidth:0 }}>
+            <p style={{ fontSize:13,color:MUTED,textTransform:"uppercase",letterSpacing:.5,fontFamily:"Barlow Condensed,sans-serif" }}>Publicación</p>
+            <p style={{ fontSize:16,fontWeight:700,color:TEXT,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{listing.title}</p>
+            <p className="bebas" style={{ fontSize:16,color:RED }}>{fmtPrice(listing.price,listing.currency)}</p>
+          </div>
+          <Ic n="chevR" s={18} c={MUTED}/>
+        </button>
       )}
       <div style={{ flex:1,overflowY:"auto",padding:"16px",display:"flex",flexDirection:"column",gap:8 }}>
         {loading ? <div style={{ display:"flex",justifyContent:"center",paddingTop:40 }}><Spin/></div>
@@ -2027,6 +2094,16 @@ function MatchesPage({ user, onSelect, onChat }) {
   const [matches,  setMatches]  = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [filter,   setFilter]   = useState("all"); // all | selling | buying
+  const [confirmDel, setConfirmDel] = useState(null);
+  const [deleting,   setDeleting]   = useState(false);
+
+  const deleteMatch = async (id) => {
+    setDeleting(true);
+    await sb.from("matches").delete().eq("id", id);
+    setMatches(prev => prev.filter(m => m.id !== id));
+    setConfirmDel(null);
+    setDeleting(false);
+  };
 
   const loadMatches = useCallback(async () => {
     setLoading(true);
@@ -2073,8 +2150,6 @@ function MatchesPage({ user, onSelect, onChat }) {
     return true;
   });
 
-  const scoreColor = s => s >= 90 ? GREEN : s >= 80 ? GOLD : RED;
-
   return (
     <div>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:10 }}>
@@ -2110,7 +2185,7 @@ function MatchesPage({ user, onSelect, onChat }) {
             const mine = m.iAmSeller ? m.listing : m.request;   // my side
             const itemTitle = item?.title || mine?.title || "Publicación";
             return (
-              <div key={m.id} className="card" style={{ padding:"16px 18px",borderLeft:`3px solid ${scoreColor(m.score)}` }}>
+              <div key={m.id} className="card" style={{ padding:"16px 18px",borderLeft:`3px solid ${m.iAmSeller?BLUE:GOLD}` }}>
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:8 }}>
                   <div style={{ flex:1,minWidth:0 }}>
                     <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap" }}>
@@ -2124,15 +2199,11 @@ function MatchesPage({ user, onSelect, onChat }) {
                       <p style={{ fontSize:15,color:SUB }}>{m.otherProfile.biz || m.otherProfile.name || "Usuario"}{m.otherProfile.location?` · ${m.otherProfile.location}`:""}</p>
                     )}
                   </div>
-                  <div style={{ textAlign:"center",flexShrink:0 }}>
-                    <div className="bebas" style={{ fontSize:30,color:scoreColor(m.score),lineHeight:1 }}>{m.score}</div>
-                    <div style={{ fontSize:12,color:MUTED,letterSpacing:.5 }}>SCORE</div>
-                  </div>
                 </div>
                 {m.reason && (
                   <p style={{ fontSize:15,color:MUTED,marginBottom:12,lineHeight:1.5,fontStyle:"italic" }}>"{m.reason}"</p>
                 )}
-                <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+                <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
                   {(m.iAmSeller ? m.listing : m.listing) && onSelect && m.listing && (
                     <button onClick={()=>onSelect(m.listing)}
                       style={{ padding:"8px 14px",borderRadius:8,border:`1px solid ${BORDER}`,background:BG2,color:TEXT,fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6 }}>
@@ -2143,6 +2214,23 @@ function MatchesPage({ user, onSelect, onChat }) {
                     <button onClick={()=>onChat(m.listing, m.otherProfile)}
                       style={{ padding:"8px 14px",borderRadius:8,border:"none",background:RED,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6 }}>
                       <Ic n="msg" s={14} c="#fff"/> Contactar
+                    </button>
+                  )}
+                  {confirmDel===m.id ? (
+                    <div style={{ display:"flex",gap:6,marginLeft:"auto" }}>
+                      <button onClick={()=>setConfirmDel(null)}
+                        style={{ padding:"8px 12px",borderRadius:8,border:`1px solid ${BORDER}`,background:"transparent",color:MUTED,fontSize:15,cursor:"pointer",fontWeight:600 }}>
+                        Cancelar
+                      </button>
+                      <button onClick={()=>deleteMatch(m.id)} disabled={deleting}
+                        style={{ padding:"8px 12px",borderRadius:8,border:"none",background:DANGER,color:"#fff",fontSize:15,cursor:"pointer",fontWeight:700 }}>
+                        {deleting?"…":"Confirmar"}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={()=>setConfirmDel(m.id)} title="Eliminar match"
+                      style={{ marginLeft:"auto",padding:"8px 12px",borderRadius:8,border:`1px solid rgba(220,38,38,.35)`,background:"rgba(220,38,38,.06)",color:DANGER,fontSize:15,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:5 }}>
+                      <Ic n="trash" s={13} c={DANGER}/>
                     </button>
                   )}
                 </div>
