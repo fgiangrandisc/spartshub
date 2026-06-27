@@ -4034,8 +4034,7 @@ function AppFooter() {
 function MobileTabBar({ tab, setTab, onPublish }) {
   const { t } = useLang();
   const TABS = [
-    { id:"home",    icon:"home",  key:"nav_home" },
-    { id:"search",  icon:"search",key:"nav_search" },
+    { id:"search",  icon:"home",  key:"nav_explore", label:"Explorar" },
     { id:"publish", icon:"plus",  key:"nav_publish", accent:true },
     { id:"matches", icon:"check", key:"nav_matches", label:"Matches" },
     { id:"messages",icon:"msg",   key:"nav_messages" },
@@ -4313,7 +4312,6 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
       {/* Page content */}
       <div style={{ paddingTop: guestMode && !session ? 86 : 54, paddingBottom:90 }}>
-        {tab==="home"    &&<HomePage    user={session?.user||null} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
@@ -4418,8 +4416,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
   }, [showPublish, showSolicitud, showSupport]);
 
   const SIDEBAR = [
-    { id:"home",        icon:"home",    key:"nav_home" },
-    { id:"search",      icon:"search",  key:"nav_explore" },
+    { id:"search",      icon:"home",    key:"nav_explore" },
     { id:"matches",     icon:"check",   key:"nav_matches", label:"Matches" },
     { id:"messages",    icon:"msg",     key:"nav_messages", badge:true },
     { id:"mispubs",     icon:"box",     key:"nav_my_listings" },
@@ -4441,7 +4438,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           </div>
           <div style={{ width:1, height:32, background:BORDER }}/>
           <nav style={{ display:"flex", gap:4, flex:1 }}>
-            {[{id:"home",key:"nav_home"},{id:"search",key:"nav_search"},{id:"profile",key:"nav_my_profile"},{id:"soporte",key:"nav_support"}].map((n,i)=>(
+            {[{id:"search",key:"nav_explore"},{id:"profile",key:"nav_my_profile"},{id:"soporte",key:"nav_support"}].map((n,i)=>(
               <button key={i} onClick={()=>{ if(n.id==="soporte"){setShowSupport(true);return;} setTab(n.id); }}
                 style={{ padding:"7px 14px",borderRadius:7,background:tab===n.id?`rgba(255,140,0,.12)`:"none",border:tab===n.id?`1px solid rgba(255,140,0,.3)`:"1px solid transparent",cursor:"pointer",fontSize:16,fontWeight:700,color:tab===n.id?RED:TEXT,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase" }}
                 onMouseEnter={e=>{ if(tab!==n.id) e.currentTarget.style.color=RED; }}
@@ -4529,7 +4526,6 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
         {/* Main */}
         <div style={{ flex:1,minWidth:0,overflowY:"auto",padding:"24px 32px 60px" }}>
-          {tab==="home"    &&<HomePage    user={session?.user||null} onSelect={setSelected} onGoSearch={()=>setTab("search")}/>}
           {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
           {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
           {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
@@ -4561,7 +4557,7 @@ export default function SpartsHub() {
   const [guestSearch,  setGuestSearch]  = useState("");
   const [profile,      setProfile]      = useState(null);
   const [authReady,    setAuthReady]    = useState(false);
-  const [tab,          setTab]          = useState("home");
+  const [tab,          setTab]          = useState("search");
   const [selected,     setSelected]     = useState(null);
   const [chatListing,  setChatListing]  = useState(null);
   const [lang,         setLangState]    = useState(()=>localStorage.getItem("sh_lang")||"es");
@@ -4601,7 +4597,7 @@ export default function SpartsHub() {
           onLogin={()=>setShowAuthMode("login")}
           onRegister={()=>setShowAuthMode("register")}
           onSearch={q=>{ setGuestSearch(q); setGuestMode(true); setTab("search"); }}
-          onEnter={()=>{ setGuestMode(true); setTab("home"); }}
+          onEnter={()=>{ setGuestMode(true); setTab("search"); }}
         />
       </LangCtx.Provider>
     );
