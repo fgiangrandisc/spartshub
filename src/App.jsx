@@ -1360,7 +1360,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
   };
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:60,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
-      <div className="sheet sheet-up" style={{ maxHeight:"92vh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
+      <div className="sheet sheet-up" style={{ maxHeight:"92dvh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
         <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
@@ -1630,7 +1630,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:60,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
-      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
+      <div className="sheet sheet-up" style={{ maxHeight:"94dvh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
         <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
@@ -2082,6 +2082,7 @@ Reglas:
 }
 
 function BulkUploadSheet({ user, profile, onClose, onDone }) {
+  const isMobile = useIsMobile();
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [stage,   setStage]   = useState("upload");   // upload | processing | review | saving | done
   const [error,   setError]   = useState("");
@@ -2214,7 +2215,7 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:60,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
-      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
+      <div className="sheet sheet-up" style={{ maxHeight:"94dvh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
         <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
@@ -2334,8 +2335,8 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
                       </div>
                     </div>
 
-                    <div style={{ display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:8,marginBottom:10 }}>
-                      <div>
+                    <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"2fr 1fr 1fr",gap:8,marginBottom:10 }}>
+                      <div style={{ gridColumn:isMobile?"1 / -1":"auto" }}>
                         <p style={TH}>Precio</p>
                         <input className="inp" inputMode="numeric" value={r.price} onChange={e=>updateRow(idx,"price",e.target.value.replace(/\D/g,""))} placeholder="A convenir"/>
                       </div>
@@ -3743,7 +3744,7 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:90,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
-      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
+      <div className="sheet sheet-up" style={{ maxHeight:"94dvh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
         <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
@@ -4210,7 +4211,7 @@ function EditSolicitudSheet({ request:req, user, profile, onClose, onSaved, onDe
   return (
     <div style={{ position:"fixed",inset:0,zIndex:200,display:"flex",alignItems:"flex-end",background:"rgba(0,0,0,.6)" }} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()}
-        style={{ width:"100%",maxWidth:620,margin:"0 auto",background:BG,borderRadius:"18px 18px 0 0",maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden",...sheetStyle }}>
+        style={{ width:"100%",maxWidth:620,margin:"0 auto",background:BG,borderRadius:"18px 18px 0 0",maxHeight:"90dvh",display:"flex",flexDirection:"column",overflow:"hidden",...sheetStyle }}>
         <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
@@ -4420,7 +4421,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:80,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:0 }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:580,maxHeight:"92vh",display:"flex",flexDirection:"column",border:`1px solid rgba(255,140,0,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,140,0,.15)",overflow:"hidden",...sheetStyle }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:580,maxHeight:"92dvh",display:"flex",flexDirection:"column",border:`1px solid rgba(255,140,0,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,140,0,.15)",overflow:"hidden",...sheetStyle }}>
 
         {/* Drag handle */}
         <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"10px 0 2px",cursor:"grab",touchAction:"none",background:"#171D24" }}>
