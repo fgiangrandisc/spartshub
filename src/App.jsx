@@ -320,9 +320,9 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
 };
 
 /* ── Logo ───────────────────────────────────────────────────── */
-function SpartsLogo({ size=36 }) {
+function SpartsLogo({ size=36, onClick }) {
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:size*0.28 }}>
+    <div onClick={onClick} style={{ display:"flex", alignItems:"center", gap:size*0.28, cursor:onClick?"pointer":"default" }}>
       <svg width={size} height={size} viewBox="0 0 36 36" fill="none">
         <rect width="36" height="36" rx="8" fill="#FF8C00"/>
         <text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white" letterSpacing="1">S</text>
@@ -4921,7 +4921,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Mobile header */}
       <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"8px 14px" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <SpartsLogo size={24}/>
+          <SpartsLogo size={24} onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
           <div style={{ display:"flex",gap:6,alignItems:"center" }}>
             {/* Lang switcher */}
             <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:16,fontWeight:700 }}>
@@ -5083,7 +5083,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 28px" }}>
         <div style={{ display:"flex", alignItems:"center", height:56, gap:20 }}>
           <div style={{ display:"flex",flexDirection:"column",gap:2,flexShrink:0 }}>
-            <SpartsLogo size={30}/>
+            <SpartsLogo size={30} onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
             <span style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
           </div>
           <div style={{ width:1, height:32, background:BORDER }}/>
