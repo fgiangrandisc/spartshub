@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, createContext, useContext } from "react";
 
 import { sb } from "./supabase.js";
 import { T, CSS_BASE } from "./theme.js";
@@ -48,6 +48,12 @@ const CSS_OVERRIDE = `
   /* Links and clickable rows show pointer affordance */
   .photo-card { transition: transform .12s ease, box-shadow .12s ease; }
   .photo-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  /* Toast entrance animation */
+  @keyframes toastIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+  .toast-in { animation: toastIn .22s ease-out; }
+  /* Skeleton loading shimmer */
+  @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+  .skel { background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.04) 75%); background-size: 800px 100%; animation: shimmer 1.4s infinite linear; }
 `;
 
 /* ── Mobile detection hook ──────────────────────────────────── */
@@ -340,6 +346,40 @@ function Logo({ size=16 }) { return <SpartsLogo size={size===16?36:size+20}/>; }
 /* ── Spinner ────────────────────────────────────────────────── */
 function Spin({ size=22 }) {
   return <div className="spinner" style={{ width:size, height:size }}/>;
+}
+
+/* ── Toast system (feedback de éxito/error) ─────────────────────
+   Reemplaza los alert() del navegador con notificaciones suaves
+   que aparecen abajo y desaparecen solas.
+──────────────────────────────────────────────────────────────── */
+const ToastCtx = createContext(()=>{});
+function useToast() { return useContext(ToastCtx); }
+
+function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+  const show = useCallback((message, type="success") => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts(ts => [...ts, { id, message, type }]);
+    setTimeout(() => setToasts(ts => ts.filter(t => t.id !== id)), 3200);
+  }, []);
+  return (
+    <ToastCtx.Provider value={show}>
+      {children}
+      <div style={{ position:"fixed", bottom:100, left:0, right:0, zIndex:300, display:"flex", flexDirection:"column", alignItems:"center", gap:8, pointerEvents:"none", padding:"0 16px" }}>
+        {toasts.map(t => {
+          const color = t.type==="error" ? DANGER : t.type==="info" ? BLUE : GREEN;
+          const icon  = t.type==="error" ? "✕" : t.type==="info" ? "ℹ" : "✓";
+          return (
+            <div key={t.id} className="toast-in"
+              style={{ background:CARD, border:`1px solid ${color}`, borderLeft:`4px solid ${color}`, borderRadius:10, padding:"12px 18px", maxWidth:420, width:"fit-content", boxShadow:"0 8px 30px rgba(0,0,0,.4)", display:"flex", alignItems:"center", gap:10, pointerEvents:"auto" }}>
+              <span style={{ color, fontWeight:700, fontSize:16, flexShrink:0 }}>{icon}</span>
+              <span style={{ color:TEXT, fontSize:15, fontWeight:500, lineHeight:1.4 }}>{t.message}</span>
+            </div>
+          );
+        })}
+      </div>
+    </ToastCtx.Provider>
+  );
 }
 
 /* ── Avatar ─────────────────────────────────────────────────── */
@@ -954,7 +994,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
       <div style={{ display:"flex", gap:10, marginBottom:12, alignItems:"center", flexWrap:"wrap" }}>
         <div className="search-bar" style={{ flex:1, minWidth:200 }}>
           <Ic n="search" s={16} c={MUTED}/>
-          <input placeholder={t("search_placeholder")} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} autoFocus/>
+          <input placeholder={t("search_placeholder")} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()}/>
           {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
         </div>
         <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
@@ -1129,11 +1169,26 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
 
         {/* Count */}
         <p style={{ fontSize:16, color:MUTED, marginBottom:14 }}>
-          {loading ? t("search_searching") : `${listings.length} ${t("search_found")}`}
+          {loading ? t("search_searching")
+            : q.trim()
+              ? `${listings.length} ${listings.length===1?"resultado":"resultados"} para "${q.trim()}"`
+              : `${listings.length} ${t("search_found")}`}
         </p>
 
         {loading ? (
-          <div style={{ display:"flex", justifyContent:"center", paddingTop:60 }}><Spin size={30}/></div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(155px, 1fr))", gap:12 }}>
+            {[0,1,2,3,4,5].map(i=>(
+              <div key={i} style={{ background:CARD, borderRadius:10, overflow:"hidden", border:`1px solid ${BORDER}` }}>
+                <div className="skel" style={{ height:130 }}/>
+                <div style={{ padding:"10px 12px 14px" }}>
+                  <div className="skel" style={{ height:12, width:"40%", borderRadius:4, marginBottom:8 }}/>
+                  <div className="skel" style={{ height:14, width:"85%", borderRadius:4, marginBottom:8 }}/>
+                  <div className="skel" style={{ height:12, width:"60%", borderRadius:4, marginBottom:8 }}/>
+                  <div className="skel" style={{ height:16, width:"50%", borderRadius:4 }}/>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : listings.length === 0 ? (
           <div style={{ padding:"60px 0", textAlign:"center" }}>
             <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
@@ -1281,7 +1336,8 @@ function PhotoCarousel({ photos }) {
     </>
   );
 }
-function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
+function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequireAuth }) {
+  const toast = useToast();
   const [showEdit,    setShowEdit]    = useState(false);
   const [confirmDel,  setConfirmDel]  = useState(false);
   const [deleting,    setDeleting]    = useState(false);
@@ -1290,8 +1346,10 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
 
   const deleteListing = async () => {
     setDeleting(true);
-    await sb.from("listings").delete().eq("id", l.id);
+    const { error } = await sb.from("listings").delete().eq("id", l.id);
     setDeleting(false);
+    if (error) { toast("No se pudo eliminar: " + error.message, "error"); return; }
+    toast("Publicación eliminada");
     if (onDeleted) onDeleted(l.id);
     onClose();
   };
@@ -1414,6 +1472,15 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
                     </button>
                   )}
                 </>
+              ) : !user ? (
+                <>
+                  <div style={{ background:BG2, border:`1px solid ${BORDER}`, borderRadius:10, padding:"14px 16px", textAlign:"center" }}>
+                    <p style={{ fontSize:15, color:SUB, lineHeight:1.5, marginBottom:12 }}>Crea una cuenta gratis para contactar al vendedor por WhatsApp o mensaje interno.</p>
+                    <button onClick={()=>{ onClose(); onRequireAuth?.(); }} className="btn-red" style={{ width:"100%", padding:"13px" }}>
+                      Crear cuenta para contactar
+                    </button>
+                  </div>
+                </>
               ) : (
                 <>
                   <button onClick={l.phone ? wa : undefined}
@@ -1429,7 +1496,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
               <button className="btn-ghost" style={{ justifyContent:"center",padding:12 }} onClick={()=>{
                 const url = window.location.href;
                 if (navigator.share) { navigator.share({ title:l.title, text:`${l.title} — ${l.currency} ${Number(l.price).toLocaleString()}`, url }); }
-                else { navigator.clipboard.writeText(url).then(()=>alert("Link copiado al portapapeles")); }
+                else { navigator.clipboard.writeText(url).then(()=>toast("Link copiado al portapapeles")); }
               }}>
                 Compartir publicación 🔗
               </button>
@@ -4975,7 +5042,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
         </button>
       )}
 
-      {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
+      {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)} onRequireAuth={onGuestRegister}/>}
       {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
       {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>setShowBulkUpload(false)} onDone={()=>setShowBulkUpload(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
@@ -5191,7 +5258,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
         </div>
       </div>
 
-      {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
+      {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)} onRequireAuth={onGuestRegister}/>}
       {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
       {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>setShowBulkUpload(false)} onDone={()=>setShowBulkUpload(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
@@ -5316,6 +5383,7 @@ export default function SpartsHub() {
 
   if (isMobile) return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
+    <ToastProvider>
     <MobileLayout
       tab={tab} setTab={setTab} session={session} profile={profile}
       selected={selected} setSelected={setSelected}
@@ -5326,11 +5394,13 @@ export default function SpartsHub() {
       onGuestLogin={()=>{ setGuestMode(false); setShowAuthMode("login"); }}
       onGuestRegister={()=>{ setGuestMode(false); setShowAuthMode("register"); }}
     />
+    </ToastProvider>
     </LangCtx.Provider>
   );
 
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
+    <ToastProvider>
     <DesktopLayout
       tab={tab} setTab={setTab} session={session} profile={profile}
       selected={selected} setSelected={setSelected}
@@ -5341,6 +5411,7 @@ export default function SpartsHub() {
       onGuestLogin={()=>{ setGuestMode(false); setShowAuthMode("login"); }}
       onGuestRegister={()=>{ setGuestMode(false); setShowAuthMode("register"); }}
     />
+    </ToastProvider>
     </LangCtx.Provider>
   );
 }
