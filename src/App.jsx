@@ -4472,6 +4472,12 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
               ))}
             </div>
             <button className="btn-ghost" style={{ padding:"5px" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={18} c={MUTED}/></button>
+            {session && (
+              <button onClick={logout} title="Cerrar sesión"
+                style={{ padding:"5px 8px",borderRadius:6,border:`1px solid ${RED}`,background:"transparent",color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+                <Ic n="logout" s={15} c={RED}/>Salir
+              </button>
+            )}
             {profile?.is_admin && (
               <button onClick={()=>setTab("admin")} style={{ padding:"5px 8px", borderRadius:6, border:`1px solid ${RED}`, background:tab==="admin"?RED:"transparent", color:tab==="admin"?"#fff":RED, cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>⚙</button>
             )}
@@ -4641,7 +4647,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
             </button>}
           </nav>
 
-          {/* ── Right side: Support + Language ── */}
+          {/* ── Right side: Support + Logout + Language ── */}
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
             <button onClick={()=>setShowSupport(true)}
               style={{ background:"none",color:TEXT,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
@@ -4649,6 +4655,13 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
               onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
               <Ic n="msg" s={14} c="currentColor"/>{t("nav_support")}
             </button>
+
+            {session && <button onClick={logout}
+              style={{ background:"none",color:RED,border:`1px solid ${RED}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+              onMouseLeave={e=>{ e.currentTarget.style.background="none"; }}>
+              <Ic n="logout" s={14} c={RED}/>{t("nav_logout")}
+            </button>}
 
             {/* ── Language switcher (far right) ── */}
             <div style={{ display:"flex",borderRadius:7,overflow:"hidden",border:`1px solid ${BORDER}`,flexShrink:0,marginLeft:4 }}>
