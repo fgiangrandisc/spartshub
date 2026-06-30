@@ -1324,10 +1324,21 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
               <h2 style={{ fontSize:22,fontWeight:700,lineHeight:1.2,color:TEXT,flex:1 }}>{l.title}</h2>
               {l.verified&&<span className="tag t-green"><Ic n="verify" s={10} c={GREEN}/>Verificado</span>}
             </div>
-            <p className="bebas" style={{ fontSize:30,color:RED,marginBottom:16 }}>{l.currency} {Number(l.price).toLocaleString()}</p>
+            <p className="bebas" style={{ fontSize:30,color:RED,marginBottom:16 }}>{fmtPrice(l.price, l.currency)}</p>
 
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20 }}>
-              {[["Condición",l.condition],["Marca",l.brand||"—"],["Modelo",l.model||"—"],["Stock",`${l.stock||1} u.`],l.hours&&["Horas de uso",`${l.hours} hrs`],l.serial_number&&["N° Serie",l.serial_number],l.part_number&&["N° Parte",l.part_number],l.engine_number&&["N° Motor",l.engine_number],l.chassis_number&&["N° Chasis",l.chassis_number]].filter(Boolean).map(([k,v])=>(
+              {[
+                l.operation&&["Tipo",l.operation],
+                ["Condición",l.condition],
+                ["Marca",l.brand||"—"],
+                ["Modelo",l.model||"—"],
+                ["Stock",`${l.stock||1} u.`],
+                l.hours&&["Horas de uso",`${l.hours} hrs`],
+                l.serial_number&&["N° Serie",l.serial_number],
+                l.part_number&&["N° Parte",l.part_number],
+                l.engine_number&&["N° Motor",l.engine_number],
+                l.chassis_number&&["N° Chasis",l.chassis_number]
+              ].filter(Boolean).map(([k,v])=>(
                 <div key={k} style={{ background:BG2,borderRadius:10,padding:"12px 14px",border:`1px solid ${BORDER}` }}>
                   <p style={{ fontSize:16,color:MUTED,marginBottom:3,fontWeight:600,textTransform:"uppercase",letterSpacing:.5 }}>{k}</p>
                   <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{v}</p>
@@ -1339,6 +1350,23 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
               <Ic n="map" s={16} c={RED}/>
               <span style={{ fontSize:16,fontWeight:500,color:TEXT }}>{l.location}</span>
             </div>
+
+            {(l.phone || l.biz) && (
+              <div style={{ display:"flex",flexDirection:"column",gap:10,marginBottom:16,padding:"12px 14px",background:BG2,borderRadius:10,border:`1px solid ${BORDER}` }}>
+                {l.biz && (
+                  <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                    <Ic n="box" s={16} c={RED}/>
+                    <span style={{ fontSize:16,fontWeight:500,color:TEXT }}>{l.biz}</span>
+                  </div>
+                )}
+                {l.phone && (
+                  <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                    <Ic n="msg" s={16} c={RED}/>
+                    <a href={`tel:${l.phone}`} style={{ fontSize:16,fontWeight:500,color:TEXT,textDecoration:"none" }}>{l.phone}</a>
+                  </div>
+                )}
+              </div>
+            )}
 
             {l.description && (
               <div style={{ marginBottom:20 }}>
