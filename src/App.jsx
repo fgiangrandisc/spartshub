@@ -1452,7 +1452,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited }) {
 /* ══════════════════════════════════════════════════════════════
    PUBLISH SHEET
 ══════════════════════════════════════════════════════════════ */
-function PublishSheet({ user, profile, onClose, onDone }) {
+function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
   const { t } = useLang();
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [step,          setStep]          = useState(0);
@@ -1592,6 +1592,27 @@ function PublishSheet({ user, profile, onClose, onDone }) {
                   <Ic n="chevR" s={18} c={MUTED}/>
                 </div>
               ))}
+
+              {onBulkUpload && (
+                <>
+                  <div style={{ display:"flex",alignItems:"center",gap:10,margin:"6px 0" }}>
+                    <div style={{ flex:1,height:1,background:BORDER }}/>
+                    <span style={{ fontSize:13,color:MUTED,fontWeight:600 }}>o</span>
+                    <div style={{ flex:1,height:1,background:BORDER }}/>
+                  </div>
+                  <div onClick={()=>{ onClose(); onBulkUpload(); }}
+                    style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${BORDER}`,background:CARD,cursor:"pointer",transition:"all .15s" }}
+                    onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>
+                    <div style={{ width:44,height:44,background:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:22 }}>📂</div>
+                    <div style={{ flex:1 }}>
+                      <p style={{ fontSize:16,fontWeight:700,marginBottom:2,color:TEXT }}>Carga masiva</p>
+                      <p style={{ fontSize:16,color:MUTED }}>Sube un Excel o PDF y publica varios productos a la vez</p>
+                    </div>
+                    <Ic n="chevR" s={18} c={MUTED}/>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -1901,6 +1922,413 @@ function PublishSheet({ user, profile, onClose, onDone }) {
     </div>
   );
 }
+
+/* ══════════════════════════════════════════════════════════════
+   CARGA MASIVA — Excel (.xlsx/.csv) o PDF, interpretado con IA
+══════════════════════════════════════════════════════════════ */
+
+/* Carga SheetJS desde CDN solo cuando se necesita (lazy) */
+let _xlsxPromise = null;
+function loadXLSX() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (_xlsxPromise) return _xlsxPromise;
+  _xlsxPromise = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+    s.onload = () => resolve(window.XLSX);
+    s.onerror = () => reject(new Error("No se pudo cargar el lector de Excel"));
+    document.head.appendChild(s);
+  });
+  return _xlsxPromise;
+}
+
+/* Lee un File como base64 (sin el prefijo data:) */
+const fileToBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1]);
+    r.onerror = () => reject(new Error("Error leyendo el archivo"));
+    r.readAsDataURL(file);
+  });
+
+/* Llama a la IA para extraer publicaciones desde texto (Excel/CSV) o un PDF */
+async function extractListingsAI({ text, pdfBase64 }) {
+  const catList = CATS.filter(c => c.id !== "all").map(c => `${c.id}(${c.label})`).join(" ");
+  const instruction = `Eres un experto en repuestos, equipos y maquinaria industrial. A partir del contenido entregado (un inventario o catálogo), extrae TODAS las publicaciones de productos que encuentres.
+
+Devuelve SOLO un arreglo JSON válido (sin markdown, sin texto extra), donde cada elemento es:
+{
+  "title": "nombre descriptivo del producto (obligatorio)",
+  "brand": "marca o null",
+  "model": "modelo o null",
+  "part_number": "número de parte o null",
+  "serial_number": "número de serie o null",
+  "cat": "una de: ${catList}",
+  "condition": "una de: Nuevo | Usado – Bueno | Usado – Regular | Reacondicionado",
+  "price": número sin separadores (ej 150000) o null si no hay,
+  "currency": "CLP | USD | EUR | COP | PEN | MXN (default CLP)",
+  "stock": número entero (default 1),
+  "location": "ubicación/ciudad o null",
+  "description": "descripción técnica breve en español o null",
+  "emoji": "un emoji que represente el producto"
+}
+
+Reglas:
+- Si un dato no aparece, usa null (no inventes).
+- Si no hay precio, price=null y currency="CLP".
+- Interpreta encabezados de columnas aunque estén en cualquier orden o idioma.
+- Ignora filas vacías, totales o encabezados que no sean productos.
+- Máximo 50 productos por carga.`;
+
+  const content = [];
+  if (pdfBase64) {
+    content.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: pdfBase64 } });
+    content.push({ type: "text", text: instruction });
+  } else {
+    content.push({ type: "text", text: `${instruction}\n\nCONTENIDO DEL ARCHIVO:\n${text}` });
+  }
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4000,
+      messages: [{ role: "user", content }],
+    }),
+  });
+  if (!response.ok) throw new Error("La IA no pudo procesar el archivo (intenta de nuevo).");
+  const data = await response.json();
+  const raw = (data.content || []).map(b => b.type === "text" ? b.text : "").join("\n");
+  const cleaned = raw.replace(/```(?:json)?/g, "").trim();
+  const match = cleaned.match(/\[[\s\S]*\]/);
+  if (!match) throw new Error("No se detectaron productos en el archivo.");
+  let arr;
+  try { arr = JSON.parse(match[0]); } catch { throw new Error("La respuesta de la IA no se pudo leer."); }
+  if (!Array.isArray(arr) || arr.length === 0) throw new Error("No se detectaron productos en el archivo.");
+  return arr;
+}
+
+function BulkUploadSheet({ user, profile, onClose, onDone }) {
+  const { handleProps, sheetStyle } = useSwipeToClose(onClose);
+  const [stage,   setStage]   = useState("upload");   // upload | processing | review | saving | done
+  const [error,   setError]   = useState("");
+  const [rows,    setRows]     = useState([]);          // publicaciones detectadas (editables)
+  const [savedCount, setSavedCount] = useState(0);
+  const [fileName, setFileName] = useState("");
+  const fileRef = useRef();
+
+  const validCats = CATS.map(c => c.id);
+
+  const normalizeRow = (r) => ({
+    title:        (r.title || "").toString().slice(0, 120),
+    brand:        r.brand || "",
+    model:        r.model || "",
+    part_number:  r.part_number || "",
+    serial_number:r.serial_number || "",
+    cat:          validCats.includes(r.cat) ? r.cat : "serv",
+    condition:    CONDITIONS.includes(r.condition) ? r.condition : "Nuevo",
+    price:        (r.price === null || r.price === undefined || r.price === "") ? "" : String(r.price).replace(/\D/g, ""),
+    currency:     CURRENCIES.includes(r.currency) ? r.currency : "CLP",
+    stock:        r.stock ? String(r.stock).replace(/\D/g, "") || "1" : "1",
+    location:     r.location || profile?.location || "",
+    description:  r.description || "",
+    emoji:        r.emoji || "📦",
+    _include:     true,
+  });
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+    setFileName(file.name);
+    const ext = file.name.split(".").pop().toLowerCase();
+    const isPdf = ext === "pdf" || file.type === "application/pdf";
+    const isExcel = ["xlsx", "xls", "csv"].includes(ext);
+    if (!isPdf && !isExcel) {
+      setError("Formato no soportado. Sube un archivo .xlsx, .csv o .pdf");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setError("El archivo debe pesar menos de 15 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setStage("processing");
+    try {
+      let detected;
+      if (isPdf) {
+        const b64 = await fileToBase64(file);
+        detected = await extractListingsAI({ pdfBase64: b64 });
+      } else {
+        // Excel/CSV → texto plano con SheetJS
+        const XLSX = await loadXLSX();
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: "array" });
+        let text = "";
+        wb.SheetNames.forEach(name => {
+          const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name]);
+          text += `--- Hoja: ${name} ---\n${csv}\n\n`;
+        });
+        if (!text.trim()) throw new Error("El archivo está vacío.");
+        detected = await extractListingsAI({ text });
+      }
+      setRows(detected.slice(0, 50).map(normalizeRow));
+      setStage("review");
+    } catch (err) {
+      setError(err.message || "Error procesando el archivo.");
+      setStage("upload");
+    }
+    e.target.value = "";
+  };
+
+  const updateRow = (idx, key, val) => {
+    setRows(rs => rs.map((r, i) => i === idx ? { ...r, [key]: val } : r));
+  };
+  const toggleRow = (idx) => {
+    setRows(rs => rs.map((r, i) => i === idx ? { ...r, _include: !r._include } : r));
+  };
+  const removeRow = (idx) => {
+    setRows(rs => rs.filter((_, i) => i !== idx));
+  };
+
+  const includedRows = rows.filter(r => r._include && r.title.trim());
+
+  const saveAll = async () => {
+    if (includedRows.length === 0) { setError("No hay publicaciones válidas para guardar."); return; }
+    setStage("saving");
+    setError("");
+    let ok = 0;
+    try {
+      const payload = includedRows.map(r => ({
+        user_id: user.id,
+        title: r.title,
+        brand: r.brand || null,
+        model: r.model || null,
+        part_number: r.part_number || null,
+        serial_number: r.serial_number || null,
+        cat: r.cat,
+        condition: r.condition,
+        operation: "Venta",
+        price: r.price ? Number(r.price) : 0,
+        currency: r.price ? r.currency : "NEG",
+        stock: Number(r.stock) || 1,
+        location: r.location || null,
+        phone: profile?.phone || null,
+        biz: profile?.biz || null,
+        description: r.description || null,
+        emoji: r.emoji || "📦",
+        verified: false,
+      }));
+      // Inserta en lotes de 20
+      const CHUNK = 20;
+      for (let i = 0; i < payload.length; i += CHUNK) {
+        const slice = payload.slice(i, i + CHUNK);
+        const { data, error: insErr } = await sb.from("listings").insert(slice).select();
+        if (insErr) throw new Error(insErr.message);
+        ok += (data?.length || slice.length);
+      }
+      setSavedCount(ok);
+      setStage("done");
+    } catch (err) {
+      setError("Error al guardar: " + (err.message || "intenta de nuevo."));
+      setStage("review");
+    }
+  };
+
+  const TH = { fontSize:13, color:MUTED, fontWeight:700, textTransform:"uppercase", letterSpacing:.5, marginBottom:4 };
+
+  return (
+    <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:60,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
+      <div className="sheet sheet-up" style={{ maxHeight:"94vh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
+        <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"12px 0 4px",cursor:"grab",touchAction:"none" }}>
+          <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
+        </div>
+        <div style={{ padding:"8px 20px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${BORDER}` }}>
+          <div>
+            <h2 style={{ fontSize:20,fontWeight:700,color:TEXT }}>Carga masiva</h2>
+            <p style={{ fontSize:14,color:MUTED }}>Sube un Excel o PDF y la IA crea tus publicaciones</p>
+          </div>
+          <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
+        </div>
+
+        <div style={{ overflowY:"auto",flex:1,padding:"20px" }}>
+          {error && (
+            <div style={{ background:"rgba(220,38,38,.08)",border:`1px solid rgba(220,38,38,.25)`,borderRadius:10,padding:"12px 14px",marginBottom:16,color:DANGER,fontSize:15 }}>
+              {error}
+            </div>
+          )}
+
+          {/* ── UPLOAD ── */}
+          {stage === "upload" && (
+            <div>
+              <div
+                onClick={()=>fileRef.current?.click()}
+                style={{ border:`2px dashed ${BORDER2}`,borderRadius:14,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:BG2,transition:"all .15s" }}
+                onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
+                onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER2}>
+                <div style={{ fontSize:48,marginBottom:12 }}>📂</div>
+                <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>Toca para subir un archivo</p>
+                <p style={{ fontSize:14,color:MUTED }}>Excel (.xlsx, .csv) o PDF · máx 15 MB</p>
+              </div>
+              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf,application/pdf" style={{ display:"none" }} onChange={handleFile}/>
+
+              <div style={{ marginTop:24,background:BG2,borderRadius:12,padding:"16px 18px",border:`1px solid ${BORDER}` }}>
+                <p style={{ fontSize:15,fontWeight:700,color:TEXT,marginBottom:10 }}>💡 Cómo funciona</p>
+                {[
+                  "Sube tu inventario en Excel, CSV o PDF.",
+                  "La IA lee el contenido y arma las publicaciones.",
+                  "Revisas y editas antes de publicar.",
+                  "Se crean todas tus publicaciones de una vez.",
+                ].map((tx,i)=>(
+                  <div key={i} style={{ display:"flex",gap:10,marginBottom:8,alignItems:"flex-start" }}>
+                    <span style={{ color:RED,fontWeight:700,fontSize:15 }}>{i+1}.</span>
+                    <span style={{ fontSize:15,color:SUB,lineHeight:1.5 }}>{tx}</span>
+                  </div>
+                ))}
+                <p style={{ fontSize:13,color:MUTED,marginTop:10,lineHeight:1.5 }}>
+                  Tip: el Excel puede tener columnas como título, marca, modelo, precio, ubicación, etc. La IA interpreta el orden automáticamente.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── PROCESSING ── */}
+          {stage === "processing" && (
+            <div style={{ padding:"60px 20px",textAlign:"center" }}>
+              <Spin/>
+              <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginTop:20,marginBottom:6 }}>Analizando el archivo…</p>
+              <p style={{ fontSize:14,color:MUTED }}>{fileName}</p>
+              <p style={{ fontSize:14,color:MUTED,marginTop:8 }}>La IA está extrayendo tus productos. Esto puede tomar unos segundos.</p>
+            </div>
+          )}
+
+          {/* ── REVIEW ── */}
+          {stage === "review" && (
+            <div>
+              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14 }}>
+                <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>
+                  {includedRows.length} de {rows.length} publicaciones
+                </p>
+                <button onClick={()=>{ setStage("upload"); setRows([]); }}
+                  style={{ background:"none",border:`1px solid ${BORDER2}`,borderRadius:7,padding:"6px 12px",color:SUB,fontSize:14,cursor:"pointer",fontWeight:600 }}>
+                  Cambiar archivo
+                </button>
+              </div>
+
+              <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+                {rows.map((r, idx) => (
+                  <div key={idx} style={{ background:BG2,borderRadius:12,padding:"14px",border:`1px solid ${r._include?BORDER:"transparent"}`,opacity:r._include?1:.5,transition:"all .15s" }}>
+                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+                      <label style={{ display:"flex",alignItems:"center",gap:8,cursor:"pointer" }}>
+                        <input type="checkbox" checked={r._include} onChange={()=>toggleRow(idx)} style={{ width:18,height:18,accentColor:RED,cursor:"pointer" }}/>
+                        <span style={{ fontSize:14,color:MUTED,fontWeight:600 }}>#{idx+1}</span>
+                      </label>
+                      <button onClick={()=>removeRow(idx)} style={{ background:"none",border:"none",cursor:"pointer",color:DANGER,fontSize:13,fontWeight:600 }}>Quitar</button>
+                    </div>
+
+                    <div style={{ marginBottom:10 }}>
+                      <p style={TH}>Título</p>
+                      <input className="inp" value={r.title} onChange={e=>updateRow(idx,"title",e.target.value)} placeholder="Título del producto"/>
+                    </div>
+
+                    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10 }}>
+                      <div>
+                        <p style={TH}>Marca</p>
+                        <input className="inp" value={r.brand} onChange={e=>updateRow(idx,"brand",e.target.value)} placeholder="—"/>
+                      </div>
+                      <div>
+                        <p style={TH}>Modelo</p>
+                        <input className="inp" value={r.model} onChange={e=>updateRow(idx,"model",e.target.value)} placeholder="—"/>
+                      </div>
+                    </div>
+
+                    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10 }}>
+                      <div>
+                        <p style={TH}>Categoría</p>
+                        <select className="inp" value={r.cat} onChange={e=>updateRow(idx,"cat",e.target.value)}>
+                          {CATS.filter(c=>c.id!=="all").map(c=>(
+                            <option key={c.id} value={c.id}>{c.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <p style={TH}>Condición</p>
+                        <select className="inp" value={r.condition} onChange={e=>updateRow(idx,"condition",e.target.value)}>
+                          {CONDITIONS.map(c=><option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:8,marginBottom:10 }}>
+                      <div>
+                        <p style={TH}>Precio</p>
+                        <input className="inp" inputMode="numeric" value={r.price} onChange={e=>updateRow(idx,"price",e.target.value.replace(/\D/g,""))} placeholder="A convenir"/>
+                      </div>
+                      <div>
+                        <p style={TH}>Moneda</p>
+                        <select className="inp" value={r.currency} onChange={e=>updateRow(idx,"currency",e.target.value)}>
+                          {CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <p style={TH}>Stock</p>
+                        <input className="inp" inputMode="numeric" value={r.stock} onChange={e=>updateRow(idx,"stock",e.target.value.replace(/\D/g,"")||"1")}/>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p style={TH}>Ubicación</p>
+                      <input className="inp" value={r.location} onChange={e=>updateRow(idx,"location",e.target.value)} placeholder="Ciudad"/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── SAVING ── */}
+          {stage === "saving" && (
+            <div style={{ padding:"60px 20px",textAlign:"center" }}>
+              <Spin/>
+              <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginTop:20 }}>Publicando {includedRows.length} productos…</p>
+            </div>
+          )}
+
+          {/* ── DONE ── */}
+          {stage === "done" && (
+            <div style={{ padding:"50px 20px",textAlign:"center" }}>
+              <div style={{ fontSize:56,marginBottom:16 }}>✅</div>
+              <p style={{ fontSize:20,fontWeight:700,color:TEXT,marginBottom:8 }}>¡{savedCount} publicaciones creadas!</p>
+              <p style={{ fontSize:15,color:SUB,marginBottom:24 }}>Ya están visibles en SpartsHub.</p>
+              <button onClick={()=>{ onDone?.(); onClose(); }} className="btn-red" style={{ padding:"14px 28px" }}>
+                Listo
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Footer action */}
+        {stage === "review" && (
+          <div style={{ padding:"14px 20px",borderTop:`1px solid ${BORDER}`,background:BG3 }}>
+            <button onClick={saveAll} disabled={includedRows.length===0} className="btn-red"
+              style={{ width:"100%",padding:"15px",opacity:includedRows.length===0?.5:1 }}>
+              Publicar {includedRows.length} {includedRows.length===1?"producto":"productos"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════
    MESSAGES PAGE
 ══════════════════════════════════════════════════════════════ */
@@ -4464,12 +4892,14 @@ function AdminEditModal({ row, table, onClose, onSaved }) {
 function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, onGuestLogin, onGuestRegister }) {
   const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
+  const [showBulkUpload,setShowBulkUpload]= useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
   const unreadCount = useUnreadCount(session?.user?.id);
 
   // El botón "atrás" del navegador cierra los paneles abiertos
   useBackButton(showPublish,   ()=>setShowPublish(false));
+  useBackButton(showBulkUpload,()=>setShowBulkUpload(false));
   useBackButton(showSolicitud, ()=>setShowSolicitud(false));
   useBackButton(showSupport,   ()=>setShowSupport(false));
 
@@ -4546,7 +4976,8 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       )}
 
       {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
-      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
+      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
+      {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>setShowBulkUpload(false)} onDone={()=>setShowBulkUpload(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&session&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
     </div>
@@ -4612,12 +5043,14 @@ function ProfileDropdown({ profile, onProfile, onLogout }) {
 function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, onGuestLogin, onGuestRegister }) {
   const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
+  const [showBulkUpload,setShowBulkUpload]= useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
   const unreadCount = useUnreadCount(session?.user?.id);
 
   // El botón "atrás" del navegador cierra los paneles abiertos
   useBackButton(showPublish,   ()=>setShowPublish(false));
+  useBackButton(showBulkUpload,()=>setShowBulkUpload(false));
   useBackButton(showSolicitud, ()=>setShowSolicitud(false));
   useBackButton(showSupport,   ()=>setShowSupport(false));
 
@@ -4759,7 +5192,8 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
       </div>
 
       {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)}/>}
-      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)}/>}
+      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
+      {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>setShowBulkUpload(false)} onDone={()=>setShowBulkUpload(false)}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&session&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
 
