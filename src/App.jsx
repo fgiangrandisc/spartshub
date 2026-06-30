@@ -4154,11 +4154,11 @@ function AppFooter() {
             <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Email general</p>
-                <a href="mailto:contacto@spartshub.com" style={{ ...LNK,color:TEXT }}>contacto@spartshub.com</a>
+                <a href="mailto:info@spartshub.com" style={{ ...LNK,color:TEXT }}>info@spartshub.com</a>
               </div>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Soporte</p>
-                <a href="mailto:soporte@spartshub.com" style={{ ...LNK,color:TEXT }}>soporte@spartshub.com</a>
+                <a href="mailto:info@spartshub.com" style={{ ...LNK,color:TEXT }}>info@spartshub.com</a>
               </div>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>WhatsApp</p>
@@ -4166,7 +4166,7 @@ function AppFooter() {
               </div>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Ventas & Partnerships</p>
-                <a href="mailto:partners@spartshub.com" style={{ ...LNK,color:TEXT }}>partners@spartshub.com</a>
+                <a href="mailto:info@spartshub.com" style={{ ...LNK,color:TEXT }}>info@spartshub.com</a>
               </div>
             </div>
           </div>
@@ -4628,10 +4628,10 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           <div style={{ width:1, height:32, background:BORDER }}/>
           <nav style={{ display:"flex", gap:8, flex:1, alignItems:"center" }}>
             <button onClick={()=>setTab("search")}
-              style={{ padding:"7px 14px",borderRadius:7,background:tab==="search"?`rgba(255,140,0,.12)`:"none",border:tab==="search"?`1px solid rgba(255,140,0,.3)`:"1px solid transparent",cursor:"pointer",fontSize:16,fontWeight:700,color:tab==="search"?RED:TEXT,transition:"all .15s",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase" }}
-              onMouseEnter={e=>{ if(tab!=="search") e.currentTarget.style.color=RED; }}
-              onMouseLeave={e=>{ e.currentTarget.style.color=tab==="search"?RED:TEXT; }}>
-              {t("nav_explore")}
+              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+              onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
+              <Ic n="home" s={14} c={RED}/>{t("nav_explore")}
             </button>
             {session && <button onClick={()=>setShowSolicitud(true)}
               style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
