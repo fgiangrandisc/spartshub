@@ -541,6 +541,13 @@ function PhotoPlaceholder({ emoji="📦", h=160, url }) {
 ══════════════════════════════════════════════════════════════ */
 function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
   const [searchQ, setSearchQ] = useState("");
+  const [featured, setFeatured] = useState([]);
+  const [loadingFeat, setLoadingFeat] = useState(true);
+
+  useEffect(()=>{
+    sb.from("listings").select("*").order("created_at",{ascending:false}).limit(10)
+      .then(({ data })=>{ setFeatured(data||[]); setLoadingFeat(false); });
+  },[]);
 
   const handleSearch = () => {
     if (searchQ.trim()) onSearch?.(searchQ.trim());
@@ -572,95 +579,126 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
         </div>
       </header>
 
-      {/* HERO */}
-      <section style={{ padding:"clamp(40px,9vw,72px) clamp(20px,5vw,32px) clamp(32px,6vw,48px)", textAlign:"center", maxWidth:760, margin:"0 auto", overflow:"hidden" }}>
-        <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(15px,4vw,20px)", color:RED, letterSpacing:1.5, textTransform:"uppercase", marginBottom:18 }}>
-          No vendemos repuestos. Conectamos personas.
-        </p>
-        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(34px,9vw,68px)", lineHeight:1.04, color:TEXT, marginBottom:18, overflowWrap:"break-word" }}>
-          Todo lo que necesitas<br/><span style={{ color:RED }}>para tu operación o faena.</span>
+
+      {/* HERO — buscador prominente */}
+      <section style={{ padding:"clamp(32px,7vw,56px) clamp(16px,5vw,32px) clamp(24px,5vw,36px)", textAlign:"center", maxWidth:720, margin:"0 auto", overflow:"hidden" }}>
+        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(30px,8vw,56px)", lineHeight:1.06, color:TEXT, marginBottom:12, overflowWrap:"break-word" }}>
+          Encuentra lo que necesitas<br/><span style={{ color:RED }}>para tu operación o faena.</span>
         </h1>
-        <p style={{ fontSize:"clamp(15px,4vw,18px)", color:SUB, lineHeight:1.6, marginBottom:28, maxWidth:560, margin:"0 auto 28px" }}>
-          Repuestos, equipos, maquinaria y más. Conecta directo con quien lo tiene, sin intermediarios ni comisiones.
+        <p style={{ fontSize:"clamp(14px,3.6vw,17px)", color:SUB, lineHeight:1.55, marginBottom:24, maxWidth:520, margin:"0 auto 24px" }}>
+          Repuestos, equipos y maquinaria. Directo con quien lo tiene, sin comisiones.
         </p>
 
         {/* Search bar */}
-        <div style={{ display:"flex", maxWidth:520, margin:"0 auto 14px", borderRadius:12, overflow:"hidden", border:`2px solid ${RED}`, background:BG3 }}>
+        <div style={{ display:"flex", maxWidth:540, margin:"0 auto", borderRadius:12, overflow:"hidden", border:`2px solid ${RED}`, background:BG3 }}>
           <input
             value={searchQ}
             onChange={e=>setSearchQ(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&handleSearch()}
             placeholder="¿Qué necesitas?"
-            style={{ flex:1, minWidth:0, padding:"15px 16px", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}
+            style={{ flex:1, minWidth:0, padding:"16px 16px", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}
           />
           <button onClick={handleSearch}
-            style={{ background:RED, border:"none", padding:"15px clamp(18px,5vw,28px)", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s", flexShrink:0 }}
+            style={{ background:RED, border:"none", padding:"16px clamp(20px,6vw,32px)", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s", flexShrink:0 }}
             onMouseEnter={e=>e.currentTarget.style.background=RED2}
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
             Buscar
           </button>
         </div>
 
-        {/* Primary + secondary CTA */}
-        <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap", maxWidth:520, margin:"0 auto" }}>
-          <button onClick={onRegister}
-            style={{ flex:"1 1 200px", background:RED, border:"none", borderRadius:10, padding:"14px 24px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
-            onMouseEnter={e=>e.currentTarget.style.background=RED2}
-            onMouseLeave={e=>e.currentTarget.style.background=RED}>
-            Crear cuenta gratis →
-          </button>
-          <button onClick={onEnter}
-            style={{ flex:"1 1 200px", background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:10, padding:"14px 24px", fontSize:16, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
-            onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
-            onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
-            Explorar
-          </button>
-        </div>
-
-        {/* Trust line */}
-        <p style={{ fontSize:13, color:MUTED, marginTop:18, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
-          ✓ Gratis &nbsp;·&nbsp; ✓ Sin comisiones &nbsp;·&nbsp; ✓ Sin tarjeta
+        <p style={{ fontSize:12, color:MUTED, marginTop:14, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
+          ✓ Gratis &nbsp;·&nbsp; ✓ Sin comisiones &nbsp;·&nbsp; ✓ Contacto directo
         </p>
       </section>
 
-      {/* CÓMO FUNCIONA */}
-      <section style={{ padding:"clamp(36px,7vw,56px) clamp(20px,5vw,32px)", background:BG2, borderTop:`1px solid ${BORDER}` }}>
-        <div style={{ maxWidth:880, margin:"0 auto" }}>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(28px,7vw,38px)", color:TEXT, textAlign:"center", marginBottom:28 }}>¿Cómo funciona?</h2>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))", gap:14 }}>
-            {[
-              { icon:"📢", title:"1. Publica o busca",      desc:"Sube lo que vendes o pide lo que necesitas. Toma menos de 2 minutos." },
-              { icon:"🤖", title:"2. La IA encuentra",       desc:"El sistema analiza el catálogo y te avisa cuando hay una coincidencia." },
-              { icon:"🤝", title:"3. Contacto directo",     desc:"Hablas directo con la otra persona. Sin intermediarios ni comisiones." },
-            ].map((s,i)=>(
-              <div key={i} style={{ background:CARD, borderRadius:14, padding:"24px 20px", border:`1px solid ${BORDER}`, textAlign:"center" }}>
-                <div style={{ fontSize:38, marginBottom:12 }}>{s.icon}</div>
-                <h3 style={{ fontSize:17, fontWeight:700, color:TEXT, marginBottom:8, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3 }}>{s.title}</h3>
-                <p style={{ fontSize:15, color:SUB, lineHeight:1.55 }}>{s.desc}</p>
+      {/* ACCESOS RÁPIDOS — ¿Qué buscas hoy? */}
+      <section style={{ padding:"clamp(20px,4vw,28px) clamp(16px,5vw,32px)", maxWidth:900, margin:"0 auto" }}>
+        <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px,5vw,30px)", color:TEXT, marginBottom:16 }}>¿Qué quieres hacer?</h2>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(140px, 1fr))", gap:12 }}>
+          {[
+            { icon:"search", label:"Explorar", desc:"Ver publicaciones", action:onEnter },
+            { icon:"plus",   label:"Publicar", desc:"Vende tu producto", action:onRegister },
+            { icon:"box",    label:"Solicitar", desc:"Pide lo que buscas", action:onRegister },
+          ].map((a,i)=>(
+            <div key={i} onClick={a.action}
+              style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:14, padding:"20px 16px", cursor:"pointer", transition:"all .15s", textAlign:"center" }}
+              onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.transform="translateY(-2px)"; }}
+              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.transform="translateY(0)"; }}>
+              <div style={{ width:48, height:48, borderRadius:12, background:"rgba(255,140,0,.12)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
+                <Ic n={a.icon} s={22} c={RED}/>
               </div>
-            ))}
-          </div>
+              <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:3, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3, textTransform:"uppercase" }}>{a.label}</p>
+              <p style={{ fontSize:13, color:MUTED }}>{a.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          {/* Compact trust badges */}
-          <div style={{ display:"flex", justifyContent:"center", gap:"clamp(24px,8vw,56px)", marginTop:36, flexWrap:"wrap" }}>
-            {[
-              { val:"0%",  label:"Comisión" },
-              { val:"P2P", label:"Directo" },
-              { val:"24/7", label:"Disponible" },
-            ].map((s,i)=>(
-              <div key={i} style={{ textAlign:"center" }}>
-                <div style={{ fontFamily:"Bebas Neue, sans-serif", fontSize:"clamp(30px,7vw,42px)", color:RED, lineHeight:1 }}>{s.val}</div>
-                <div style={{ fontSize:13, color:MUTED, marginTop:4, fontWeight:600, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>{s.label}</div>
+      {/* CARRUSEL DESTACADOS — Lo más reciente */}
+      <section style={{ padding:"clamp(20px,4vw,28px) 0 clamp(20px,4vw,28px)", maxWidth:900, margin:"0 auto" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, padding:"0 clamp(16px,5vw,32px)" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px,5vw,30px)", color:TEXT }}>Lo más reciente</h2>
+          <span onClick={onEnter} style={{ fontSize:14, fontWeight:700, color:RED, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>Ver todo →</span>
+        </div>
+
+        {loadingFeat ? (
+          <div style={{ display:"flex", gap:12, overflowX:"auto", padding:"0 clamp(16px,5vw,32px)" }}>
+            {[0,1,2].map(i=>(
+              <div key={i} style={{ flex:"0 0 auto", width:200, background:CARD, borderRadius:12, overflow:"hidden", border:`1px solid ${BORDER}` }}>
+                <div className="skel" style={{ height:140 }}/>
+                <div style={{ padding:"12px" }}>
+                  <div className="skel" style={{ height:14, width:"80%", borderRadius:4, marginBottom:8 }}/>
+                  <div className="skel" style={{ height:16, width:"50%", borderRadius:4 }}/>
+                </div>
               </div>
             ))}
           </div>
+        ) : featured.length === 0 ? (
+          <div style={{ padding:"0 clamp(16px,5vw,32px)" }}>
+            <div style={{ background:CARD, borderRadius:12, padding:"32px 20px", textAlign:"center", border:`1px solid ${BORDER}` }}>
+              <div style={{ fontSize:40, marginBottom:10 }}>📦</div>
+              <p style={{ fontSize:15, color:SUB }}>Aún no hay publicaciones. ¡Sé el primero en publicar!</p>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display:"flex", gap:12, overflowX:"auto", padding:"0 clamp(16px,5vw,32px) 6px", scrollSnapType:"x mandatory", WebkitOverflowScrolling:"touch" }}>
+            {featured.map(l=>(
+              <div key={l.id} onClick={onEnter}
+                style={{ flex:"0 0 auto", width:200, background:CARD, borderRadius:12, overflow:"hidden", border:`1px solid ${BORDER}`, cursor:"pointer", scrollSnapAlign:"start", transition:"transform .12s" }}
+                onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
+                onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+                <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={140}/>
+                <div style={{ padding:"12px" }}>
+                  <span className="tag t-dim" style={{ fontSize:11, marginBottom:6, display:"inline-flex" }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
+                  <p style={{ fontSize:15, fontWeight:700, color:TEXT, lineHeight:1.3, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{l.title}</p>
+                  <p className="bebas" style={{ fontSize:18, color:RED }}>{fmtPrice(l.price, l.currency)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* CATEGORÍAS */}
+      <section style={{ padding:"clamp(20px,4vw,28px) clamp(16px,5vw,32px) clamp(28px,5vw,40px)", maxWidth:900, margin:"0 auto" }}>
+        <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px,5vw,30px)", color:TEXT, marginBottom:16 }}>Explora por rubro</h2>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(130px, 1fr))", gap:10 }}>
+          {CATS.filter(c=>c.id!=="all").map(c=>(
+            <div key={c.id} onClick={onEnter}
+              style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"16px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:10, transition:"all .15s" }}
+              onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; }}
+              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; }}>
+              <span style={{ fontSize:22 }}>{c.emoji||"🔧"}</span>
+              <span style={{ fontSize:14, fontWeight:600, color:TEXT }}>{c.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* CTA FINAL */}
-      <section style={{ padding:"clamp(40px,8vw,64px) clamp(20px,5vw,32px)", textAlign:"center", borderTop:`1px solid ${BORDER}` }}>
-        <div style={{ maxWidth:520, margin:"0 auto" }}>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(28px,7vw,46px)", color:TEXT, lineHeight:1.08, marginBottom:20 }}>
+      <section style={{ padding:"clamp(32px,6vw,52px) clamp(16px,5vw,32px)", textAlign:"center", background:BG2, borderTop:`1px solid ${BORDER}` }}>
+        <div style={{ maxWidth:480, margin:"0 auto" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(26px,6vw,40px)", color:TEXT, lineHeight:1.1, marginBottom:16 }}>
             Empieza hoy. <span style={{ color:RED }}>Es gratis.</span>
           </h2>
           <button onClick={onRegister}
