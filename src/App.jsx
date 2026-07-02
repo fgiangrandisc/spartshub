@@ -540,76 +540,114 @@ function PhotoPlaceholder({ emoji="📦", h=160, url }) {
    LANDING PAGE
 ══════════════════════════════════════════════════════════════ */
 function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
+  const isMobile = useIsMobile();
   const [searchQ, setSearchQ] = useState("");
-  const [featured, setFeatured] = useState([]);
-  const [loadingFeat, setLoadingFeat] = useState(true);
-
-  useEffect(()=>{
-    sb.from("listings").select("*").order("created_at",{ascending:false}).limit(10)
-      .then(({ data })=>{ setFeatured(data||[]); setLoadingFeat(false); });
-  },[]);
+  const [cat, setCat] = useState("all");
 
   const handleSearch = () => {
     if (searchQ.trim()) onSearch?.(searchQ.trim());
     else onEnter?.();
   };
 
+  const FEATURES = [
+    { icon:"box",   title:"Miles de repuestos", desc:"en un solo lugar" },
+    { icon:"users", title:"Contacto directo",   desc:"sin intermediarios" },
+    { icon:"shield",title:"Sin comisiones",     desc:"ni costos ocultos" },
+  ];
+  const TRUST = [
+    { icon:"shield", label:"Negocios verificados" },
+    { icon:"lock",   label:"Transacciones seguras" },
+    { icon:"msg",    label:"Soporte real" },
+    { icon:"map",    label:"Cobertura nacional" },
+  ];
+
   return (
     <div style={{ minHeight:"100vh", background:BG, color:TEXT, fontFamily:"'Barlow', sans-serif" }}>
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
-      {/* HEADER */}
-      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(14px,4vw,32px)", position:"sticky", top:0, zIndex:50, overflow:"hidden" }}>
-        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:58, gap:8 }}>
-          <div style={{ flexShrink:0 }}><SpartsLogo size={26}/></div>
+      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(14px,4vw,32px)", position:"sticky", top:0, zIndex:50 }}>
+        <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:60, gap:12 }}>
+          <div style={{ flexShrink:0 }}><SpartsLogo size={28}/></div>
+          {!isMobile && (
+            <nav style={{ display:"flex", gap:20, flex:1, justifyContent:"center" }}>
+              {["Categorías","Equipos","Marcas","Vender repuestos","Cómo funciona"].map((l,i)=>(
+                <span key={i} onClick={onEnter}
+                  style={{ fontSize:15, fontWeight:600, color:SUB, cursor:"pointer", whiteSpace:"nowrap" }}>
+                  {l}
+                </span>
+              ))}
+            </nav>
+          )}
           <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
             <button onClick={onLogin}
-              style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 12px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
-              onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
-              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
+              style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 14px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
               Ingresar
             </button>
             <button onClick={onRegister}
-              style={{ background:RED, border:"none", borderRadius:8, padding:"8px 14px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
-              onMouseEnter={e=>e.currentTarget.style.background=RED2}
-              onMouseLeave={e=>e.currentTarget.style.background=RED}>
+              style={{ background:RED, border:"none", borderRadius:8, padding:"8px 16px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
               Registrarse
             </button>
           </div>
         </div>
       </header>
 
+      <section style={{ position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"url(/hero.png)", backgroundSize:"cover", backgroundPosition: isMobile ? "center 30%" : "right center", zIndex:0 }}/>
+        <div style={{ position:"absolute", inset:0, zIndex:1, background: isMobile ? "linear-gradient(to bottom, rgba(10,10,10,.96) 0%, rgba(10,10,10,.75) 45%, rgba(10,10,10,.35) 100%)" : "linear-gradient(to right, rgba(10,10,10,.97) 30%, rgba(10,10,10,.6) 55%, rgba(10,10,10,.15) 100%)" }}/>
 
-      {/* HERO — banner con imagen */}
-      <section style={{ maxWidth:1100, margin:"0 auto", padding:"clamp(12px,3vw,20px) clamp(12px,4vw,24px) 0" }}>
-        <img
-          src="/hero.png"
-          alt="SpartsHub — todo lo que necesitas para tu operación o faena"
-          style={{ width:"100%", height:"auto", display:"block", borderRadius:14, border:`1px solid ${BORDER}` }}
-        />
-      </section>
+        <div style={{ position:"relative", zIndex:2, maxWidth:1200, margin:"0 auto", padding: isMobile ? "40px 20px 28px" : "72px 32px 56px", minHeight: isMobile ? "auto" : 520 }}>
+          <div style={{ maxWidth: isMobile ? "100%" : 640 }}>
+            <p style={{ fontFamily:"Barlow Condensed, sans-serif", fontSize:"clamp(15px,4vw,22px)", color:RED, letterSpacing:1, textTransform:"uppercase", fontWeight:700, lineHeight:1.15, marginBottom:16 }}>
+              No vendemos repuestos.<br/>Conectamos personas.
+            </p>
+            <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(38px,10vw,80px)", lineHeight:.98, color:TEXT, marginBottom:24, overflowWrap:"break-word" }}>
+              Todo lo que necesitas <span style={{ color:RED }}>para tu operación o faena.</span>
+            </h1>
 
-      {/* Buscador debajo del banner */}
-      <section style={{ padding:"clamp(20px,5vw,28px) clamp(16px,5vw,32px) clamp(12px,3vw,20px)", maxWidth:720, margin:"0 auto", textAlign:"center" }}>
-        <div style={{ display:"flex", maxWidth:540, margin:"0 auto", borderRadius:12, overflow:"hidden", border:`2px solid ${RED}`, background:BG3 }}>
-          <input
-            value={searchQ}
-            onChange={e=>setSearchQ(e.target.value)}
-            onKeyDown={e=>e.key==="Enter"&&handleSearch()}
-            placeholder="¿Qué necesitas?"
-            style={{ flex:1, minWidth:0, padding:"16px 16px", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}
-          />
-          <button onClick={handleSearch}
-            style={{ background:RED, border:"none", padding:"16px clamp(20px,6vw,32px)", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s", flexShrink:0 }}
-            onMouseEnter={e=>e.currentTarget.style.background=RED2}
-            onMouseLeave={e=>e.currentTarget.style.background=RED}>
-            Buscar
-          </button>
+            <div style={{ display:"flex", gap:0, marginBottom:28, flexWrap:"wrap" }}>
+              {FEATURES.map((f,i)=>(
+                <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:10, paddingRight:20, marginRight:20, borderRight: i<FEATURES.length-1 ? `1px solid ${BORDER2}` : "none", marginBottom:8 }}>
+                  <Ic n={f.icon} s={22} c={RED}/>
+                  <div>
+                    <p style={{ fontSize:15, fontWeight:700, color:TEXT, lineHeight:1.2 }}>{f.title}</p>
+                    <p style={{ fontSize:14, color:MUTED }}>{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display:"flex", flexWrap:"wrap", gap:8, background:BG3, border:`1px solid ${BORDER2}`, borderRadius:12, padding:8, maxWidth:720 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, flex:"1 1 200px", minWidth:0, padding:"0 10px" }}>
+                <Ic n="search" s={18} c={MUTED}/>
+                <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSearch()}
+                  placeholder="¿Qué necesitas?"
+                  style={{ flex:1, minWidth:0, padding:"12px 0", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}/>
+              </div>
+              <select value={cat} onChange={e=>setCat(e.target.value)}
+                style={{ background:BG2, border:`1px solid ${BORDER}`, borderRadius:8, padding:"12px 12px", fontSize:15, color:TEXT, cursor:"pointer", flex:"1 1 160px", minWidth:0 }}>
+                {CATS.map(c=><option key={c.id} value={c.id}>{c.id==="all"?"Todas las categorías":c.label}</option>)}
+              </select>
+              <button onClick={handleSearch}
+                style={{ background:RED, border:"none", borderRadius:8, padding:"12px 28px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", flex: isMobile ? "1 1 100%" : "0 0 auto" }}>
+                Buscar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ position:"relative", zIndex:2, background:"rgba(10,10,10,.6)", borderTop:`1px solid ${BORDER}`, backdropFilter:"blur(4px)" }}>
+          <div style={{ maxWidth:1200, margin:"0 auto", padding:"14px 20px", display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap:12 }}>
+            {TRUST.map((t,i)=>(
+              <div key={i} style={{ display:"flex", alignItems:"center", gap:8, justifyContent: isMobile ? "flex-start" : "center" }}>
+                <Ic n={t.icon} s={18} c={RED}/>
+                <span style={{ fontSize:14, fontWeight:600, color:SUB }}>{t.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ACCESOS RÁPIDOS — ¿Qué buscas hoy? */}
-      <section style={{ padding:"clamp(20px,4vw,28px) clamp(16px,5vw,32px)", maxWidth:900, margin:"0 auto" }}>
+      <section style={{ padding:"clamp(24px,5vw,36px) clamp(16px,5vw,32px)", maxWidth:900, margin:"0 auto" }}>
         <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px,5vw,30px)", color:TEXT, marginBottom:16 }}>¿Qué quieres hacer?</h2>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(140px, 1fr))", gap:12 }}>
           {[
@@ -618,9 +656,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
             { icon:"box",    label:"Solicitar", desc:"Pide lo que buscas", action:onRegister },
           ].map((a,i)=>(
             <div key={i} onClick={a.action}
-              style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:14, padding:"20px 16px", cursor:"pointer", transition:"all .15s", textAlign:"center" }}
-              onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.transform="translateY(-2px)"; }}
-              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.transform="translateY(0)"; }}>
+              style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:14, padding:"20px 16px", cursor:"pointer", textAlign:"center" }}>
               <div style={{ width:48, height:48, borderRadius:12, background:"rgba(255,140,0,.12)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
                 <Ic n={a.icon} s={22} c={RED}/>
               </div>
@@ -631,91 +667,32 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
         </div>
       </section>
 
-      {/* CARRUSEL DESTACADOS — Lo más reciente */}
-      <section style={{ padding:"clamp(20px,4vw,28px) 0 clamp(20px,4vw,28px)", maxWidth:900, margin:"0 auto" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, padding:"0 clamp(16px,5vw,32px)" }}>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px,5vw,30px)", color:TEXT }}>Lo más reciente</h2>
-          <span onClick={onEnter} style={{ fontSize:14, fontWeight:700, color:RED, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>Ver todo →</span>
-        </div>
-
-        {loadingFeat ? (
-          <div style={{ display:"flex", gap:12, overflowX:"auto", padding:"0 clamp(16px,5vw,32px)" }}>
-            {[0,1,2].map(i=>(
-              <div key={i} style={{ flex:"0 0 auto", width:200, background:CARD, borderRadius:12, overflow:"hidden", border:`1px solid ${BORDER}` }}>
-                <div className="skel" style={{ height:140 }}/>
-                <div style={{ padding:"12px" }}>
-                  <div className="skel" style={{ height:14, width:"80%", borderRadius:4, marginBottom:8 }}/>
-                  <div className="skel" style={{ height:16, width:"50%", borderRadius:4 }}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : featured.length === 0 ? (
-          <div style={{ padding:"0 clamp(16px,5vw,32px)" }}>
-            <div style={{ background:CARD, borderRadius:12, padding:"32px 20px", textAlign:"center", border:`1px solid ${BORDER}` }}>
-              <div style={{ fontSize:40, marginBottom:10 }}>📦</div>
-              <p style={{ fontSize:15, color:SUB }}>Aún no hay publicaciones. ¡Sé el primero en publicar!</p>
-            </div>
-          </div>
-        ) : (
-          <div style={{ display:"flex", gap:12, overflowX:"auto", padding:"0 clamp(16px,5vw,32px) 6px", scrollSnapType:"x mandatory", WebkitOverflowScrolling:"touch" }}>
-            {featured.map(l=>(
-              <div key={l.id} onClick={onEnter}
-                style={{ flex:"0 0 auto", width:200, background:CARD, borderRadius:12, overflow:"hidden", border:`1px solid ${BORDER}`, cursor:"pointer", scrollSnapAlign:"start", transition:"transform .12s" }}
-                onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
-                onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
-                <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={140}/>
-                <div style={{ padding:"12px" }}>
-                  <span className="tag t-dim" style={{ fontSize:11, marginBottom:6, display:"inline-flex" }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
-                  <p style={{ fontSize:15, fontWeight:700, color:TEXT, lineHeight:1.3, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{l.title}</p>
-                  <p className="bebas" style={{ fontSize:18, color:RED }}>{fmtPrice(l.price, l.currency)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* CTA FINAL */}
       <section style={{ padding:"clamp(32px,6vw,52px) clamp(16px,5vw,32px)", textAlign:"center", background:BG2, borderTop:`1px solid ${BORDER}` }}>
         <div style={{ maxWidth:480, margin:"0 auto" }}>
           <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(26px,6vw,40px)", color:TEXT, lineHeight:1.1, marginBottom:16 }}>
             Empieza hoy. <span style={{ color:RED }}>Es gratis.</span>
           </h2>
           <button onClick={onRegister}
-            style={{ background:RED, border:"none", borderRadius:10, padding:"15px 36px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
-            onMouseEnter={e=>e.currentTarget.style.background=RED2}
-            onMouseLeave={e=>e.currentTarget.style.background=RED}>
+            style={{ background:RED, border:"none", borderRadius:10, padding:"15px 36px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap" }}>
             Crear cuenta gratis →
           </button>
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer style={{ background:BG3, borderTop:`1px solid ${BORDER}`, padding:"28px 20px", textAlign:"center" }}>
         <div style={{ maxWidth:880, margin:"0 auto" }}>
-          <div style={{ display:"flex", justifyContent:"center", marginBottom:14 }}>
-            <SpartsLogo size={24}/>
-          </div>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:14 }}><SpartsLogo size={24}/></div>
           <div style={{ display:"flex", gap:"16px 24px", justifyContent:"center", flexWrap:"wrap", marginBottom:16 }}>
             {["Términos y condiciones","Política de privacidad","Contacto"].map((link,i)=>(
-              <span key={i} style={{ fontSize:14, color:MUTED, cursor:"pointer", transition:"color .15s" }}
-                onMouseEnter={e=>e.currentTarget.style.color=TEXT}
-                onMouseLeave={e=>e.currentTarget.style.color=MUTED}>
-                {link}
-              </span>
+              <span key={i} style={{ fontSize:14, color:MUTED, cursor:"pointer" }}>{link}</span>
             ))}
           </div>
-          <p style={{ fontSize:13, color:MUTED, lineHeight:1.6 }}>© {new Date().getFullYear()} SpartsHub™ · info@spartshub.com</p>
+          <p style={{ fontSize:13, color:MUTED, lineHeight:1.6 }}>© 2026 SpartsHub™ · info@spartshub.com</p>
         </div>
       </footer>
     </div>
   );
 }
-
-/* ══════════════════════════════════════════════════════════════
-   AUTH SCREEN
-══════════════════════════════════════════════════════════════ */
 function AuthScreen({ initialMode="login", onAuth, onBack }) {
   const { t, lang } = useLang();
   const [mode, setMode]     = useState(initialMode);
