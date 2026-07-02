@@ -580,16 +580,17 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       </header>
 
 
-      {/* HERO — buscador prominente */}
-      <section style={{ padding:"clamp(32px,7vw,56px) clamp(16px,5vw,32px) clamp(24px,5vw,36px)", textAlign:"center", maxWidth:720, margin:"0 auto", overflow:"hidden" }}>
-        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(30px,8vw,56px)", lineHeight:1.06, color:TEXT, marginBottom:12, overflowWrap:"break-word" }}>
-          Encuentra lo que necesitas<br/><span style={{ color:RED }}>para tu operación o faena.</span>
-        </h1>
-        <p style={{ fontSize:"clamp(14px,3.6vw,17px)", color:SUB, lineHeight:1.55, marginBottom:24, maxWidth:520, margin:"0 auto 24px" }}>
-          Repuestos, equipos y maquinaria. Directo con quien lo tiene, sin comisiones.
-        </p>
+      {/* HERO — banner con imagen */}
+      <section style={{ maxWidth:1100, margin:"0 auto", padding:"clamp(12px,3vw,20px) clamp(12px,4vw,24px) 0" }}>
+        <img
+          src="/hero.png"
+          alt="SpartsHub — todo lo que necesitas para tu operación o faena"
+          style={{ width:"100%", height:"auto", display:"block", borderRadius:14, border:`1px solid ${BORDER}` }}
+        />
+      </section>
 
-        {/* Search bar */}
+      {/* Buscador debajo del banner */}
+      <section style={{ padding:"clamp(20px,5vw,28px) clamp(16px,5vw,32px) clamp(12px,3vw,20px)", maxWidth:720, margin:"0 auto", textAlign:"center" }}>
         <div style={{ display:"flex", maxWidth:540, margin:"0 auto", borderRadius:12, overflow:"hidden", border:`2px solid ${RED}`, background:BG3 }}>
           <input
             value={searchQ}
@@ -605,10 +606,6 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
             Buscar
           </button>
         </div>
-
-        <p style={{ fontSize:12, color:MUTED, marginTop:14, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
-          ✓ Gratis &nbsp;·&nbsp; ✓ Sin comisiones &nbsp;·&nbsp; ✓ Contacto directo
-        </p>
       </section>
 
       {/* ACCESOS RÁPIDOS — ¿Qué buscas hoy? */}
