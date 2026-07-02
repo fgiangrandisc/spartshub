@@ -552,48 +552,40 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
       {/* HEADER */}
-      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(12px,4vw,32px)", position:"sticky", top:0, zIndex:50, overflow:"hidden" }}>
-        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:60, gap:8 }}>
-          <div style={{ flexShrink:0 }}><SpartsLogo size={28}/></div>
+      <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(14px,4vw,32px)", position:"sticky", top:0, zIndex:50, overflow:"hidden" }}>
+        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:58, gap:8 }}>
+          <div style={{ flexShrink:0 }}><SpartsLogo size={26}/></div>
           <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
             <button onClick={onLogin}
               style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 12px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
               onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
-              Iniciar Sesión
+              Ingresar
             </button>
             <button onClick={onRegister}
               style={{ background:RED, border:"none", borderRadius:8, padding:"8px 14px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
               onMouseEnter={e=>e.currentTarget.style.background=RED2}
               onMouseLeave={e=>e.currentTarget.style.background=RED}>
-              Registrarse →
+              Registrarse
             </button>
           </div>
         </div>
       </header>
 
       {/* HERO */}
-      <section style={{ padding:"clamp(36px,8vw,80px) clamp(16px,4vw,32px) clamp(40px,6vw,64px)", textAlign:"center", maxWidth:820, margin:"0 auto", overflow:"hidden" }}>
-        <div style={{ marginBottom:24 }}>
-          <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(20px, 5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase", marginBottom:0 }}>
-            No vendemos repuestos.
-          </p>
-          <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(20px, 5vw, 32px)", color:RED, letterSpacing:2, textTransform:"uppercase" }}>
-            Conectamos personas.
-          </p>
-        </div>
-        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(32px, 9vw, 72px)", lineHeight:1.05, color:TEXT, marginBottom:16, overflowWrap:"break-word" }}>
+      <section style={{ padding:"clamp(40px,9vw,72px) clamp(20px,5vw,32px) clamp(32px,6vw,48px)", textAlign:"center", maxWidth:760, margin:"0 auto", overflow:"hidden" }}>
+        <p style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(15px,4vw,20px)", color:RED, letterSpacing:1.5, textTransform:"uppercase", marginBottom:18 }}>
+          No vendemos repuestos. Conectamos personas.
+        </p>
+        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(34px,9vw,68px)", lineHeight:1.04, color:TEXT, marginBottom:18, overflowWrap:"break-word" }}>
           Todo lo que necesitas<br/><span style={{ color:RED }}>para tu operación o faena.</span>
         </h1>
-        <p style={{ fontSize:"clamp(16px,4vw,19px)", color:SUB, lineHeight:1.6, marginBottom:32, fontWeight:400, maxWidth:620, margin:"0 auto 32px" }}>
-          Repuestos, equipos, maquinaria, herramientas y más — encuentra lo que necesitas para que tu operación no se detenga. Sin intermediarios. Sin comisiones.
+        <p style={{ fontSize:"clamp(15px,4vw,18px)", color:SUB, lineHeight:1.6, marginBottom:28, maxWidth:560, margin:"0 auto 28px" }}>
+          Repuestos, equipos, maquinaria y más. Conecta directo con quien lo tiene, sin intermediarios ni comisiones.
         </p>
-        <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(255,140,0,.1)", border:"1px solid rgba(255,140,0,.3)", borderRadius:20, padding:"6px 16px", marginBottom:32, maxWidth:"100%" }}>
-          <span style={{ fontSize:"clamp(12px,3vw,16px)", fontWeight:700, color:RED, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>✓ GRATIS · SIN COMISIONES · CONTACTO DIRECTO</span>
-        </div>
 
         {/* Search bar */}
-        <div style={{ display:"flex", gap:0, maxWidth:580, margin:"0 auto 20px", borderRadius:10, overflow:"hidden", border:`2px solid ${RED}`, background:BG3 }}>
+        <div style={{ display:"flex", maxWidth:520, margin:"0 auto 14px", borderRadius:12, overflow:"hidden", border:`2px solid ${RED}`, background:BG3 }}>
           <input
             value={searchQ}
             onChange={e=>setSearchQ(e.target.value)}
@@ -602,103 +594,100 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
             style={{ flex:1, minWidth:0, padding:"15px 16px", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}
           />
           <button onClick={handleSearch}
-            style={{ background:RED, border:"none", padding:"15px clamp(16px,5vw,28px)", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s", flexShrink:0 }}
+            style={{ background:RED, border:"none", padding:"15px clamp(18px,5vw,28px)", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", whiteSpace:"nowrap", transition:"background .15s", flexShrink:0 }}
             onMouseEnter={e=>e.currentTarget.style.background=RED2}
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
-            Buscar →
+            Buscar
           </button>
         </div>
 
-        {/* CTA buttons */}
-        <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", marginBottom:20 }}>
+        {/* Primary + secondary CTA */}
+        <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap", maxWidth:520, margin:"0 auto" }}>
           <button onClick={onRegister}
-            style={{ background:RED, border:"none", borderRadius:10, padding:"14px 32px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s" }}
+            style={{ flex:"1 1 200px", background:RED, border:"none", borderRadius:10, padding:"14px 24px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>e.currentTarget.style.background=RED2}
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
             Crear cuenta gratis →
           </button>
           <button onClick={onEnter}
-            style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:10, padding:"14px 28px", fontSize:16, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s" }}
+            style={{ flex:"1 1 200px", background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:10, padding:"14px 24px", fontSize:16, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
             onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
-            Explorar publicaciones
+            Explorar
           </button>
         </div>
-        <p style={{ fontSize:16, color:MUTED }}>✓ Sin tarjeta de crédito &nbsp;&nbsp; ✓ Activa en minutos &nbsp;&nbsp; ✓ Gratis para siempre</p>
+
+        {/* Trust line */}
+        <p style={{ fontSize:13, color:MUTED, marginTop:18, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
+          ✓ Gratis &nbsp;·&nbsp; ✓ Sin comisiones &nbsp;·&nbsp; ✓ Sin tarjeta
+        </p>
       </section>
 
       {/* CÓMO FUNCIONA */}
-      <section style={{ padding:"clamp(36px,6vw,56px) clamp(16px,4vw,32px)", background:BG2, borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}` }}>
-        <div style={{ maxWidth:900, margin:"0 auto" }}>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:38, color:TEXT, textAlign:"center", marginBottom:40 }}>¿Cómo funciona?</h2>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:20 }}>
+      <section style={{ padding:"clamp(36px,7vw,56px) clamp(20px,5vw,32px)", background:BG2, borderTop:`1px solid ${BORDER}` }}>
+        <div style={{ maxWidth:880, margin:"0 auto" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(28px,7vw,38px)", color:TEXT, textAlign:"center", marginBottom:28 }}>¿Cómo funciona?</h2>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))", gap:14 }}>
             {[
-              { icon:"📢", title:"1. Publica o busca",      desc:"Publica lo que vendes o pide lo que necesitas. Es gratis y toma menos de 2 minutos." },
-              { icon:"🤖", title:"2. La IA busca matches",  desc:"Nuestro sistema analiza el catálogo y te avisa cuando hay una coincidencia con tu búsqueda." },
-              { icon:"🤝", title:"3. Contacto directo",     desc:"Hablas directamente con el comprador o vendedor. Sin intermediarios, sin comisiones." },
+              { icon:"📢", title:"1. Publica o busca",      desc:"Sube lo que vendes o pide lo que necesitas. Toma menos de 2 minutos." },
+              { icon:"🤖", title:"2. La IA encuentra",       desc:"El sistema analiza el catálogo y te avisa cuando hay una coincidencia." },
+              { icon:"🤝", title:"3. Contacto directo",     desc:"Hablas directo con la otra persona. Sin intermediarios ni comisiones." },
             ].map((s,i)=>(
-              <div key={i} style={{ background:CARD, borderRadius:14, padding:"32px 24px", border:`1px solid ${BORDER}`, textAlign:"center" }}>
-                <div style={{ fontSize:44, marginBottom:16 }}>{s.icon}</div>
-                <h3 style={{ fontSize:17, fontWeight:700, color:TEXT, marginBottom:10, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3 }}>{s.title}</h3>
-                <p style={{ fontSize:16, color:SUB, lineHeight:1.7 }}>{s.desc}</p>
+              <div key={i} style={{ background:CARD, borderRadius:14, padding:"24px 20px", border:`1px solid ${BORDER}`, textAlign:"center" }}>
+                <div style={{ fontSize:38, marginBottom:12 }}>{s.icon}</div>
+                <h3 style={{ fontSize:17, fontWeight:700, color:TEXT, marginBottom:8, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3 }}>{s.title}</h3>
+                <p style={{ fontSize:15, color:SUB, lineHeight:1.55 }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Compact trust badges */}
+          <div style={{ display:"flex", justifyContent:"center", gap:"clamp(24px,8vw,56px)", marginTop:36, flexWrap:"wrap" }}>
+            {[
+              { val:"0%",  label:"Comisión" },
+              { val:"P2P", label:"Directo" },
+              { val:"24/7", label:"Disponible" },
+            ].map((s,i)=>(
+              <div key={i} style={{ textAlign:"center" }}>
+                <div style={{ fontFamily:"Bebas Neue, sans-serif", fontSize:"clamp(30px,7vw,42px)", color:RED, lineHeight:1 }}>{s.val}</div>
+                <div style={{ fontSize:13, color:MUTED, marginTop:4, fontWeight:600, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>{s.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* STATS */}
-      <section style={{ padding:"clamp(36px,6vw,56px) clamp(16px,4vw,32px)", textAlign:"center" }}>
-        <div style={{ maxWidth:700, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(160px, 1fr))", gap:32 }}>
-          {[
-            { val:"0%",  label:"Comisión" },
-            { val:"P2P", label:"Contacto directo" },
-            { val:"✓",   label:"Gratis para siempre" },
-          ].map((s,i)=>(
-            <div key={i}>
-              <div style={{ fontFamily:"Bebas Neue, sans-serif", fontSize:56, color:RED, lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontSize:16, color:SUB, marginTop:8, fontWeight:600 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* CTA FINAL */}
-      <section style={{ padding:"clamp(48px,8vw,80px) clamp(16px,4vw,32px)", textAlign:"center" }}>
-        <div style={{ maxWidth:560, margin:"0 auto" }}>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(36px, 6vw, 56px)", color:TEXT, lineHeight:1.1, marginBottom:16 }}>
-            Empieza hoy.<br/><span style={{ color:RED }}>Es completamente gratis.</span>
+      <section style={{ padding:"clamp(40px,8vw,64px) clamp(20px,5vw,32px)", textAlign:"center", borderTop:`1px solid ${BORDER}` }}>
+        <div style={{ maxWidth:520, margin:"0 auto" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(28px,7vw,46px)", color:TEXT, lineHeight:1.08, marginBottom:20 }}>
+            Empieza hoy. <span style={{ color:RED }}>Es gratis.</span>
           </h2>
-          <p style={{ fontSize:16, color:SUB, marginBottom:36, lineHeight:1.6 }}>
-            Únete a esta comunidad. Busca, encuentra, vende y compra lo que necesitas para que tu negocio siga operando.
-          </p>
           <button onClick={onRegister}
-            style={{ background:RED, border:"none", borderRadius:10, padding:"16px 40px", fontSize:17, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s" }}
+            style={{ background:RED, border:"none", borderRadius:10, padding:"15px 36px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.6, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>e.currentTarget.style.background=RED2}
             onMouseLeave={e=>e.currentTarget.style.background=RED}>
             Crear cuenta gratis →
           </button>
-          <p style={{ fontSize:16, color:MUTED, marginTop:16 }}>Sin tarjeta de crédito · Sin comisiones · Sin contratos</p>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer style={{ background:BG3, borderTop:`1px solid ${BORDER}`, padding:"32px", textAlign:"center" }}>
-        <div style={{ maxWidth:900, margin:"0 auto" }}>
-          <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}>
-            <SpartsLogo size={28}/>
+      <footer style={{ background:BG3, borderTop:`1px solid ${BORDER}`, padding:"28px 20px", textAlign:"center" }}>
+        <div style={{ maxWidth:880, margin:"0 auto" }}>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:14 }}>
+            <SpartsLogo size={24}/>
           </div>
-          <p style={{ fontSize:16, color:RED, marginBottom:16, fontFamily:"Bebas Neue, sans-serif", letterSpacing:1.5, textTransform:"uppercase" }}>No vendemos repuestos. Conectamos personas.</p>
-          <div style={{ display:"flex", gap:24, justifyContent:"center", flexWrap:"wrap", marginBottom:20 }}>
+          <div style={{ display:"flex", gap:"16px 24px", justifyContent:"center", flexWrap:"wrap", marginBottom:16 }}>
             {["Términos y condiciones","Política de privacidad","Contacto"].map((link,i)=>(
-              <span key={i} style={{ fontSize:16, color:MUTED, cursor:"pointer", transition:"color .15s" }}
+              <span key={i} style={{ fontSize:14, color:MUTED, cursor:"pointer", transition:"color .15s" }}
                 onMouseEnter={e=>e.currentTarget.style.color=TEXT}
                 onMouseLeave={e=>e.currentTarget.style.color=MUTED}>
                 {link}
               </span>
             ))}
           </div>
-          <p style={{ fontSize:16, color:MUTED }}>© {new Date().getFullYear()} SpartsHub™ · fgiangrandisc@gmail.com · +56 9 3268 9914</p>
+          <p style={{ fontSize:13, color:MUTED, lineHeight:1.6 }}>© {new Date().getFullYear()} SpartsHub™ · info@spartshub.com</p>
         </div>
       </footer>
     </div>
@@ -3375,7 +3364,7 @@ function ProfilePage({ user, profile, onLogout }) {
               </div>
               <div style={{ flex:1 }}>
                 <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>WhatsApp directo</p>
-                <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Lun–Vie 9:00–18:00 · +56 9 3268 9914</p>
+                <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Lun–Vie 9:00–18:00</p>
               </div>
               <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20SpartsHub","_blank")}
                 style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:8,padding:"9px 18px",fontSize:16,fontWeight:700,cursor:"pointer",flexShrink:0 }}>
@@ -3537,7 +3526,7 @@ function SupportPanel({ onClose }) {
           </div>
           <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20SpartsHub","_blank")}
             style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"13px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
-            <Ic n="wa" s={18} c="#fff"/>WhatsApp · +56 9 3268 9914
+            <Ic n="wa" s={18} c="#fff"/>Escríbenos por WhatsApp
           </button>
         </div>
       </div>
@@ -4686,7 +4675,7 @@ function AppFooter() {
               </div>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>WhatsApp</p>
-                <a href="https://wa.me/56932689914" target="_blank" style={{ ...LNK,color:TEXT }}>+56 9 3268 9914</a>
+                <a href="https://wa.me/56932689914" target="_blank" style={{ ...LNK,color:TEXT }}>Escríbenos por WhatsApp</a>
               </div>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Ventas & Partnerships</p>
