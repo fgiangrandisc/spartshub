@@ -679,22 +679,6 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
         )}
       </section>
 
-      {/* CATEGORÍAS */}
-      <section style={{ padding:"clamp(20px,4vw,28px) clamp(16px,5vw,32px) clamp(28px,5vw,40px)", maxWidth:900, margin:"0 auto" }}>
-        <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px,5vw,30px)", color:TEXT, marginBottom:16 }}>Explora por rubro</h2>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(130px, 1fr))", gap:10 }}>
-          {CATS.filter(c=>c.id!=="all").map(c=>(
-            <div key={c.id} onClick={onEnter}
-              style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"16px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:10, transition:"all .15s" }}
-              onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; }}
-              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER; }}>
-              <span style={{ fontSize:22 }}>{c.emoji||"🔧"}</span>
-              <span style={{ fontSize:14, fontWeight:600, color:TEXT }}>{c.label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* CTA FINAL */}
       <section style={{ padding:"clamp(32px,6vw,52px) clamp(16px,5vw,32px)", textAlign:"center", background:BG2, borderTop:`1px solid ${BORDER}` }}>
         <div style={{ maxWidth:480, margin:"0 auto" }}>
