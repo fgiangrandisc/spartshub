@@ -327,19 +327,15 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
 };
 
 /* ── Logo ───────────────────────────────────────────────────── */
-function SpartsLogo({ size=36, onClick }) {
+function SpartsLogo({ size=36, onClick, icon=false }) {
+  const src = icon ? "/isotipo.svg" : "/logo.svg";
   return (
-    <div onClick={onClick} style={{ display:"flex", alignItems:"center", gap:size*0.28, cursor:onClick?"pointer":"default" }}>
-      <svg width={size} height={size} viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="8" fill="#FF8C00"/>
-        <text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white" letterSpacing="1">S</text>
-        <circle cx="26" cy="10" r="4" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"/>
-        <circle cx="26" cy="10" r="1.5" fill="rgba(255,255,255,0.9)"/>
-      </svg>
-      <span style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:size*0.6, letterSpacing:size*0.04, color:"#F2F5F7", lineHeight:1 }}>
-        SPARTSHUB
-      </span>
-    </div>
+    <img
+      src={src}
+      alt="PortalMaquinas"
+      onClick={onClick}
+      style={{ height:size, width:"auto", display:"block", cursor:onClick?"pointer":"default" }}
+    />
   );
 }
 function Logo({ size=16 }) { return <SpartsLogo size={size===16?36:size+20}/>; }
@@ -387,7 +383,7 @@ function ToastProvider({ children }) {
 function Avatar({ name, size=40 }) {
   const initials = (name||"U").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   return (
-    <div title={name} style={{ width:size, height:size, borderRadius:"50%", background:`rgba(255,140,0,.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+    <div title={name} style={{ width:size, height:size, borderRadius:"50%", background:`rgba(255,106,0,.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
       <span style={{ color:RED, fontWeight:700, fontSize:size*0.38, fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
     </div>
   );
@@ -581,7 +577,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
             <nav style={{ display:"flex", gap:8, flex:1, justifyContent:"center" }}>
               {CENTER_NAV.map(b=>(
                 <button key={b.key} onClick={b.action} style={centerBtn}
-                  onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+                  onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,106,0,.12)"; }}
                   onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
                   {t(b.key)}
                 </button>
@@ -693,7 +689,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
           ].map((a,i)=>(
             <div key={i} onClick={a.action}
               style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:14, padding:"20px 16px", cursor:"pointer", textAlign:"center" }}>
-              <div style={{ width:48, height:48, borderRadius:12, background:"rgba(255,140,0,.12)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
+              <div style={{ width:48, height:48, borderRadius:12, background:"rgba(255,106,0,.12)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
                 <Ic n={a.icon} s={22} c={RED}/>
               </div>
               <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:3, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3, textTransform:"uppercase" }}>{a.label}</p>
@@ -723,7 +719,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
               <span key={i} style={{ fontSize:14, color:MUTED, cursor:"pointer" }}>{link}</span>
             ))}
           </div>
-          <p style={{ fontSize:14, color:MUTED, lineHeight:1.6 }}>© 2026 SpartsHub™ · info@spartshub.com</p>
+          <p style={{ fontSize:14, color:MUTED, lineHeight:1.6 }}>© 2026 PortalMaquinas™ · info@portalmaquinas.com</p>
         </div>
       </footer>
     </div>
@@ -779,7 +775,7 @@ function AuthScreen({ initialMode="login", notice=null, onAuth, onBack }) {
           {mode==="login" ? "Ingresa para continuar" : "Únete a la red industrial"}
         </p>
 
-        {notice && <div style={{ background:"rgba(255,140,0,.1)", border:`1px solid rgba(255,140,0,.35)`, borderRadius:8, padding:"12px 16px", fontSize:15, color:TEXT, marginBottom:4 }}>
+        {notice && <div style={{ background:"rgba(255,106,0,.1)", border:`1px solid rgba(255,106,0,.35)`, borderRadius:8, padding:"12px 16px", fontSize:15, color:TEXT, marginBottom:4 }}>
           {t(notice)}
         </div>}
 
@@ -961,7 +957,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
 
       {/* ══ FILTERS TOGGLE BUTTON ══ */}
       <button onClick={()=>setShowFilters(s=>!s)}
-        style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 16px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,140,0,.08)":SURF, color:activeFilters>0?RED:TEXT, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", marginBottom:14, transition:"all .15s" }}>
+        style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 16px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,106,0,.08)":SURF, color:activeFilters>0?RED:TEXT, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", marginBottom:14, transition:"all .15s" }}>
         <Ic n="settings" s={16} c={activeFilters>0?RED:TEXT}/>
         {t("search_filters")}
         {activeFilters > 0 && <span style={{ background:RED, color:"#fff", fontSize:14, fontWeight:700, borderRadius:10, padding:"1px 8px", fontFamily:"Barlow Condensed,sans-serif" }}>{activeFilters}</span>}
@@ -974,7 +970,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
 
         {/* Global region badge */}
         {region && region !== "all" && ubicacion === "all" && (
-          <div style={{ gridColumn:"1/-1", marginBottom:4, padding:"5px 9px", background:"rgba(255,140,0,.08)", borderRadius:7, border:"1px solid rgba(255,140,0,.2)", display:"flex", alignItems:"center", gap:6 }}>
+          <div style={{ gridColumn:"1/-1", marginBottom:4, padding:"5px 9px", background:"rgba(255,106,0,.08)", borderRadius:7, border:"1px solid rgba(255,106,0,.2)", display:"flex", alignItems:"center", gap:6 }}>
             <Ic n="map" s={11} c={RED}/>
             <span style={{ fontSize:16, color:RED, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>
               {lang==="en" ? REGIONS.find(r=>r.id===region)?.label_en : REGIONS.find(r=>r.id===region)?.label_es}
@@ -1091,7 +1087,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
 
         {/* CLEAR ALL FILTERS */}
         <button onClick={resetFilters}
-          style={{ gridColumn:"1/-1", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,140,0,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
+          style={{ gridColumn:"1/-1", padding:"10px", borderRadius:8, border:`1px solid ${activeFilters>0?RED:BORDER}`, background:activeFilters>0?"rgba(255,106,0,.08)":"transparent", color:activeFilters>0?RED:MUTED, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, transition:"all .15s" }}>
           {activeFilters > 0 ? `✕ Limpiar filtros (${activeFilters})` : "Sin filtros activos"}
         </button>
       </div>
@@ -1237,7 +1233,7 @@ function PhotoCarousel({ photos }) {
               <img key={i} src={url} alt=""
                 onClick={e=>{ e.stopPropagation(); setIdx(i); setLightbox(true); }}
                 style={{ width:56, height:56, borderRadius:8, objectFit:"cover", flexShrink:0, cursor:"zoom-in",
-                  border: i===idx ? "2px solid #FF8C00" : "2px solid rgba(255,255,255,.1)",
+                  border: i===idx ? "2px solid #FF6A00" : "2px solid rgba(255,255,255,.1)",
                   opacity: i===idx ? 1 : 0.5, transition:"all .15s" }}
               />
             ))}
@@ -1265,7 +1261,7 @@ function PhotoCarousel({ photos }) {
               {photos.map((url,i)=>(
                 <img key={i} src={url} alt="" onClick={e=>{ e.stopPropagation(); setIdx(i); }}
                   style={{ width:54, height:54, borderRadius:8, objectFit:"cover", cursor:"pointer",
-                    border: i===idx ? "2px solid #FF8C00" : "2px solid rgba(255,255,255,.12)",
+                    border: i===idx ? "2px solid #FF6A00" : "2px solid rgba(255,255,255,.12)",
                     opacity: i===idx ? 1 : 0.45, transition:"all .15s" }}
                 />
               ))}
@@ -1307,7 +1303,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
   };
 
   const wa = () => {
-    const msg = encodeURIComponent(`Hola! Vi tu publicación en SpartsHub: *${l.title}*. Me interesa, ¿puedes darme más detalles?`);
+    const msg = encodeURIComponent(`Hola! Vi tu publicación en PortalMaquinas: *${l.title}*. Me interesa, ¿puedes darme más detalles?`);
     window.open(`https://wa.me/${(l.phone||"").replace(/\D/g,"")}?text=${msg}`, "_blank");
   };
   return (
@@ -1441,7 +1437,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
                     <Ic n="wa" s={20} c={l.phone?"#fff":MUTED}/>{l.phone?"Contactar por WhatsApp":"WhatsApp no disponible"}
                   </button>
                   <button className="btn-ol" style={{ padding:14 }} onClick={()=>{ onClose(); onChat(l); }}>
-                    <Ic n="msg" s={18} c={RED}/><span style={{ color:RED,fontWeight:700 }}>Mensaje en SpartsHub</span>
+                    <Ic n="msg" s={18} c={RED}/><span style={{ color:RED,fontWeight:700 }}>Mensaje en PortalMaquinas</span>
                   </button>
                 </>
               )}
@@ -1601,7 +1597,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
               <p style={{ fontSize:16,color:MUTED,marginBottom:4 }}>{t("pub_what")}</p>
               {TYPES.map(tp=>(
                 <div key={tp.id} onClick={()=>{ setType(tp.id); setStep(1); }}
-                  style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${tp.highlight?RED:BORDER}`,background:tp.highlight?"rgba(255,140,0,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
+                  style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${tp.highlight?RED:BORDER}`,background:tp.highlight?"rgba(255,106,0,.08)":CARD,cursor:"pointer",transition:"all .15s" }}>
                   <div style={{ width:44,height:44,background:tp.highlight?RED:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                     <Ic n={tp.icon} s={20} c={tp.highlight?"#fff":SUB}/>
                   </div>
@@ -1644,9 +1640,9 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
               {previews.length === 0 ? (
                 /* Empty state — big tap target */
                 <div onClick={()=>photoInputRef.current?.click()}
-                  style={{ border:`2px dashed ${RED}`, borderRadius:14, padding:"32px 20px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, cursor:"pointer", background:"rgba(255,140,0,.04)", transition:"background .15s" }}
-                  onMouseEnter={e=>e.currentTarget.style.background="rgba(255,140,0,.09)"}
-                  onMouseLeave={e=>e.currentTarget.style.background="rgba(255,140,0,.04)"}>
+                  style={{ border:`2px dashed ${RED}`, borderRadius:14, padding:"32px 20px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, cursor:"pointer", background:"rgba(255,106,0,.04)", transition:"background .15s" }}
+                  onMouseEnter={e=>e.currentTarget.style.background="rgba(255,106,0,.09)"}
+                  onMouseLeave={e=>e.currentTarget.style.background="rgba(255,106,0,.04)"}>
                   <Ic n="camera" s={36} c={RED}/>
                   <p style={{ fontSize:17, fontWeight:700, color:RED, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", margin:0 }}>Agregar fotos</p>
                   <p style={{ fontSize:14, color:MUTED, margin:0, textAlign:"center" }}>Toca para seleccionar · Hasta 4 fotos · Puedes elegir varias a la vez</p>
@@ -1725,7 +1721,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
                 <div style={{ display:"flex",gap:8 }}>
                   {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                     <button key={c} onClick={()=>upd("condition",c)}
-                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,140,0,.1)":CARD,fontWeight:700,fontSize:16,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,106,0,.1)":CARD,fontWeight:700,fontSize:16,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
                       {c}
                     </button>
                   ))}
@@ -1789,10 +1785,10 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
                       if (aiPreview) URL.revokeObjectURL(aiPreview);
                       setAiPreview(URL.createObjectURL(file));
                     }}/>
-                  <div style={{ border:`2px dashed rgba(255,140,0,.4)`,borderRadius:16,padding:"48px 24px",textAlign:"center",background:"rgba(255,140,0,.04)",transition:"all .2s" }}
+                  <div style={{ border:`2px dashed rgba(255,106,0,.4)`,borderRadius:16,padding:"48px 24px",textAlign:"center",background:"rgba(255,106,0,.04)",transition:"all .2s" }}
                     onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
-                    onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,140,0,.4)"}>
-                    <div style={{ width:72,height:72,background:"rgba(255,140,0,.12)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>
+                    onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,106,0,.4)"}>
+                    <div style={{ width:72,height:72,background:"rgba(255,106,0,.12)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>
                       <Ic n="camera" s={32} c={RED}/>
                     </div>
                     <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>{t("ai_take_photo")}</p>
@@ -1929,7 +1925,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
 
       {showMatchAlert&&(
         <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }} onClick={()=>setShowMatchAlert(false)}>
-          <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(255,140,0,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:BG3,borderRadius:20,padding:36,maxWidth:420,textAlign:"center",border:`1px solid rgba(255,106,0,.3)`,boxShadow:"0 24px 80px rgba(0,0,0,.6)",animation:"slideUp .3s ease" }}>
             <div style={{ fontSize:56,marginBottom:12 }}>🤝</div>
             <p className="bebas" style={{ fontSize:32,color:RED,marginBottom:8 }}>¡{matchCount} MATCH{matchCount>1?"ES":""} ENCONTRADO{matchCount>1?"S":""}!</p>
             <p style={{ fontSize:16,color:TEXT,lineHeight:1.7,marginBottom:20 }}>
@@ -2328,7 +2324,7 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
             <div style={{ padding:"50px 20px",textAlign:"center" }}>
               <div style={{ fontSize:56,marginBottom:16 }}>✅</div>
               <p style={{ fontSize:20,fontWeight:700,color:TEXT,marginBottom:8 }}>¡{savedCount} publicaciones creadas!</p>
-              <p style={{ fontSize:15,color:SUB,marginBottom:24 }}>Ya están visibles en SpartsHub.</p>
+              <p style={{ fontSize:15,color:SUB,marginBottom:24 }}>Ya están visibles en PortalMaquinas.</p>
               <button onClick={()=>{ onDone?.(); onClose(); }} className="btn-red" style={{ padding:"14px 28px" }}>
                 Listo
               </button>
@@ -2787,7 +2783,7 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
                   <p style={{ color:mine?"#fff":TEXT }}>{m.body}</p>
                   {m.listing_id && (
                     <button onClick={()=>onViewListing?.(m.listing_id)}
-                      style={{ marginTop:8,background:mine?"rgba(255,255,255,.18)":"rgba(255,140,0,.12)",border:`1px solid ${mine?"rgba(255,255,255,.3)":"rgba(255,140,0,.3)"}`,borderRadius:8,padding:"6px 12px",fontSize:16,fontWeight:700,color:mine?"#fff":RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
+                      style={{ marginTop:8,background:mine?"rgba(255,255,255,.18)":"rgba(255,106,0,.12)",border:`1px solid ${mine?"rgba(255,255,255,.3)":"rgba(255,106,0,.3)"}`,borderRadius:8,padding:"6px 12px",fontSize:16,fontWeight:700,color:mine?"#fff":RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
                       <Ic n="chevR" s={12} c={mine?"#fff":RED}/> Ver publicación
                     </button>
                   )}
@@ -2894,7 +2890,7 @@ function MatchesPage({ user, onSelect, onChat }) {
       <div style={{ display:"flex",gap:8,marginBottom:20,flexWrap:"wrap" }}>
         {[["all","Todos"],["selling","Vendo (mis publicaciones)"],["buying","Busco (mis solicitudes)"]].map(([val,lbl])=>(
           <button key={val} onClick={()=>setFilter(val)}
-            style={{ padding:"8px 16px",borderRadius:20,border:`1.5px solid ${filter===val?RED:BORDER}`,background:filter===val?"rgba(255,140,0,.1)":CARD,color:filter===val?RED:SUB,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3 }}>
+            style={{ padding:"8px 16px",borderRadius:20,border:`1.5px solid ${filter===val?RED:BORDER}`,background:filter===val?"rgba(255,106,0,.1)":CARD,color:filter===val?RED:SUB,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3 }}>
             {lbl}
           </button>
         ))}
@@ -3026,9 +3022,9 @@ function ProfilePage({ user, profile, onLogout }) {
   };
   const sendSupport = ()=>{
     if(!supportMsg.trim()) return;
-    const subject = encodeURIComponent("Soporte SpartsHub");
+    const subject = encodeURIComponent("Soporte PortalMaquinas");
     const body    = encodeURIComponent(supportMsg.trim());
-    window.location.href = `mailto:info@spartshub.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:info@portalmaquinas.com?subject=${subject}&body=${body}`;
     setSupportSent(true); setSupportMsg(""); setTimeout(()=>setSupportSent(false),4000);
   };
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -3207,13 +3203,13 @@ function ProfilePage({ user, profile, onLogout }) {
             ) : (
               <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
                 {inbox.map(m=>(
-                  <div key={m.id} style={{ background:m.read?CARD:"rgba(255,140,0,.06)",borderRadius:10,padding:"14px 16px",border:`1px solid ${m.read?BORDER:"rgba(255,140,0,.25)"}`,display:"flex",gap:12,alignItems:"flex-start" }}>
+                  <div key={m.id} style={{ background:m.read?CARD:"rgba(255,106,0,.06)",borderRadius:10,padding:"14px 16px",border:`1px solid ${m.read?BORDER:"rgba(255,106,0,.25)"}`,display:"flex",gap:12,alignItems:"flex-start" }}>
                     {!m.read && <div style={{ width:8,height:8,borderRadius:"50%",background:RED,marginTop:5,flexShrink:0 }}/>}
                     <div style={{ flex:1 }}>
                       <p style={{ fontSize:16,color:TEXT,lineHeight:1.5,fontWeight:m.read?400:600 }}>{m.body}</p>
                       {m.listing_id && (
                         <button onClick={()=>openNotifListing(m.listing_id)}
-                          style={{ marginTop:8,background:"rgba(255,140,0,.12)",border:"1px solid rgba(255,140,0,.3)",borderRadius:8,padding:"6px 12px",fontSize:16,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
+                          style={{ marginTop:8,background:"rgba(255,106,0,.12)",border:"1px solid rgba(255,106,0,.3)",borderRadius:8,padding:"6px 12px",fontSize:16,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif" }}>
                           <Ic n="chevR" s={12} c={RED}/> Ver publicación
                         </button>
                       )}
@@ -3235,7 +3231,7 @@ function ProfilePage({ user, profile, onLogout }) {
           <div style={{ maxWidth:"100%" }}>
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Carga Masiva de Publicaciones</h2>
             <p style={{ color:MUTED,fontSize:16,marginBottom:24 }}>Sube hasta 500 publicaciones de una sola vez usando un archivo Excel o CSV.</p>
-            <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:20,marginBottom:24,display:"flex",gap:16,alignItems:"center" }}>
+            <div style={{ background:"rgba(255,106,0,.06)",border:"1px solid rgba(255,106,0,.2)",borderRadius:12,padding:20,marginBottom:24,display:"flex",gap:16,alignItems:"center" }}>
               <div style={{ width:44,height:44,background:RED,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                 <Ic n="box" s={20} c="#fff"/>
               </div>
@@ -3302,7 +3298,7 @@ function ProfilePage({ user, profile, onLogout }) {
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Soporte</h2>
             <p style={{ color:MUTED,fontSize:16,marginBottom:28 }}>Estamos aquí para ayudarte. Elige cómo quieres contactarnos.</p>
 
-            <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:24,marginBottom:16 }}>
+            <div style={{ background:"rgba(255,106,0,.06)",border:"1px solid rgba(255,106,0,.2)",borderRadius:12,padding:24,marginBottom:16 }}>
               <div style={{ display:"flex",gap:14,alignItems:"flex-start",marginBottom:16 }}>
                 <div style={{ width:44,height:44,background:RED,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                   <span style={{ color:"#fff",fontSize:20 }}>⚡</span>
@@ -3346,7 +3342,7 @@ function ProfilePage({ user, profile, onLogout }) {
                 <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>WhatsApp directo</p>
                 <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Lun–Vie 9:00–18:00</p>
               </div>
-              <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20SpartsHub","_blank")}
+              <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20PortalMaquinas","_blank")}
                 style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:8,padding:"9px 18px",fontSize:16,fontWeight:700,cursor:"pointer",flexShrink:0 }}>
                 Chatear
               </button>
@@ -3361,7 +3357,7 @@ function ProfilePage({ user, profile, onLogout }) {
 
             <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:16 }}>
               <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:16,fontFamily:"Barlow Condensed,sans-serif" }}>Notificaciones</p>
-              {[["Nuevos mensajes","Recibir email cuando alguien te contacta",true],["Alertas de búsqueda","Notificar cuando aparezcan productos que buscas",true],["Novedades de SpartsHub","Actualizaciones y mejoras de la plataforma",false]].map(([label,desc,def])=>(
+              {[["Nuevos mensajes","Recibir email cuando alguien te contacta",true],["Alertas de búsqueda","Notificar cuando aparezcan productos que buscas",true],["Novedades de PortalMaquinas","Actualizaciones y mejoras de la plataforma",false]].map(([label,desc,def])=>(
                 <div key={label} style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:`1px solid ${BORDER}` }}>
                   <div>
                     <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{label}</p>
@@ -3407,7 +3403,7 @@ function ProfilePage({ user, profile, onLogout }) {
               </div>
             </div>
 
-            <div style={{ background:"rgba(255,140,0,.06)",border:"1px solid rgba(255,140,0,.2)",borderRadius:12,padding:24 }}>
+            <div style={{ background:"rgba(255,106,0,.06)",border:"1px solid rgba(255,106,0,.2)",borderRadius:12,padding:24 }}>
               <p style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Zona de peligro</p>
               {!showDeleteConfirm ? (
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
@@ -3448,9 +3444,9 @@ function SupportPanel({ onClose }) {
 
   const sendMail = () => {
     if (!msg.trim()) return;
-    const subject = encodeURIComponent("Soporte SpartsHub");
+    const subject = encodeURIComponent("Soporte PortalMaquinas");
     const body    = encodeURIComponent(msg.trim());
-    window.location.href = `mailto:info@spartshub.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:info@portalmaquinas.com?subject=${subject}&body=${body}`;
     setSent(true);
   };
 
@@ -3459,7 +3455,7 @@ function SupportPanel({ onClose }) {
       <div style={{ background:CARD,borderRadius:16,width:"100%",maxWidth:400,maxHeight:"80vh",display:"flex",flexDirection:"column",border:`1px solid ${BORDER2}`,boxShadow:"0 20px 60px rgba(0,0,0,.5)",overflow:"hidden" }} onClick={e=>e.stopPropagation()}>
         <div style={{ background:RED,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <div>
-            <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:2 }}><svg width={22} height={22} viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.2)"/><text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white">S</text></svg><p className="bebas" style={{ fontSize:18,color:"#fff",letterSpacing:.5 }}>SOPORTE</p></div>
+            <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:2 }}><img src="/isotipo.svg" alt="" style={{ height:22, width:"auto", display:"block" }}/><p className="bebas" style={{ fontSize:18,color:"#fff",letterSpacing:.5 }}>SOPORTE</p></div>
             <p style={{ fontSize:16,color:"rgba(255,255,255,.7)",marginTop:2 }}>Contáctanos directamente</p>
           </div>
           <button onClick={onClose} style={{ color:"rgba(255,255,255,.8)",background:"none",border:"none",cursor:"pointer",fontSize:20 }}>✕</button>
@@ -3472,7 +3468,7 @@ function SupportPanel({ onClose }) {
               :<button onClick={sendMail} className="btn-red" style={{ width:"100%",minHeight:46,padding:"11px",fontSize:16 }}>Enviar mensaje</button>
             }
           </div>
-          <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20SpartsHub","_blank")}
+          <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20PortalMaquinas","_blank")}
             style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:10,minHeight:46,padding:"13px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
             <Ic n="wa" s={18} c="#fff"/>Escríbenos por WhatsApp
           </button>
@@ -3631,7 +3627,7 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
 
             {totalSlots === 0 ? (
               <div onClick={()=>photoInputRef.current?.click()}
-                style={{ border:`2px dashed ${RED}`, borderRadius:14, padding:"28px 20px", display:"flex", flexDirection:"column", alignItems:"center", gap:10, cursor:"pointer", background:"rgba(255,140,0,.04)" }}>
+                style={{ border:`2px dashed ${RED}`, borderRadius:14, padding:"28px 20px", display:"flex", flexDirection:"column", alignItems:"center", gap:10, cursor:"pointer", background:"rgba(255,106,0,.04)" }}>
                 <Ic n="camera" s={32} c={RED}/>
                 <p style={{ fontSize:16, fontWeight:700, color:RED, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", margin:0 }}>Agregar fotos</p>
                 <p style={{ fontSize:13, color:MUTED, margin:0, textAlign:"center" }}>Toca para seleccionar · Hasta 4 fotos · Puedes elegir varias a la vez</p>
@@ -3726,7 +3722,7 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
             <div style={{ display:"flex",gap:8 }}>
               {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
                 <button key={c} onClick={()=>upd("condition",c)}
-                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,140,0,.1)":CARD,fontWeight:700,fontSize:16,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,106,0,.1)":CARD,fontWeight:700,fontSize:16,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
                   {c}
                 </button>
               ))}
@@ -3885,11 +3881,11 @@ function MisPublicaciones({ user, onSelect, initSubTab="pubs" }) {
     <div style={{ maxWidth:"100%" }}>
       <div style={{ display:"flex",gap:8,marginBottom:20 }}>
         <button onClick={()=>setSubTab("pubs")}
-          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="pubs"?RED:BORDER}`,background:subTab==="pubs"?"rgba(255,140,0,.1)":"transparent",color:subTab==="pubs"?RED:SUB,fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="pubs"?RED:BORDER}`,background:subTab==="pubs"?"rgba(255,106,0,.1)":"transparent",color:subTab==="pubs"?RED:SUB,fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
           Mis Publicaciones
         </button>
         <button onClick={()=>setSubTab("solicitudes")}
-          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="solicitudes"?RED:BORDER}`,background:subTab==="solicitudes"?"rgba(255,140,0,.1)":"transparent",color:subTab==="solicitudes"?RED:SUB,fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+          style={{ padding:"8px 18px",borderRadius:8,border:`1.5px solid ${subTab==="solicitudes"?RED:BORDER}`,background:subTab==="solicitudes"?"rgba(255,106,0,.1)":"transparent",color:subTab==="solicitudes"?RED:SUB,fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
           Mis Solicitudes
         </button>
       </div>
@@ -4289,7 +4285,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
 
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:80,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:0 }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:580,maxHeight:"92dvh",display:"flex",flexDirection:"column",border:`1px solid rgba(255,140,0,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,140,0,.15)",overflow:"hidden",...sheetStyle }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#171D24",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:580,maxHeight:"92dvh",display:"flex",flexDirection:"column",border:`1px solid rgba(255,106,0,.4)`,boxShadow:"0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,106,0,.15)",overflow:"hidden",...sheetStyle }}>
 
         {/* Drag handle */}
         <div {...handleProps} style={{ display:"flex",justifyContent:"center",padding:"10px 0 2px",cursor:"grab",touchAction:"none",background:"#171D24" }}>
@@ -4338,7 +4334,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
             )}
 
             {solicitudMatches > 0 ? (
-              <div style={{ background:"rgba(255,140,0,.1)",border:"1px solid rgba(255,140,0,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
+              <div style={{ background:"rgba(255,106,0,.1)",border:"1px solid rgba(255,106,0,.3)",borderRadius:12,padding:"16px 20px",maxWidth:320 }}>
                 <p className="bebas" style={{ fontSize:22,color:RED,marginBottom:6 }}>🤝 {solicitudMatches} MATCH{solicitudMatches>1?"ES":""} ENCONTRADO{solicitudMatches>1?"S":""}</p>
                 <p style={{ fontSize:16,color:TEXT,lineHeight:1.6 }}>¡Hay publicaciones que coinciden con tu búsqueda! Revisá tus mensajes para ver los contactos automáticos.</p>
               </div>
@@ -4357,7 +4353,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
               {/* Título */}
               <div>
                 <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.8,fontFamily:"Barlow Condensed,sans-serif" }}>¿Qué estás buscando? *</p>
-                <input style={{ ...INP,borderColor:f.title?"rgba(255,140,0,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
+                <input style={{ ...INP,borderColor:f.title?"rgba(255,106,0,.4)":BORDER }} placeholder="Ej: Motor CAT 3406E, Bomba Rexroth A10V…" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
               </div>
 
               {/* Industria + Marca */}
@@ -4432,7 +4428,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
                   {URGENCY.map(([val,label])=>(
                     <div key={val} onClick={()=>upd("urgency",val)}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"255,140,0":val==="urgente"?"245,158,11":"59,130,246"},.15)`:"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${f.urgency===val?URGENCY_C[val]:BORDER}`,background:f.urgency===val?`rgba(${val==="critico"?"255,106,0":val==="urgente"?"245,158,11":"59,130,246"},.15)`:"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <div style={{ width:10,height:10,borderRadius:"50%",background:URGENCY_C[val],flexShrink:0 }}/>
                       <p style={{ fontSize:16,fontWeight:f.urgency===val?700:400,color:f.urgency===val?TEXT:SUB }}>{label}</p>
                       {f.urgency===val&&<span style={{ marginLeft:"auto",fontSize:16,color:URGENCY_C[val] }}>✓</span>}
@@ -4459,7 +4455,7 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
                 <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                   {[["email","📧","Email",user?.email||""],["whatsapp","💬","WhatsApp",f.phone||"Agrega tu número arriba"],["inapp","🔔","Notificación en la app","Cuando estés conectado"]].map(([key,icon,label,sub])=>(
                     <div key={key} onClick={()=>toggleNotif(key)}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(255,140,0,.2)":"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`1.5px solid ${notif[key]?RED:BORDER}`,background:notif[key]?"rgba(255,106,0,.2)":"rgba(255,255,255,.04)",cursor:"pointer",transition:"all .15s" }}>
                       <span style={{ fontSize:18,flexShrink:0 }}>{icon}</span>
                       <div style={{ flex:1 }}>
                         <p style={{ fontSize:16,fontWeight:notif[key]?700:400,color:notif[key]?TEXT:SUB }}>{label}</p>
@@ -4546,11 +4542,11 @@ function AppFooter() {
             <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Email general</p>
-                <a href="mailto:info@spartshub.com" style={{ ...LNK,color:TEXT }}>info@spartshub.com</a>
+                <a href="mailto:info@portalmaquinas.com" style={{ ...LNK,color:TEXT }}>info@portalmaquinas.com</a>
               </div>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Soporte</p>
-                <a href="mailto:info@spartshub.com" style={{ ...LNK,color:TEXT }}>info@spartshub.com</a>
+                <a href="mailto:info@portalmaquinas.com" style={{ ...LNK,color:TEXT }}>info@portalmaquinas.com</a>
               </div>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>WhatsApp</p>
@@ -4558,7 +4554,7 @@ function AppFooter() {
               </div>
               <div>
                 <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Ventas & Partnerships</p>
-                <a href="mailto:info@spartshub.com" style={{ ...LNK,color:TEXT }}>info@spartshub.com</a>
+                <a href="mailto:info@portalmaquinas.com" style={{ ...LNK,color:TEXT }}>info@portalmaquinas.com</a>
               </div>
             </div>
           </div>
@@ -4571,17 +4567,17 @@ function AppFooter() {
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,paddingBottom:24 }}>
           <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
             <p style={{ fontSize:16,color:MUTED }}>
-              © {new Date().getFullYear()} SpartsHub™ — Todos los derechos reservados.
+              © {new Date().getFullYear()} PortalMaquinas™ — Todos los derechos reservados.
             </p>
             <p style={{ fontSize:16,color:"rgba(255,255,255,.2)" }}>
-              SpartsHub es una marca registrada. El nombre, logo y diseño son propiedad exclusiva de SpartsHub. Queda prohibida su reproducción sin autorización expresa.
+              PortalMaquinas es una marca registrada. El nombre, logo y diseño son propiedad exclusiva de PortalMaquinas. Queda prohibida su reproducción sin autorización expresa.
             </p>
           </div>
           <div style={{ display:"flex",gap:16,alignItems:"center" }}>
             <span style={{ fontSize:16,color:MUTED }}>Privacidad</span>
             <span style={{ fontSize:16,color:MUTED }}>Términos</span>
             <span style={{ fontSize:16,color:MUTED }}>Cookies</span>
-            <span style={{ fontSize:16,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>® & ™ SpartsHub</span>
+            <span style={{ fontSize:16,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>® & ™ PortalMaquinas</span>
           </div>
         </div>
       </div>
@@ -4610,7 +4606,7 @@ function MobileTabBar({ tab, setTab, onPublish, session, onGuestAction }) {
             setTab(tb.id);
           }}
           style={{ flex:1,minWidth:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 2px",background:"none",border:"none",cursor:"pointer",opacity:(tb.needsAuth&&!session)?.45:1 }}>
-          <div style={{ width:34,height:34,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,140,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",flexShrink:0 }}>
+          <div style={{ width:34,height:34,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,106,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",flexShrink:0 }}>
             <Ic n={tb.icon} s={19} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
           </div>
           <span style={{ fontSize:11,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.2,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%" }}>{tb.label||t(tb.key)}</span>
@@ -4671,13 +4667,13 @@ function AdminPanel({ user }) {
       <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
         <h2 className="bebas" style={{ fontSize:28, color:RED }}>⚙ Panel de Administración</h2>
       </div>
-      <p style={{ color:MUTED, fontSize:16, marginBottom:20 }}>Gestión de contenido y usuarios de SpartsHub. Usa con cuidado — los cambios son permanentes.</p>
+      <p style={{ color:MUTED, fontSize:16, marginBottom:20 }}>Gestión de contenido y usuarios de PortalMaquinas. Usa con cuidado — los cambios son permanentes.</p>
 
       {/* Section tabs */}
       <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
         {Object.entries(TABLES).map(([key,c])=>(
           <button key={key} onClick={()=>{ setSection(key); setSearch(""); setConfirmDel(null); }}
-            style={{ padding:"8px 16px", borderRadius:8, border:`1.5px solid ${section===key?RED:BORDER}`, background:section===key?"rgba(255,140,0,.1)":CARD, color:section===key?RED:SUB, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
+            style={{ padding:"8px 16px", borderRadius:8, border:`1.5px solid ${section===key?RED:BORDER}`, background:section===key?"rgba(255,106,0,.1)":CARD, color:section===key?RED:SUB, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
             {c.label}
           </button>
         ))}
@@ -4857,7 +4853,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Mobile header */}
       <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"8px 14px" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <SpartsLogo size={24} onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
+          <SpartsLogo size={28} icon onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
           <div style={{ display:"flex",gap:6,alignItems:"center" }}>
             {/* Lang switcher */}
             <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:15,fontWeight:700 }}>
@@ -4881,7 +4877,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
       {/* Guest banner */}
       {guestMode && !session && (
-        <div style={{ position:"fixed", top:60, left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,140,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+        <div style={{ position:"fixed", top:60, left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,106,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
           <p style={{ fontSize:14, color:SUB, flex:1 }}>Modo <strong style={{ color:RED }}>invitado</strong></p>
           <button onClick={onGuestLogin} style={{ background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:6, minHeight:44, padding:"0 12px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Entrar</button>
           <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:6, minHeight:44, padding:"0 12px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Registrarse</button>
@@ -4905,7 +4901,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Floating solicitud button — above tab bar (logged-in only) */}
       {session&&!showSolicitud&&!showPublish&&(
         <button onClick={()=>setShowSolicitud(true)}
-          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,140,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
+          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,106,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
           <Ic n="search" s={16} c="#fff"/>Solicita un repuesto
         </button>
       )}
@@ -4987,7 +4983,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           <nav style={{ display:"flex", gap:8, flex:1, minWidth:0, alignItems:"center", justifyContent:"center", overflowX:"auto" }}>
             {CENTER_NAV.map(b=>(
               <button key={b.key} onClick={b.action} style={centerBtn}
-                onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+                onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,106,0,.12)"; }}
                 onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
                 {t(b.key)}
               </button>
@@ -5018,7 +5014,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
             {session && <button onClick={logout}
               style={{ background:"none",color:RED,border:`1px solid ${RED}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,106,0,.12)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="none"; }}>
               <Ic n="logout" s={14} c={RED}/>{t("nav_logout")}
             </button>}
@@ -5040,7 +5036,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                   setTab(n.id);
                   if (n.id!=="messages") setChatListing(null);
                 }}
-                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:16,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C26800)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(255,140,0,.35)" } : undefined}>
+                style={(n.accent||n.solicitud) ? { display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:10,border:"none",cursor:"pointer",fontSize:16,width:"100%",textAlign:"left",marginTop:6,background:`linear-gradient(135deg,${RED},#C26800)`,color:"#fff",fontWeight:700,fontFamily:"inherit",transition:"all .15s",boxShadow:"0 4px 16px rgba(255,106,0,.35)" } : undefined}>
                 <Ic n={n.icon} s={16} c={(n.accent||n.solicitud)?"#fff":tab===n.id?RED:MUTED}/>{n.label||t(n.key)}
                 {n.badge&&unreadCount>0&&<span style={{ marginLeft:"auto",background:RED,color:"#fff",fontSize:16,fontWeight:700,borderRadius:10,padding:"2px 7px",fontFamily:"Barlow Condensed,sans-serif" }}>{unreadCount}</span>}
               </button>
@@ -5059,7 +5055,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
         {/* Guest banner */}
         {guestMode && !session && (
-          <div style={{ background:"rgba(255,140,0,.1)", borderBottom:`1px solid rgba(255,140,0,.3)`, padding:"10px 32px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16 }}>
+          <div style={{ background:"rgba(255,106,0,.1)", borderBottom:`1px solid rgba(255,106,0,.3)`, padding:"10px 32px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16 }}>
             <p style={{ fontSize:16, color:TEXT }}>Estás navegando como <strong style={{ color:RED }}>invitado</strong> — para publicar, contactar vendedores o guardar búsquedas necesitas una cuenta.</p>
             <div style={{ display:"flex", gap:8, flexShrink:0 }}>
               <button onClick={onGuestLogin} style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:7, padding:"7px 16px", fontSize:15, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>Iniciar sesión</button>
