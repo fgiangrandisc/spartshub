@@ -23,7 +23,7 @@ export const T = {
 
   TEXT:   "#F2F5F7",   // primary text
   SUB:    "#A9B3BE",   // secondary text
-  MUTED:  "#707B88",   // muted text
+  MUTED:  "#8B95A1",   // muted text — WCAG AA (>=4.8:1) sobre CARD/superficies oscuras
 };
 
 export const CSS_BASE = `
@@ -61,7 +61,7 @@ img{object-fit:cover}
 /* Inputs */
 .inp{background:#202833;border:1px solid #303A46;border-radius:8px;padding:11px 14px;font-size:14px;color:#F2F5F7;width:100%;transition:border-color .2s}
 .inp:focus{border-color:#FF8C00}
-.inp::placeholder{color:#707B88}
+.inp::placeholder{color:#8B95A1}
 select.inp{appearance:none}
 
 /* Cards */
@@ -98,7 +98,7 @@ select.inp{appearance:none}
 /* Search bar */
 .search-bar{background:#202833;border:1px solid #303A46;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px}
 .search-bar input{background:none;border:none;outline:none;font-size:14px;color:#F2F5F7;flex:1}
-.search-bar input::placeholder{color:#707B88}
+.search-bar input::placeholder{color:#8B95A1}
 
 /* Segment control */
 .seg{display:flex;background:#171D24;border-radius:8px;padding:3px;gap:2px}

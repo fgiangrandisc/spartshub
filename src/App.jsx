@@ -606,14 +606,14 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
             <div style={{ display:"flex", borderRadius:7, overflow:"hidden", border:`1px solid ${BORDER}`, flexShrink:0 }}>
               {["es","en"].map(l=>(
                 <button key={l} onClick={()=>setLang(l)}
-                  style={{ padding:"6px 12px", background:lang===l?RED:"transparent", color:lang===l?"#fff":TEXT, border:"none", cursor:"pointer", fontSize:14, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}>
+                  style={{ minHeight: isMobile?44:0, padding: isMobile?"0 13px":"6px 12px", background:lang===l?RED:"transparent", color:lang===l?"#fff":TEXT, border:"none", cursor:"pointer", fontSize:14, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}>
                   {l.toUpperCase()}
                 </button>
               ))}
             </div>
             {isMobile && (
               <button onClick={()=>setMenuOpen(o=>!o)} aria-label="Menú"
-                style={{ width:42, height:42, display:"flex", alignItems:"center", justifyContent:"center", background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:8, cursor:"pointer", flexShrink:0 }}>
+                style={{ width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:8, cursor:"pointer", flexShrink:0 }}>
                 <Ic n={menuOpen?"x":"menu"} s={22} c={TEXT}/>
               </button>
             )}
@@ -697,7 +697,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
                 <Ic n={a.icon} s={22} c={RED}/>
               </div>
               <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:3, fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.3, textTransform:"uppercase" }}>{a.label}</p>
-              <p style={{ fontSize:13, color:MUTED }}>{a.desc}</p>
+              <p style={{ fontSize:14, color:SUB }}>{a.desc}</p>
             </div>
           ))}
         </div>
@@ -723,7 +723,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
               <span key={i} style={{ fontSize:14, color:MUTED, cursor:"pointer" }}>{link}</span>
             ))}
           </div>
-          <p style={{ fontSize:13, color:MUTED, lineHeight:1.6 }}>© 2026 SpartsHub™ · info@spartshub.com</p>
+          <p style={{ fontSize:14, color:MUTED, lineHeight:1.6 }}>© 2026 SpartsHub™ · info@spartshub.com</p>
         </div>
       </footer>
     </div>
@@ -4738,7 +4738,7 @@ function MobileTabBar({ tab, setTab, onPublish, session, onGuestAction }) {
           <div style={{ width:34,height:34,borderRadius:tb.accent?12:10,background:tb.accent?RED:tab===tb.id?"rgba(255,140,0,.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",flexShrink:0 }}>
             <Ic n={tb.icon} s={19} c={tb.accent?"#fff":tab===tb.id?RED:MUTED}/>
           </div>
-          <span style={{ fontSize:10,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.2,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%" }}>{tb.label||t(tb.key)}</span>
+          <span style={{ fontSize:11,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.2,color:tb.accent?RED:tab===tb.id?RED:MUTED,textTransform:"uppercase",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%" }}>{tb.label||t(tb.key)}</span>
         </button>
       ))}
     </div>
@@ -4985,20 +4985,20 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
           <SpartsLogo size={24} onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
           <div style={{ display:"flex",gap:6,alignItems:"center" }}>
             {/* Lang switcher */}
-            <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:16,fontWeight:700 }}>
+            <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:15,fontWeight:700 }}>
               {["es","en"].map(l=>(
-                <button key={l} onClick={()=>setLang(l)} style={{ padding:"3px 8px",background:lang===l?RED:"transparent",color:lang===l?"#fff":MUTED,border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>{l.toUpperCase()}</button>
+                <button key={l} onClick={()=>setLang(l)} style={{ minHeight:44,padding:"0 12px",background:lang===l?RED:"transparent",color:lang===l?"#fff":SUB,border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>{l.toUpperCase()}</button>
               ))}
             </div>
-            <button className="btn-ghost" style={{ padding:"5px" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={18} c={MUTED}/></button>
+            <button className="btn-ghost" aria-label="Soporte" style={{ width:44,height:44,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={20} c={SUB}/></button>
             {session && (
               <button onClick={logout} title="Cerrar sesión"
-                style={{ padding:"5px 8px",borderRadius:6,border:`1px solid ${RED}`,background:"transparent",color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
-                <Ic n="logout" s={15} c={RED}/>Salir
+                style={{ minHeight:44,padding:"0 10px",borderRadius:6,border:`1px solid ${RED}`,background:"transparent",color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:14,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+                <Ic n="logout" s={16} c={RED}/>Salir
               </button>
             )}
             {profile?.is_admin && (
-              <button onClick={()=>setTab("admin")} style={{ padding:"5px 8px", borderRadius:6, border:`1px solid ${RED}`, background:tab==="admin"?RED:"transparent", color:tab==="admin"?"#fff":RED, cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>⚙</button>
+              <button onClick={()=>setTab("admin")} aria-label="Admin" style={{ width:44, height:44, padding:0, borderRadius:6, border:`1px solid ${RED}`, background:tab==="admin"?RED:"transparent", color:tab==="admin"?"#fff":RED, cursor:"pointer", fontSize:16, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>⚙</button>
             )}
           </div>
         </div>
@@ -5006,15 +5006,15 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
       {/* Guest banner */}
       {guestMode && !session && (
-        <div style={{ position:"fixed", top:46, left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,140,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
-          <p style={{ fontSize:13, color:SUB, flex:1 }}>Modo <strong style={{ color:RED }}>invitado</strong></p>
-          <button onClick={onGuestLogin} style={{ background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:6, padding:"5px 10px", fontSize:13, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Entrar</button>
-          <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:6, padding:"5px 10px", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Registrarse</button>
+        <div style={{ position:"fixed", top:60, left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,140,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+          <p style={{ fontSize:14, color:SUB, flex:1 }}>Modo <strong style={{ color:RED }}>invitado</strong></p>
+          <button onClick={onGuestLogin} style={{ background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:6, minHeight:44, padding:"0 12px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Entrar</button>
+          <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:6, minHeight:44, padding:"0 12px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Registrarse</button>
         </div>
       )}
 
       {/* Page content */}
-      <div style={{ paddingTop: guestMode && !session ? 86 : 54, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
+      <div style={{ paddingTop: guestMode && !session ? 122 : 64, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
