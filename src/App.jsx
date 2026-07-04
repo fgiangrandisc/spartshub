@@ -315,6 +315,7 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
     img:      <><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>,
     grid:     <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>,
     phone:    <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,
+    menu:     <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>,
     wa:       null,
   };
   if (n === "wa") return (
@@ -543,6 +544,8 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
   const { t, lang, setLang } = useLang();
   const isMobile = useIsMobile();
   const [searchQ, setSearchQ] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const go = fn => { setMenuOpen(false); fn?.(); };
 
   const centerBtn = { background:"transparent", color:RED, border:`1.5px solid ${RED}`, borderRadius:7, padding:"8px 13px", fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" };
   const CENTER_NAV = [
@@ -573,7 +576,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
           {/* Left: logo → inicio (Explorar) */}
           <div style={{ flexShrink:0, cursor:"pointer" }} onClick={onEnter}><SpartsLogo size={28}/></div>
 
-          {/* Center: 5 nav buttons */}
+          {/* Center: 5 nav buttons (desktop only) */}
           {!isMobile && (
             <nav style={{ display:"flex", gap:8, flex:1, justifyContent:"center" }}>
               {CENTER_NAV.map(b=>(
@@ -586,16 +589,20 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
             </nav>
           )}
 
-          {/* Right: Ingresar, Registrarse, language (no session on landing → no Log Out) */}
+          {/* Right: language + (desktop) Ingresar/Registrarse or (mobile) hamburger */}
           <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-            <button onClick={onLogin}
-              style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 14px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
-              {t("nav_signin")}
-            </button>
-            <button onClick={onRegister}
-              style={{ background:RED, border:"none", borderRadius:8, padding:"8px 16px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
-              {t("nav_signup")}
-            </button>
+            {!isMobile && (
+              <>
+                <button onClick={onLogin}
+                  style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 14px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+                  {t("nav_signin")}
+                </button>
+                <button onClick={onRegister}
+                  style={{ background:RED, border:"none", borderRadius:8, padding:"8px 16px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+                  {t("nav_signup")}
+                </button>
+              </>
+            )}
             <div style={{ display:"flex", borderRadius:7, overflow:"hidden", border:`1px solid ${BORDER}`, flexShrink:0 }}>
               {["es","en"].map(l=>(
                 <button key={l} onClick={()=>setLang(l)}
@@ -604,8 +611,35 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
                 </button>
               ))}
             </div>
+            {isMobile && (
+              <button onClick={()=>setMenuOpen(o=>!o)} aria-label="Menú"
+                style={{ width:42, height:42, display:"flex", alignItems:"center", justifyContent:"center", background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:8, cursor:"pointer", flexShrink:0 }}>
+                <Ic n={menuOpen?"x":"menu"} s={22} c={TEXT}/>
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {isMobile && menuOpen && (
+          <div style={{ maxWidth:1200, margin:"0 auto", padding:"8px 0 12px", display:"flex", flexDirection:"column", gap:8, borderTop:`1px solid ${BORDER}` }}>
+            {CENTER_NAV.map(b=>(
+              <button key={b.key} onClick={()=>go(b.action)}
+                style={{ ...centerBtn, width:"100%", minHeight:46, textAlign:"center" }}>
+                {t(b.key)}
+              </button>
+            ))}
+            <div style={{ height:1, background:BORDER, margin:"2px 0" }}/>
+            <button onClick={()=>go(onLogin)}
+              style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, width:"100%", minHeight:46, fontSize:15, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>
+              {t("nav_signin")}
+            </button>
+            <button onClick={()=>go(onRegister)}
+              style={{ background:RED, border:"none", borderRadius:8, width:"100%", minHeight:46, fontSize:15, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>
+              {t("nav_signup")}
+            </button>
+          </div>
+        )}
       </header>
 
       <section style={{ position:"relative", overflow:"hidden" }}>
@@ -3491,11 +3525,11 @@ function SupportPanel({ onClose }) {
             <p style={{ fontWeight:700,fontSize:16,color:TEXT,marginBottom:8 }}>Soporte humano</p>
             <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Describe tu problema…" rows={3} className="inp" style={{ resize:"none",marginBottom:8 }}/>
             {sent?<p style={{ color:GREEN,fontSize:16,fontWeight:700 }}>✓ Abrimos tu correo — envíanos el mensaje y responderemos en menos de 24hrs</p>
-              :<button onClick={sendMail} className="btn-red" style={{ width:"100%",padding:"10px",fontSize:16 }}>Enviar mensaje</button>
+              :<button onClick={sendMail} className="btn-red" style={{ width:"100%",minHeight:46,padding:"11px",fontSize:16 }}>Enviar mensaje</button>
             }
           </div>
           <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20SpartsHub","_blank")}
-            style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:10,padding:"13px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
+            style={{ background:"#25D366",color:"#fff",border:"none",borderRadius:10,minHeight:46,padding:"13px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
             <Ic n="wa" s={18} c="#fff"/>Escríbenos por WhatsApp
           </button>
         </div>
@@ -5128,7 +5162,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
           </div>
           <div style={{ width:1, height:32, background:BORDER }}/>
           {/* Center: 5 nav buttons */}
-          <nav style={{ display:"flex", gap:8, flex:1, alignItems:"center", justifyContent:"center" }}>
+          <nav style={{ display:"flex", gap:8, flex:1, minWidth:0, alignItems:"center", justifyContent:"center", overflowX:"auto" }}>
             {CENTER_NAV.map(b=>(
               <button key={b.key} onClick={b.action} style={centerBtn}
                 onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
