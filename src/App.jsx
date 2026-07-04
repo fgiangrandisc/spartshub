@@ -564,7 +564,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:BG, color:TEXT, fontFamily:"'Barlow', sans-serif" }}>
+    <div style={{ minHeight:"100dvh", background:BG, color:TEXT, fontFamily:"'Barlow', sans-serif" }}>
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(14px,4vw,32px)", position:"sticky", top:0, zIndex:50 }}>
@@ -639,7 +639,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
       </header>
 
       <section style={{ position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"url(/hero.png)", backgroundSize:"cover", backgroundPosition: isMobile ? "center 30%" : "right center", zIndex:0 }}/>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"url(/hero.jpg)", backgroundSize:"cover", backgroundPosition: isMobile ? "center 30%" : "right center", zIndex:0 }}/>
         <div style={{ position:"absolute", inset:0, zIndex:1, background: isMobile ? "linear-gradient(to bottom, rgba(10,10,10,.96) 0%, rgba(10,10,10,.75) 45%, rgba(10,10,10,.35) 100%)" : "linear-gradient(to right, rgba(10,10,10,.97) 30%, rgba(10,10,10,.6) 55%, rgba(10,10,10,.15) 100%)" }}/>
 
         <div style={{ position:"relative", zIndex:2, maxWidth:1200, margin:"0 auto", padding: isMobile ? "40px 20px 28px" : "72px 32px 56px", minHeight: isMobile ? "auto" : 520 }}>
@@ -760,7 +760,7 @@ function AuthScreen({ initialMode="login", notice=null, onAuth, onBack }) {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column" }}>
+    <div style={{ minHeight:"100dvh", background:BG, display:"flex", flexDirection:"column" }}>
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
       <div style={{ padding:"56px 20px 20px", display:"flex", alignItems:"center", gap:12 }}>
         <button className="btn-ghost" onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
@@ -2350,9 +2350,11 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
    MESSAGES PAGE
 ══════════════════════════════════════════════════════════════ */
 function MessagesPage({ user, initListing, onClear }) {
+  const isMobile = useIsMobile();
   const [contacts, setContacts] = useState([]);
   const [active,   setActive]   = useState(null);
   const [filter,   setFilter]   = useState("Todas");
+  const [convSearch, setConvSearch] = useState("");
   const [viewListing, setViewListing] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
   const [deleting,   setDeleting]   = useState(false);
@@ -2426,41 +2428,53 @@ function MessagesPage({ user, initListing, onClear }) {
     load();
   },[user.id]);
 
-  if (active) return (
-    <>
-      <ChatView user={user} other={active.profile} listing={active.listing} onBack={()=>setActive(null)} onViewListing={openListing}/>
-      {viewListing && <ListingDetail l={viewListing} onClose={()=>setViewListing(null)} user={user}/>}
-    </>
-  );
+  if (active) {
+    const chat = (
+      <>
+        <ChatView user={user} other={active.profile} listing={active.listing} onBack={()=>setActive(null)} onViewListing={openListing}/>
+        {viewListing && <ListingDetail l={viewListing} onClose={()=>setViewListing(null)} user={user}/>}
+      </>
+    );
+    // En móvil el chat va full-screen (por encima del header y la tab bar fijos).
+    return isMobile
+      ? <div style={{ position:"fixed", inset:0, zIndex:100, background:BG }}>{chat}</div>
+      : chat;
+  }
+
+  const cq = convSearch.trim().toLowerCase();
+  const visibleContacts = cq
+    ? contacts.filter(c =>
+        (c.name||"").toLowerCase().includes(cq) ||
+        (c.biz||"").toLowerCase().includes(cq) ||
+        (contactMeta[c.id]?.listing?.title||"").toLowerCase().includes(cq))
+    : contacts;
 
   return (
     <div style={{ paddingBottom:100 }}>
-      <div style={{ padding:"56px 20px 16px" }}>
+      <div style={{ padding: isMobile ? "8px 20px 16px" : "0 20px 16px" }}>
         <h1 className="bebas" style={{ fontSize:34,color:TEXT,marginBottom:16 }}>Chat</h1>
         <div className="search-bar">
           <Ic n="search" s={16} c={MUTED}/>
-          <input placeholder="Buscar conversaciones…" onChange={e=>{
-            const v = e.target.value.toLowerCase();
-            // filter contacts by name/biz — future enhancement
-          }}/>
+          <input placeholder="Buscar conversaciones…" value={convSearch} onChange={e=>setConvSearch(e.target.value)}/>
+          {convSearch && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setConvSearch("")}><Ic n="x" s={16} c={MUTED}/></button>}
         </div>
       </div>
       <div style={{ padding:"0 20px 16px",display:"flex",gap:8,overflowX:"auto" }}>
         {FILTERS.map(f=>(
           <button key={f} onClick={()=>setFilter(f)}
-            style={{ flexShrink:0,padding:"7px 16px",borderRadius:20,fontSize:16,fontWeight:700,border:`1px solid ${filter===f?RED:BORDER}`,cursor:"pointer",background:filter===f?RED:CARD,color:filter===f?"#fff":SUB,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+            style={{ flexShrink:0,minHeight:40,padding:"8px 16px",borderRadius:20,fontSize:16,fontWeight:700,border:`1px solid ${filter===f?RED:BORDER}`,cursor:"pointer",background:filter===f?RED:CARD,color:filter===f?"#fff":SUB,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
             {f}
           </button>
         ))}
       </div>
       <div style={{ padding:"0" }}>
-        {contacts.length===0 ? (
+        {visibleContacts.length===0 ? (
           <div style={{ paddingTop:60,textAlign:"center" }}>
             <div style={{ fontSize:56,marginBottom:16 }}>💬</div>
-            <p className="bebas" style={{ fontSize:28,marginBottom:8 }}>Sin conversaciones</p>
-            <p style={{ fontSize:16,color:MUTED }}>Contacta a un vendedor desde cualquier publicación</p>
+            <p className="bebas" style={{ fontSize:28,marginBottom:8 }}>{cq ? "Sin resultados" : "Sin conversaciones"}</p>
+            <p style={{ fontSize:16,color:MUTED }}>{cq ? "Prueba con otro nombre o empresa" : "Contacta a un vendedor desde cualquier publicación"}</p>
           </div>
-        ) : contacts.map(c=>{
+        ) : visibleContacts.map(c=>{
           const meta = contactMeta[c.id] || {};
           const { lastMsg, listing, unread } = meta;
           return (
@@ -2712,7 +2726,7 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
   return (
     <div style={{ height:"100dvh",display:"flex",flexDirection:"column",background:BG }}>
       {/* Header — full contact info */}
-      <div style={{ padding:"56px 16px 14px",borderBottom:`0.5px solid ${BORDER}`,display:"flex",gap:12,alignItems:"flex-start",flexShrink:0,background:BG3 }}>
+      <div style={{ padding:"calc(20px + env(safe-area-inset-top)) 16px 14px",borderBottom:`0.5px solid ${BORDER}`,display:"flex",gap:12,alignItems:"flex-start",flexShrink:0,background:BG3 }}>
         <button className="btn-ghost" style={{ padding:"6px 8px",marginTop:2 }} onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
         <Avatar name={other.biz||other.name||"U"} size={44}/>
         <div style={{ flex:1,minWidth:0 }}>
@@ -2795,7 +2809,7 @@ function ChatView({ user, other, listing, onBack, onViewListing }) {
         }
         <div ref={endRef}/>
       </div>
-      <div style={{ padding:"12px 16px 32px",borderTop:`0.5px solid ${BORDER}`,display:"flex",gap:10,flexShrink:0,background:BG3 }}>
+      <div style={{ padding:"12px 16px calc(16px + env(safe-area-inset-bottom))",borderTop:`0.5px solid ${BORDER}`,display:"flex",gap:10,flexShrink:0,background:BG3 }}>
         <input className="inp" value={inp} maxLength={2000} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()} placeholder={t("chat_write")} style={{ flex:1,borderRadius:24,padding:"12px 18px" }}/>
         <button onClick={send} disabled={!inp.trim()} style={{ width:44,height:44,background:inp.trim()?RED:`${RED}66`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"none",cursor:inp.trim()?"pointer":"default",flexShrink:0,transition:"background .15s" }}>
           <Ic n="send" s={18} c="#fff"/>
@@ -2880,7 +2894,7 @@ function MatchesPage({ user, onSelect, onChat }) {
     <div>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:10 }}>
         <h2 className="bebas" style={{ fontSize:28,color:TEXT }}>Mis Matches</h2>
-        <button onClick={loadMatches} style={{ background:"none",border:`1px solid ${BORDER}`,borderRadius:7,padding:"6px 12px",color:SUB,fontSize:15,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:6 }}>
+        <button onClick={loadMatches} style={{ background:"none",border:`1px solid ${BORDER}`,borderRadius:7,minHeight:40,padding:"8px 14px",color:SUB,fontSize:15,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:6 }}>
           <Ic n="search" s={14} c={SUB}/> Actualizar
         </button>
       </div>
@@ -2890,7 +2904,7 @@ function MatchesPage({ user, onSelect, onChat }) {
       <div style={{ display:"flex",gap:8,marginBottom:20,flexWrap:"wrap" }}>
         {[["all","Todos"],["selling","Vendo (mis publicaciones)"],["buying","Busco (mis solicitudes)"]].map(([val,lbl])=>(
           <button key={val} onClick={()=>setFilter(val)}
-            style={{ padding:"8px 16px",borderRadius:20,border:`1.5px solid ${filter===val?RED:BORDER}`,background:filter===val?"rgba(255,106,0,.1)":CARD,color:filter===val?RED:SUB,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3 }}>
+            style={{ minHeight:40,padding:"8px 16px",borderRadius:20,border:`1.5px solid ${filter===val?RED:BORDER}`,background:filter===val?"rgba(255,106,0,.1)":CARD,color:filter===val?RED:SUB,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3 }}>
             {lbl}
           </button>
         ))}
@@ -4598,7 +4612,7 @@ function MobileTabBar({ tab, setTab, onPublish, session, onGuestAction }) {
     { id:"profile", icon:"user",  key:"nav_my_profile", needsAuth:true },
   ];
   return (
-    <div style={{ position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(20px)",borderTop:`1px solid ${BORDER}`,display:"flex",alignItems:"center",padding:"6px 0 18px" }}>
+    <div style={{ position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(20px)",borderTop:`1px solid ${BORDER}`,display:"flex",alignItems:"center",padding:"6px 0 calc(12px + env(safe-area-inset-bottom))" }}>
       {TABS.map(tb=>(
         <button key={tb.id} onClick={()=>{
             if(tb.needsAuth && !session){ onGuestAction?.(); return; }
@@ -4847,11 +4861,11 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
   }, [showPublish, showSolicitud, showSupport]);
 
   return (
-    <div style={{ background:BG, minHeight:"100vh", color:TEXT }}>
+    <div style={{ background:BG, minHeight:"100dvh", color:TEXT }}>
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
       {/* Mobile header */}
-      <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"8px 14px" }}>
+      <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"calc(8px + env(safe-area-inset-top)) 14px 8px" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <SpartsLogo size={28} icon onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
           <div style={{ display:"flex",gap:6,alignItems:"center" }}>
@@ -4877,7 +4891,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
       {/* Guest banner */}
       {guestMode && !session && (
-        <div style={{ position:"fixed", top:60, left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,106,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+        <div style={{ position:"fixed", top:"calc(60px + env(safe-area-inset-top))", left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,106,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
           <p style={{ fontSize:14, color:SUB, flex:1 }}>Modo <strong style={{ color:RED }}>invitado</strong></p>
           <button onClick={onGuestLogin} style={{ background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:6, minHeight:44, padding:"0 12px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Entrar</button>
           <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:6, minHeight:44, padding:"0 12px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Registrarse</button>
@@ -4885,7 +4899,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       )}
 
       {/* Page content */}
-      <div style={{ paddingTop: guestMode && !session ? 122 : 64, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
+      <div style={{ paddingTop: `calc(${guestMode && !session ? 122 : 64}px + env(safe-area-inset-top))`, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
@@ -4901,7 +4915,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Floating solicitud button — above tab bar (logged-in only) */}
       {session&&!showSolicitud&&!showPublish&&(
         <button onClick={()=>setShowSolicitud(true)}
-          style={{ position:"fixed",bottom:88,right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"10px 16px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,106,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
+          style={{ position:"fixed",bottom:"calc(88px + env(safe-area-inset-bottom))",right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"12px 18px",minHeight:48,fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,106,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
           <Ic n="search" s={16} c="#fff"/>Solicita un repuesto
         </button>
       )}
@@ -4968,7 +4982,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column" }}>
+    <div style={{ minHeight:"100dvh", background:BG, display:"flex", flexDirection:"column" }}>
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
       {/* GLOBAL HEADER */}
@@ -5175,7 +5189,7 @@ export default function SpartsHub() {
 
   if (!authReady) return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
-      <div style={{ minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16 }}>
+      <div style={{ minHeight:"100dvh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16 }}>
         <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
         <SpartsLogo size={36}/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
       </div>

@@ -59,7 +59,7 @@ img{object-fit:cover}
 .btn-ghost:hover{background:rgba(255,255,255,.06);color:#F2F5F7}
 
 /* Inputs */
-.inp{background:#202833;border:1px solid #303A46;border-radius:8px;padding:11px 14px;font-size:14px;color:#F2F5F7;width:100%;transition:border-color .2s}
+.inp{background:#202833;border:1px solid #303A46;border-radius:8px;padding:11px 14px;font-size:16px;color:#F2F5F7;width:100%;transition:border-color .2s}
 .inp:focus{border-color:#FF6A00}
 .inp::placeholder{color:#8B95A1}
 select.inp{appearance:none}
@@ -97,7 +97,7 @@ select.inp{appearance:none}
 
 /* Search bar */
 .search-bar{background:#202833;border:1px solid #303A46;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px}
-.search-bar input{background:none;border:none;outline:none;font-size:14px;color:#F2F5F7;flex:1}
+.search-bar input{background:none;border:none;outline:none;font-size:16px;color:#F2F5F7;flex:1}
 .search-bar input::placeholder{color:#8B95A1}
 
 /* Segment control */
