@@ -539,10 +539,20 @@ function PhotoPlaceholder({ emoji="📦", h=160, url }) {
 /* ══════════════════════════════════════════════════════════════
    LANDING PAGE
 ══════════════════════════════════════════════════════════════ */
-function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
+function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister }) {
+  const { t, lang, setLang } = useLang();
   const isMobile = useIsMobile();
   const [searchQ, setSearchQ] = useState("");
   const [cat, setCat] = useState("all");
+
+  const centerBtn = { background:"transparent", color:RED, border:`1.5px solid ${RED}`, borderRadius:7, padding:"8px 13px", fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" };
+  const CENTER_NAV = [
+    { key:"nav_sell",     action:onGateRegister },
+    { key:"nav_buy",      action:onEnter },
+    { key:"nav_requests", action:onGateRegister },
+    { key:"nav_services", action:onEnter },
+    { key:"nav_rentals",  action:onEnter },
+  ];
 
   const handleSearch = () => {
     if (searchQ.trim()) onSearch?.(searchQ.trim());
@@ -567,26 +577,40 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
 
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(14px,4vw,32px)", position:"sticky", top:0, zIndex:50 }}>
         <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:60, gap:12 }}>
-          <div style={{ flexShrink:0 }}><SpartsLogo size={28}/></div>
+          {/* Left: logo → inicio (Explorar) */}
+          <div style={{ flexShrink:0, cursor:"pointer" }} onClick={onEnter}><SpartsLogo size={28}/></div>
+
+          {/* Center: 5 nav buttons */}
           {!isMobile && (
-            <nav style={{ display:"flex", gap:20, flex:1, justifyContent:"center" }}>
-              {["Categorías","Equipos","Marcas","Vender repuestos","Cómo funciona"].map((l,i)=>(
-                <span key={i} onClick={onEnter}
-                  style={{ fontSize:15, fontWeight:600, color:SUB, cursor:"pointer", whiteSpace:"nowrap" }}>
-                  {l}
-                </span>
+            <nav style={{ display:"flex", gap:8, flex:1, justifyContent:"center" }}>
+              {CENTER_NAV.map(b=>(
+                <button key={b.key} onClick={b.action} style={centerBtn}
+                  onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+                  onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
+                  {t(b.key)}
+                </button>
               ))}
             </nav>
           )}
+
+          {/* Right: Ingresar, Registrarse, language (no session on landing → no Log Out) */}
           <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
             <button onClick={onLogin}
               style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:8, padding:"8px 14px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
-              Ingresar
+              {t("nav_signin")}
             </button>
             <button onClick={onRegister}
               style={{ background:RED, border:"none", borderRadius:8, padding:"8px 16px", fontSize:"clamp(12px,3.2vw,14px)", fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
-              Registrarse
+              {t("nav_signup")}
             </button>
+            <div style={{ display:"flex", borderRadius:7, overflow:"hidden", border:`1px solid ${BORDER}`, flexShrink:0 }}>
+              {["es","en"].map(l=>(
+                <button key={l} onClick={()=>setLang(l)}
+                  style={{ padding:"6px 12px", background:lang===l?RED:"transparent", color:lang===l?"#fff":TEXT, border:"none", cursor:"pointer", fontSize:14, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}>
+                  {l.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>
@@ -693,7 +717,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter }) {
     </div>
   );
 }
-function AuthScreen({ initialMode="login", onAuth, onBack }) {
+function AuthScreen({ initialMode="login", notice=null, onAuth, onBack }) {
   const { t, lang } = useLang();
   const [mode, setMode]     = useState(initialMode);
   const [f, setF]           = useState({ email:"", pass:"", name:"", biz:"", phone:"", location:"" });
@@ -742,6 +766,10 @@ function AuthScreen({ initialMode="login", onAuth, onBack }) {
         <p style={{ fontSize:16, color:SUB, marginBottom:8 }}>
           {mode==="login" ? "Ingresa para continuar" : "Únete a la red industrial"}
         </p>
+
+        {notice && <div style={{ background:"rgba(255,140,0,.1)", border:`1px solid rgba(255,140,0,.35)`, borderRadius:8, padding:"12px 16px", fontSize:15, color:TEXT, marginBottom:4 }}>
+          {t(notice)}
+        </div>}
 
         <div className="seg" style={{ marginBottom:4 }}>
           {[["login",t("auth_login")],["register",t("auth_register")]].map(([m,l])=>(
@@ -5125,7 +5153,20 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
     { id:"mispubs",     icon:"box",     key:"nav_my_listings" },
     { id:"missolicitudes", icon:"search", key:"nav_my_requests", label:"Mis Solicitudes" },
     { id:"profile",     icon:"user",    key:"nav_my_profile" },
+    { id:"soporte",     icon:"msg",     key:"nav_support" },
     ...(profile?.is_admin ? [{ id:"admin", icon:"settings", key:"nav_admin", label:"⚙ Admin" }] : []),
+  ];
+
+  const goExplore = ()=>{ setSelected(null); setChatListing(null); setTab("search"); };
+  const onSell    = ()=> session ? setShowPublish(true)   : onGuestRegister();
+  const onRequest = ()=> session ? setShowSolicitud(true) : onGuestRegister();
+  const centerBtn = { background:"transparent", color:RED, border:`1.5px solid ${RED}`, borderRadius:7, padding:"8px 13px", fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" };
+  const CENTER_NAV = [
+    { key:"nav_sell",     action:onSell },
+    { key:"nav_buy",      action:goExplore },
+    { key:"nav_requests", action:onRequest },
+    { key:"nav_services", action:goExplore },
+    { key:"nav_rentals",  action:goExplore },
   ];
 
   return (
@@ -5140,44 +5181,30 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
             <span style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
           </div>
           <div style={{ width:1, height:32, background:BORDER }}/>
-          <nav style={{ display:"flex", gap:8, flex:1, alignItems:"center" }}>
-            <button onClick={()=>setTab("search")}
-              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
-              onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
-              <Ic n="home" s={14} c={RED}/>{t("nav_explore")}
-            </button>
-            {session && <button onClick={()=>setShowSolicitud(true)}
-              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
-              onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
-              <Ic n="search" s={14} c={RED}/>{t("nav_request")}
-            </button>}
-            {session && <button onClick={()=>setShowPublish(true)}
-              style={{ background:"transparent",color:RED,border:`1.5px solid ${RED}`,borderRadius:7,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.6,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
-              onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
-              <Ic n="plus" s={14} c={RED}/>{t("nav_publish_here")}
-            </button>}
+          {/* Center: 5 nav buttons */}
+          <nav style={{ display:"flex", gap:8, flex:1, alignItems:"center", justifyContent:"center" }}>
+            {CENTER_NAV.map(b=>(
+              <button key={b.key} onClick={b.action} style={centerBtn}
+                onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+                onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
+                {t(b.key)}
+              </button>
+            ))}
           </nav>
 
-          {/* ── Right side: Support + Logout + Language ── */}
+          {/* ── Right side: Ingresar/Registrarse (guest) · Language · Log Out (session) ── */}
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            <button onClick={()=>setShowSupport(true)}
-              style={{ background:"none",color:TEXT,border:`1px solid ${BORDER2}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
-              onMouseEnter={e=>{ e.currentTarget.style.borderColor=RED; e.currentTarget.style.color=RED; }}
-              onMouseLeave={e=>{ e.currentTarget.style.borderColor=BORDER2; e.currentTarget.style.color=TEXT; }}>
-              <Ic n="msg" s={14} c="currentColor"/>{t("nav_support")}
-            </button>
-
-            {session && <button onClick={logout}
-              style={{ background:"none",color:RED,border:`1px solid ${RED}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
-              onMouseLeave={e=>{ e.currentTarget.style.background="none"; }}>
-              <Ic n="logout" s={14} c={RED}/>{t("nav_logout")}
+            {!session && <button onClick={onGuestLogin}
+              style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:7, padding:"8px 14px", fontSize:15, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+              {t("nav_signin")}
             </button>}
 
-            {/* ── Language switcher (far right) ── */}
+            {!session && <button onClick={onGuestRegister}
+              style={{ background:RED, border:"none", borderRadius:7, padding:"8px 16px", fontSize:15, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+              {t("nav_signup")}
+            </button>}
+
+            {/* ── Language switcher ── */}
             <div style={{ display:"flex",borderRadius:7,overflow:"hidden",border:`1px solid ${BORDER}`,flexShrink:0,marginLeft:4 }}>
               {["es","en"].map(l=>(
                 <button key={l} onClick={()=>setLang(l)}
@@ -5186,6 +5213,13 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
                 </button>
               ))}
             </div>
+
+            {session && <button onClick={logout}
+              style={{ background:"none",color:RED,border:`1px solid ${RED}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,140,0,.12)"; }}
+              onMouseLeave={e=>{ e.currentTarget.style.background="none"; }}>
+              <Ic n="logout" s={14} c={RED}/>{t("nav_logout")}
+            </button>}
           </div>
         </div>
       </header>
@@ -5262,6 +5296,7 @@ export default function SpartsHub() {
   const isMobile = useIsMobile();
   const [session,      setSession]      = useState(null);
   const [showAuthMode, setShowAuthMode] = useState("landing");
+  const [authNotice,   setAuthNotice]   = useState(null);
   const [guestMode,    setGuestMode]    = useState(false);
   const [guestSearch,  setGuestSearch]  = useState("");
   const [profile,      setProfile]      = useState(null);
@@ -5353,8 +5388,9 @@ export default function SpartsHub() {
     if (showAuthMode === "landing") return (
       <LangCtx.Provider value={{ lang, setLang, t }}>
         <LandingPage
-          onLogin={()=>setShowAuthMode("login")}
-          onRegister={()=>setShowAuthMode("register")}
+          onLogin={()=>{ setAuthNotice(null); setShowAuthMode("login"); }}
+          onRegister={()=>{ setAuthNotice(null); setShowAuthMode("register"); }}
+          onGateRegister={()=>{ setAuthNotice("auth_gate_msg"); setShowAuthMode("register"); }}
           onSearch={q=>{ setGuestSearch(q); setGuestMode(true); setTab("search"); }}
           onEnter={()=>{ setGuestMode(true); setTab("search"); }}
         />
@@ -5362,7 +5398,7 @@ export default function SpartsHub() {
     );
     return (
       <LangCtx.Provider value={{ lang, setLang, t }}>
-        <AuthScreen initialMode={showAuthMode==="register"?"register":"login"} onAuth={()=>sb.auth.getSession().then(({ data })=>setSession(data.session))} onBack={()=>setShowAuthMode("landing")}/>
+        <AuthScreen initialMode={showAuthMode==="register"?"register":"login"} notice={authNotice} onAuth={()=>sb.auth.getSession().then(({ data })=>setSession(data.session))} onBack={()=>{ setAuthNotice(null); setShowAuthMode("landing"); }}/>
       </LangCtx.Provider>
     );
   }

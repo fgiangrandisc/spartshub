@@ -42,6 +42,14 @@ const STRINGS = {
     nav_publish_here: "Publicar aquí",
     nav_logout: "Cerrar sesión",
     nav_tagline: "No vendemos repuestos, conectamos personas",
+    nav_sell: "Vende",
+    nav_buy: "Compra",
+    nav_requests: "Solicitudes",
+    nav_services: "Servicios",
+    nav_rentals: "Arriendos",
+    nav_signin: "Ingresar",
+    nav_signup: "Registrarse",
+    auth_gate_msg: "Para vender y solicitar repuestos debes acceder a tu cuenta",
 
     // — Location / Language
     region_label: "Región",
@@ -277,6 +285,14 @@ const STRINGS = {
     nav_publish_here: "Publish here",
     nav_logout: "Log out",
     nav_tagline: "We don't sell parts, we connect people",
+    nav_sell: "Sell",
+    nav_buy: "Buy",
+    nav_requests: "Requests",
+    nav_services: "Services",
+    nav_rentals: "Rentals",
+    nav_signin: "Sign in",
+    nav_signup: "Sign up",
+    auth_gate_msg: "To sell and request parts you must sign in to your account",
 
     // — Location / Language
     region_label: "Region",
