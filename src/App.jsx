@@ -142,7 +142,7 @@ async function analyzeImage(base64Data, mediaType) {
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 600,
@@ -189,7 +189,7 @@ Responde SOLO con JSON válido (sin markdown):
 
 async function analyzeMatch(listingText, requestText) {
   try {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    const apiKey = import.meta.env.VITE_ANTHROPIC_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY;
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
@@ -822,79 +822,6 @@ function AuthScreen({ initialMode="login", notice=null, onAuth, onBack }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   HOME PAGE
-══════════════════════════════════════════════════════════════ */
-function HomePage({ user, onSelect, onGoSearch }) {
-  const { t } = useLang();
-  const [listings, setListings] = useState([]);
-  const [loading,  setLoading]  = useState(true);
-
-  useEffect(()=>{
-    const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-    sb.from("listings").select("*")
-      .gte("created_at", weekAgo)
-      .order("created_at",{ascending:false})
-      .limit(20)
-      .then(({ data })=>{ setListings(data||[]); setLoading(false); });
-  },[]);
-
-  return (
-    <div>
-      {/* Featured grid — 4 columns */}
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-        <span className="bebas" style={{ fontSize:22,color:TEXT }}>Publicaciones recientes</span>
-        <span style={{ fontSize:16,fontWeight:700,color:RED,cursor:"pointer" }} onClick={onGoSearch}>{t("home_see_all")}</span>
-      </div>
-      {loading ? (
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(150px, 1fr))",gap:12,marginBottom:24 }}>
-          {[0,1,2,3].map(i=><div key={i} style={{ height:220,background:CARD,borderRadius:10 }}/>)}
-        </div>
-      ) : listings.length === 0 ? (
-        <div style={{ background:CARD,borderRadius:12,padding:"48px 24px",textAlign:"center",border:`1px solid ${BORDER}`,marginBottom:24 }}>
-          <div style={{ fontSize:48,marginBottom:12 }}>📦</div>
-          <p className="bebas" style={{ fontSize:22,color:TEXT,marginBottom:6 }}>Sin publicaciones esta semana</p>
-          <p style={{ color:MUTED,fontSize:16 }}>Explora todo el catálogo o publica algo nuevo</p>
-        </div>
-      ) : (
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(150px, 1fr))",gap:12,marginBottom:24 }}>
-          {listings.slice(0,8).map(l=>(
-            <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
-              <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
-              <div style={{ padding:"10px 12px 14px" }}>
-                <span className="tag t-dim" style={{ fontSize:16,marginBottom:6,display:"inline-flex" }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
-                <p style={{ fontSize:16,fontWeight:700,lineHeight:1.3,marginBottom:4,color:TEXT }}>{l.title}</p>
-                <p style={{ fontSize:16,color:MUTED,marginBottom:6 }}>{l.location}</p>
-                <p className="bebas" style={{ fontSize:17,color:RED }}>{fmtPrice(l.price,l.currency)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-    </div>
-  );
-}
-
-function MiniCard({ l, onClick }) {
-  return (
-    <div onClick={onClick} style={{ display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderBottom:`0.5px solid ${BORDER}`,cursor:"pointer",borderRadius:8,transition:"background .15s" }} onMouseEnter={e=>e.currentTarget.style.background=BG2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-      <div style={{ width:64, height:64, borderRadius:10, overflow:"hidden", background:BG2, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28 }}>
-        {l.photos?.[0]
-          ? <img src={l.photos[0]} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
-          : (l.emoji||"📦")}
-      </div>
-      <div style={{ flex:1, minWidth:0 }}>
-        <p style={{ fontSize:16, fontWeight:600, lineHeight:1.3, marginBottom:3, color:TEXT }}>{l.title}</p>
-        <p style={{ fontSize:16, color:MUTED, marginBottom:6 }}>{l.biz} · {l.location}</p>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <span className="bebas" style={{ fontSize:16, color:RED }}>{fmtPrice(l.price, l.currency)}</span>
-          <span style={{ fontSize:16, color:MUTED }}>{fmtTs(l.created_at)}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════
    SEARCH PAGE
@@ -1535,6 +1462,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
           listing={l}
           onClose={()=>setShowEdit(false)}
           onSaved={updated=>{ setShowEdit(false); if (onEdited) onEdited(updated); }}
+          onDeleted={id=>{ setShowEdit(false); if (onDeleted) onDeleted(id); onClose(); }}
         />
       )}
     </div>
@@ -2084,7 +2012,7 @@ Reglas:
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+      "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY,
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true",
     },
@@ -3096,7 +3024,23 @@ function ProfilePage({ user, profile, onLogout }) {
     const { error } = await sb.from("profiles").update(editData).eq("id", user.id);
     if (!error) setEditMode(false);
   };
-  const sendSupport = ()=>{ if(!supportMsg.trim()) return; setSupportSent(true); setSupportMsg(""); setTimeout(()=>setSupportSent(false),4000); };
+  const sendSupport = ()=>{
+    if(!supportMsg.trim()) return;
+    const subject = encodeURIComponent("Soporte SpartsHub");
+    const body    = encodeURIComponent(supportMsg.trim());
+    window.location.href = `mailto:info@spartshub.com?subject=${subject}&body=${body}`;
+    setSupportSent(true); setSupportMsg(""); setTimeout(()=>setSupportSent(false),4000);
+  };
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const deleteAccount = async ()=>{
+    setDeletingAccount(true);
+    // Borra el contenido del usuario (RLS permite eliminar filas propias) y cierra sesión.
+    await sb.from("listings").delete().eq("user_id", user.id);
+    await sb.from("requests").delete().eq("user_id", user.id);
+    await sb.from("profiles").delete().eq("id", user.id);
+    await sb.auth.signOut();
+    window.location.reload();
+  };
 
   const handleBulkFile = file => {
     if (!file) return;
@@ -3480,9 +3424,9 @@ function ProfilePage({ user, profile, onLogout }) {
                   <p style={{ fontSize:16,color:RED,fontWeight:700,marginBottom:12 }}>¿Estás seguro? Esta acción no se puede deshacer.</p>
                   <div style={{ display:"flex",gap:10 }}>
                     <button className="btn-ol" onClick={()=>setShowDeleteConfirm(false)} style={{ flex:1,padding:"11px" }}>Cancelar</button>
-                    <button onClick={async()=>{ await sb.auth.signOut(); window.location.reload(); }}
-                      style={{ flex:1,background:RED,color:"#fff",border:"none",borderRadius:8,padding:"11px",fontSize:16,fontWeight:700,cursor:"pointer" }}>
-                      Sí, cerrar mi cuenta
+                    <button onClick={deleteAccount} disabled={deletingAccount}
+                      style={{ flex:1,background:RED,color:"#fff",border:"none",borderRadius:8,padding:"11px",fontSize:16,fontWeight:700,cursor:deletingAccount?"default":"pointer",opacity:deletingAccount?.6:1 }}>
+                      {deletingAccount ? "Eliminando…" : "Sí, cerrar mi cuenta"}
                     </button>
                   </div>
                 </div>
@@ -3538,75 +3482,6 @@ function SupportPanel({ onClose }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   ALERTAS PAGE
-══════════════════════════════════════════════════════════════ */
-function AlertasPage({ user, profile }) {
-  const isMobile = useIsMobile();
-  const [alertForm, setAlertForm] = useState({ keyword:"", cat:"all", email:user?.email||"", notifType:"email", wa:"" });
-  const [alerts,    setAlerts]    = useState([]);
-  const [saved,     setSaved]     = useState(false);
-
-  const saveAlert = () => {
-    if (!alertForm.keyword) return;
-    setAlerts(a=>[...a,{...alertForm,id:Date.now()}]);
-    setAlertForm({keyword:"",cat:"all",email:user?.email||""});
-    setSaved(true); setTimeout(()=>setSaved(false),3000);
-  };
-
-  return (
-    <div>
-      <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Mis Alertas de Búsqueda</h2>
-      <p style={{ color:MUTED,fontSize:16,marginBottom:24 }}>Recibe una notificación cuando se publique lo que estás buscando.</p>
-      <div style={{ display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:24,alignItems:"start" }}>
-      <div style={{ background:CARD,borderRadius:12,padding:24,border:`1px solid ${BORDER}`,marginBottom:24,display:"flex",flexDirection:"column",gap:12 }}>
-        <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif" }}>Crear nueva alerta</p>
-        <input className="inp" placeholder="Ej: Bomba hidráulica Rexroth A10V" value={alertForm.keyword} onChange={e=>setAlertForm(f=>({...f,keyword:e.target.value}))}/>
-        <select className="inp" value={alertForm.cat} onChange={e=>setAlertForm(f=>({...f,cat:e.target.value}))}>
-          {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
-        </select>
-        <input className="inp" value={alertForm.email} onChange={e=>setAlertForm(f=>({...f,email:e.target.value}))} placeholder="tu@email.com"/>
-        <div style={{ display:"flex",gap:8 }}>
-          {[["email","Email"],["whatsapp","WhatsApp"]].map(([val,lbl])=>(
-            <div key={val} onClick={()=>setAlertForm(f=>({...f,notifType:val}))}
-              style={{ flex:1,padding:"10px",borderRadius:8,border:`1.5px solid ${alertForm.notifType===val?RED:BORDER}`,background:alertForm.notifType===val?"rgba(255,140,0,.1)":BG2,cursor:"pointer",textAlign:"center" }}>
-              <p style={{ fontSize:16,fontWeight:700,color:alertForm.notifType===val?RED:SUB,fontFamily:"Barlow Condensed,sans-serif" }}>{lbl}</p>
-            </div>
-          ))}
-        </div>
-        {alertForm.notifType==="whatsapp"&&(
-          <input className="inp" placeholder="+1 555 1234 / +56 9 1234" value={alertForm.wa||""} onChange={e=>setAlertForm(f=>({...f,wa:e.target.value}))}/>
-        )}
-        {saved&&<p style={{ color:GREEN,fontSize:16,fontWeight:700 }}>✓ Alerta guardada — te avisaremos cuando haya coincidencias</p>}
-        <button className="btn-red" onClick={saveAlert} style={{ padding:"13px" }}>
-          <Ic n="bell" s={16} c="#fff"/> Activar alerta
-        </button>
-      </div>
-
-      {alerts.length===0 ? (
-        <div style={{ background:CARD,borderRadius:12,padding:40,textAlign:"center",border:`1px solid ${BORDER}` }}>
-          <div style={{ fontSize:48,marginBottom:12 }}>🔔</div>
-          <p className="bebas" style={{ fontSize:22,color:TEXT,marginBottom:6 }}>Sin alertas activas</p>
-          <p style={{ color:MUTED,fontSize:16 }}>Crea una alerta para recibir notificaciones automáticas</p>
-        </div>
-      ) : (
-        <div>
-          <p style={{ fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:12,fontFamily:"Barlow Condensed,sans-serif" }}>Alertas activas</p>
-          {alerts.map(a=>(
-            <div key={a.id} style={{ background:CARD,borderRadius:10,padding:"14px 16px",marginBottom:8,border:`1px solid ${BORDER}`,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-              <div>
-                <p style={{ fontWeight:600,fontSize:16,color:TEXT }}>{a.keyword}</p>
-                <p style={{ fontSize:16,color:MUTED }}>{CATS.find(c=>c.id===a.cat)?.label} · {a.email}</p>
-              </div>
-              <button onClick={()=>setAlerts(x=>x.filter(i=>i.id!==a.id))} style={{ color:RED,fontSize:16,background:"none",border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif" }}>Eliminar</button>
-            </div>
-          ))}
-        </div>
-      )}
-      </div>
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════
    MIS PUBLICACIONES PAGE
@@ -5018,7 +4893,6 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
-        {tab==="alertas" &&session&&<AlertasPage  user={session.user} profile={profile} onSolicitud={()=>setShowSolicitud(true)}/>}
         {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
         {tab==="mispubs" &&session&&<MisPublicaciones user={session.user} onSelect={setSelected}/>}
         {tab==="missolicitudes" &&session&&<MisPublicaciones key="msols" user={session.user} onSelect={setSelected} initSubTab="solicitudes"/>}
@@ -5045,58 +4919,6 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
   );
 }
 
-/* ── Profile Dropdown ────────────────────────────────────────── */
-function ProfileDropdown({ profile, onProfile, onLogout }) {
-  const [open, setOpen] = useState(false);
-  useEffect(()=>{
-    if (!open) return;
-    const fn = ()=>setOpen(false);
-    setTimeout(()=>document.addEventListener("click",fn),0);
-    return ()=>document.removeEventListener("click",fn);
-  },[open]);
-  const name = profile?.name||profile?.biz||"Mi cuenta";
-  const initials = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-  return (
-    <div style={{ position:"relative" }}>
-      <button onClick={e=>{ e.stopPropagation(); setOpen(v=>!v); }}
-        style={{ display:"flex",alignItems:"center",gap:8,background:open?"rgba(255,140,0,.1)":CARD,border:`1px solid ${open?RED:BORDER}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",transition:"all .15s" }}>
-        <div style={{ width:28,height:28,borderRadius:"50%",background:"rgba(255,140,0,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-          <span style={{ fontSize:16,fontWeight:700,color:RED,fontFamily:"Barlow Condensed,sans-serif" }}>{initials}</span>
-        </div>
-        <span style={{ fontSize:16,fontWeight:700,color:TEXT,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"Barlow Condensed,sans-serif" }}>{profile?.biz||profile?.name||"Mi cuenta"}</span>
-        <Ic n="chevR" s={14} c={MUTED} style={{ transform:open?"rotate(90deg)":"rotate(0deg)",transition:"transform .15s" }}/>
-      </button>
-      {open&&(
-        <div onClick={e=>e.stopPropagation()} style={{ position:"absolute",top:"calc(100% + 8px)",right:0,background:BG3,border:`1px solid ${BORDER2}`,borderRadius:10,padding:"6px",minWidth:200,zIndex:100,boxShadow:"0 8px 32px rgba(0,0,0,.5)",animation:"fadeIn .15s ease" }}>
-          <div style={{ padding:"10px 12px",borderBottom:`1px solid ${BORDER}`,marginBottom:4 }}>
-            <p style={{ fontSize:16,fontWeight:700,color:TEXT }}>{profile?.name||"Usuario"}</p>
-            <p style={{ fontSize:16,color:MUTED }}>{profile?.biz||""}</p>
-          </div>
-          {[
-            {icon:"user",    label:"Mi perfil",          action:()=>{ onProfile("perfil"); setOpen(false); }},
-            {icon:"box",     label:"Mis publicaciones",   action:()=>{ onProfile("mispubs"); setOpen(false); }},
-            {icon:"bell",    label:"Solicitudes & Alertas",action:()=>{ onProfile("notif"); setOpen(false); }},
-            {icon:"settings",label:"Configuración",       action:()=>{ onProfile("settings"); setOpen(false); }},
-          ].map(({icon,label,action})=>(
-            <button key={label} onClick={action}
-              style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:16,color:SUB,fontFamily:"inherit",transition:"all .15s" }}
-              onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,255,255,.05)"; e.currentTarget.style.color=TEXT; }}
-              onMouseLeave={e=>{ e.currentTarget.style.background="none"; e.currentTarget.style.color=SUB; }}>
-              <Ic n={icon} s={15} c={MUTED}/>{label}
-            </button>
-          ))}
-          <div style={{ height:1,background:BORDER,margin:"4px 0" }}/>
-          <button onClick={()=>{ setOpen(false); onLogout(); }}
-            style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:7,border:"none",background:"none",cursor:"pointer",width:"100%",textAlign:"left",fontSize:16,color:RED,fontFamily:"inherit",transition:"all .15s" }}
-            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,140,0,.08)"}
-            onMouseLeave={e=>e.currentTarget.style.background="none"}>
-            <Ic n="logout" s={15} c={RED}/>Cerrar sesión
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════
    DESKTOP LAYOUT
