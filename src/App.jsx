@@ -543,7 +543,6 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
   const { t, lang, setLang } = useLang();
   const isMobile = useIsMobile();
   const [searchQ, setSearchQ] = useState("");
-  const [cat, setCat] = useState("all");
 
   const centerBtn = { background:"transparent", color:RED, border:`1.5px solid ${RED}`, borderRadius:7, padding:"8px 13px", fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" };
   const CENTER_NAV = [
@@ -641,10 +640,6 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
                   placeholder="¿Qué necesitas?"
                   style={{ flex:1, minWidth:0, padding:"12px 0", background:"transparent", border:"none", outline:"none", fontSize:16, color:TEXT, fontFamily:"Barlow, sans-serif" }}/>
               </div>
-              <select value={cat} onChange={e=>setCat(e.target.value)}
-                style={{ background:BG2, border:`1px solid ${BORDER}`, borderRadius:8, padding:"12px 12px", fontSize:15, color:TEXT, cursor:"pointer", flex:"1 1 160px", minWidth:0 }}>
-                {CATS.map(c=><option key={c.id} value={c.id}>{c.id==="all"?"Todas las categorías":c.label}</option>)}
-              </select>
               <button onClick={handleSearch}
                 style={{ background:RED, border:"none", borderRadius:8, padding:"12px 28px", fontSize:16, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed, sans-serif", letterSpacing:.5, textTransform:"uppercase", flex: isMobile ? "1 1 100%" : "0 0 auto" }}>
                 Buscar
@@ -3472,29 +3467,13 @@ function ProfilePage({ user, profile, onLogout }) {
 function SupportPanel({ onClose }) {
   const [msg,      setMsg]      = useState("");
   const [sent,     setSent]     = useState(false);
-  const [aiInput,  setAiInput]  = useState("");
-  const [aiResp,   setAiResp]   = useState("Hola, soy el asistente de SpartsHub. ¿En qué puedo ayudarte?");
-  const [aiLoading,setAiLoading]= useState(false);
 
-  const sendAI = async () => {
-    if (!aiInput.trim() || aiLoading) return;
-    const q = aiInput.trim(); setAiInput(""); setAiLoading(true);
-    try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 200,
-          system: "Eres el asistente de soporte de SpartsHub, un marketplace P2P de repuestos industriales. Responde en español, de forma breve y útil. Si no sabes algo, sugiere contactar soporte humano o WhatsApp.",
-          messages: [{ role:"user", content: q }]
-        })
-      });
-      const data = await response.json();
-      setAiResp(data.content?.[0]?.text || "Lo siento, no pude procesar tu consulta. Contacta al soporte humano.");
-    } catch {
-      setAiResp("Error de conexión. Por favor contacta al soporte humano o por WhatsApp.");
-    }
-    setAiLoading(false);
+  const sendMail = () => {
+    if (!msg.trim()) return;
+    const subject = encodeURIComponent("Soporte SpartsHub");
+    const body    = encodeURIComponent(msg.trim());
+    window.location.href = `mailto:info@spartshub.com?subject=${subject}&body=${body}`;
+    setSent(true);
   };
 
   return (
@@ -3503,32 +3482,16 @@ function SupportPanel({ onClose }) {
         <div style={{ background:RED,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <div>
             <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:2 }}><svg width={22} height={22} viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.2)"/><text x="18" y="26" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="24" fill="white">S</text></svg><p className="bebas" style={{ fontSize:18,color:"#fff",letterSpacing:.5 }}>SOPORTE</p></div>
-            <p style={{ fontSize:16,color:"rgba(255,255,255,.7)",marginTop:2 }}>Respuesta inmediata · IA + Humano</p>
+            <p style={{ fontSize:16,color:"rgba(255,255,255,.7)",marginTop:2 }}>Contáctanos directamente</p>
           </div>
           <button onClick={onClose} style={{ color:"rgba(255,255,255,.8)",background:"none",border:"none",cursor:"pointer",fontSize:20 }}>✕</button>
         </div>
         <div style={{ overflowY:"auto",flex:1,padding:20,display:"flex",flexDirection:"column",gap:16 }}>
           <div style={{ background:BG2,borderRadius:10,padding:16,border:`1px solid ${BORDER}` }}>
-            <div style={{ display:"flex",gap:10,alignItems:"center",marginBottom:12 }}>
-              <div style={{ width:32,height:32,background:RED,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center" }}>
-                <span style={{ color:"#fff",fontSize:16 }}>⚡</span>
-              </div>
-              <div>
-                <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>Asistente IA</p>
-                <p style={{ fontSize:16,color:GREEN }}>● En línea ahora</p>
-              </div>
-            </div>
-            <div style={{ background:CARD,borderRadius:8,padding:12,marginBottom:10,fontSize:16,color:TEXT,lineHeight:1.6,border:`1px solid ${BORDER}` }}>{aiResp}</div>
-            <div style={{ display:"flex",gap:8 }}>
-              <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAI()} placeholder="Escribe tu pregunta…" className="inp" style={{ flex:1,borderRadius:8,padding:"8px 12px",fontSize:16 }}/>
-              <button onClick={sendAI} className="btn-red" style={{ padding:"8px 12px" }}><Ic n="send" s={14} c="#fff"/></button>
-            </div>
-          </div>
-          <div style={{ background:BG2,borderRadius:10,padding:16,border:`1px solid ${BORDER}` }}>
             <p style={{ fontWeight:700,fontSize:16,color:TEXT,marginBottom:8 }}>Soporte humano</p>
             <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Describe tu problema…" rows={3} className="inp" style={{ resize:"none",marginBottom:8 }}/>
-            {sent?<p style={{ color:GREEN,fontSize:16,fontWeight:700 }}>✓ Mensaje enviado — responderemos en menos de 24hrs</p>
-              :<button onClick={()=>{ if(msg.trim()) setSent(true); }} className="btn-red" style={{ width:"100%",padding:"10px",fontSize:16 }}>Enviar mensaje</button>
+            {sent?<p style={{ color:GREEN,fontSize:16,fontWeight:700 }}>✓ Abrimos tu correo — envíanos el mensaje y responderemos en menos de 24hrs</p>
+              :<button onClick={sendMail} className="btn-red" style={{ width:"100%",padding:"10px",fontSize:16 }}>Enviar mensaje</button>
             }
           </div>
           <button onClick={()=>window.open("https://wa.me/56932689914?text=Hola%20SpartsHub","_blank")}
