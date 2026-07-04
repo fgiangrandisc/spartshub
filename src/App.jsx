@@ -564,12 +564,6 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
     { icon:"users", title:"Contacto directo",   desc:"sin intermediarios" },
     { icon:"shield",title:"Sin comisiones",     desc:"ni costos ocultos" },
   ];
-  const TRUST = [
-    { icon:"shield", label:"Negocios verificados" },
-    { icon:"lock",   label:"Transacciones seguras" },
-    { icon:"msg",    label:"Soporte real" },
-    { icon:"map",    label:"Cobertura nacional" },
-  ];
 
   return (
     <div style={{ minHeight:"100vh", background:BG, color:TEXT, fontFamily:"'Barlow', sans-serif" }}>
@@ -656,17 +650,6 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
                 Buscar
               </button>
             </div>
-          </div>
-        </div>
-
-        <div style={{ position:"relative", zIndex:2, background:"rgba(10,10,10,.6)", borderTop:`1px solid ${BORDER}`, backdropFilter:"blur(4px)" }}>
-          <div style={{ maxWidth:1200, margin:"0 auto", padding:"14px 20px", display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap:12 }}>
-            {TRUST.map((t,i)=>(
-              <div key={i} style={{ display:"flex", alignItems:"center", gap:8, justifyContent: isMobile ? "flex-start" : "center" }}>
-                <Ic n={t.icon} s={18} c={RED}/>
-                <span style={{ fontSize:14, fontWeight:600, color:SUB }}>{t.label}</span>
-              </div>
-            ))}
           </div>
         </div>
       </section>
