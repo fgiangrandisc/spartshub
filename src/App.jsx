@@ -1636,7 +1636,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
                     <span style={{ fontSize:13,color:MUTED,fontWeight:600 }}>o</span>
                     <div style={{ flex:1,height:1,background:BORDER }}/>
                   </div>
-                  <div onClick={()=>{ onClose(); onBulkUpload(); }}
+                  <div onClick={()=>onBulkUpload()}
                     style={{ display:"flex",alignItems:"center",gap:16,padding:"16px",borderRadius:12,border:`1.5px solid ${BORDER}`,background:CARD,cursor:"pointer",transition:"all .15s" }}
                     onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
                     onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>
@@ -4843,7 +4843,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
       {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)} onRequireAuth={onGuestRegister}/>}
       {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
-      {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>setShowBulkUpload(false)} onDone={()=>setShowBulkUpload(false)}/>}
+      {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>{ setShowBulkUpload(false); setShowPublish(false); }} onDone={()=>{ setShowBulkUpload(false); setShowPublish(false); }}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&session&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
     </div>
@@ -5003,7 +5003,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
       {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)} onRequireAuth={onGuestRegister}/>}
       {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
-      {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>setShowBulkUpload(false)} onDone={()=>setShowBulkUpload(false)}/>}
+      {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>{ setShowBulkUpload(false); setShowPublish(false); }} onDone={()=>{ setShowBulkUpload(false); setShowPublish(false); }}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&session&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
 
