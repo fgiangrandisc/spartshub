@@ -327,10 +327,11 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
 };
 
 /* ── Logo ───────────────────────────────────────────────────── */
-/* logo.png es raster horizontal: width:auto es fiable y se adapta a cualquier
-   dimensión que suba el usuario. El isotipo es SVG (width:auto puede fallar en
-   Safari), así que lo fijamos por su proporción real (718x729).
-   objectFit:contain + maxWidth:none + flexShrink:0 => nunca se recorta ni deforma. */
+/* logo.png es raster horizontal con fondo NEGRO sólido (sin alpha). Se muestra
+   sobre headers oscuros, así que aplicamos mix-blend-mode:screen: el negro se
+   funde con el fondo oscuro y desaparece, dejando visibles el engranaje naranja
+   y el texto. El isotipo es SVG transparente -> no necesita blend.
+   width:auto (raster fiable) + objectFit:contain + maxWidth:none + flexShrink:0. */
 function SpartsLogo({ size=36, onClick, icon=false }) {
   const src   = icon ? "/isotipo.svg" : "/logo.png";
   const width = icon ? size*(718/729) : "auto";
@@ -339,7 +340,7 @@ function SpartsLogo({ size=36, onClick, icon=false }) {
       src={src}
       alt="PortalMaquinas"
       onClick={onClick}
-      style={{ height:size, width, maxWidth:"none", objectFit:"contain", display:"block", flexShrink:0, cursor:onClick?"pointer":"default" }}
+      style={{ height:size, width, maxWidth:"none", objectFit:"contain", display:"block", flexShrink:0, mixBlendMode: icon ? undefined : "screen", cursor:onClick?"pointer":"default" }}
     />
   );
 }
