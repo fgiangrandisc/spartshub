@@ -362,7 +362,7 @@ function ToastProvider({ children }) {
   return (
     <ToastCtx.Provider value={show}>
       {children}
-      <div style={{ position:"fixed", bottom:100, left:0, right:0, zIndex:300, display:"flex", flexDirection:"column", alignItems:"center", gap:8, pointerEvents:"none", padding:"0 16px" }}>
+      <div style={{ position:"fixed", bottom:"calc(100px + env(safe-area-inset-bottom))", left:0, right:0, zIndex:300, display:"flex", flexDirection:"column", alignItems:"center", gap:8, pointerEvents:"none", padding:"0 16px" }}>
         {toasts.map(t => {
           const color = t.type==="error" ? DANGER : t.type==="info" ? BLUE : GREEN;
           const icon  = t.type==="error" ? "✕" : t.type==="info" ? "ℹ" : "✓";
@@ -1179,6 +1179,18 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
 function PhotoCarousel({ photos }) {
   const [idx, setIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
+  const touchX = useRef(null);
+
+  const prev = () => setIdx(i => (i - 1 + photos.length) % photos.length);
+  const next = () => setIdx(i => (i + 1) % photos.length);
+  // Swipe táctil entre fotos (móvil)
+  const onTouchStart = e => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = e => {
+    if (touchX.current == null || photos.length <= 1) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (Math.abs(dx) > 40) (dx < 0 ? next : prev)();
+    touchX.current = null;
+  };
 
   // Keyboard navigation
   useEffect(() => {
@@ -1197,7 +1209,8 @@ function PhotoCarousel({ photos }) {
       <div style={{ width:"100%", background:"#0a0a0a" }}>
         {/* Main photo — click to open lightbox */}
         <div style={{ position:"relative", width:"100%", height:280, overflow:"hidden", cursor:"zoom-in" }}
-          onClick={e=>{ e.stopPropagation(); setLightbox(true); }}>
+          onClick={e=>{ e.stopPropagation(); setLightbox(true); }}
+          onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           <img src={photos[idx]} alt=""
             style={{ width:"100%", height:"100%", objectFit:"contain", display:"block", background:"#0a0a0a" }}
           />
@@ -1215,13 +1228,13 @@ function PhotoCarousel({ photos }) {
           {/* Arrows */}
           {photos.length > 1 && (
             <>
-              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i-1+photos.length)%photos.length); }}
-                style={{ position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
-                <Ic n="chevL" s={16} c="#fff"/>
+              <button aria-label="Anterior" onClick={e=>{ e.stopPropagation(); prev(); }}
+                style={{ position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:40,height:40,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                <Ic n="chevL" s={18} c="#fff"/>
               </button>
-              <button onClick={e=>{ e.stopPropagation(); setIdx(i=>(i+1)%photos.length); }}
-                style={{ position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
-                <Ic n="chevR" s={16} c="#fff"/>
+              <button aria-label="Siguiente" onClick={e=>{ e.stopPropagation(); next(); }}
+                style={{ position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.55)",border:"none",borderRadius:"50%",width:40,height:40,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                <Ic n="chevR" s={18} c="#fff"/>
               </button>
             </>
           )}
@@ -1254,6 +1267,7 @@ function PhotoCarousel({ photos }) {
           </div>
           <img src={photos[idx]} alt=""
             onClick={e=>e.stopPropagation()}
+            onTouchStart={onTouchStart} onTouchEnd={e=>{ e.stopPropagation(); onTouchEnd(e); }}
             style={{ maxWidth:"92vw", maxHeight:"78vh", objectFit:"contain", borderRadius:10, boxShadow:"0 24px 80px rgba(0,0,0,.8)" }}
           />
           {photos.length > 1 && (
@@ -3281,12 +3295,12 @@ function ProfilePage({ user, profile, onLogout }) {
                   <button onClick={()=>{setBulkFile(null);setBulkRows([]);}} style={{ color:MUTED,fontSize:16,background:"none",border:"none",cursor:"pointer" }}>Cambiar</button>
                 </div>
                 {bulkRows.length > 0 && (
-                <div style={{ background:CARD,borderRadius:10,border:`1px solid ${BORDER}`,overflow:"hidden",marginBottom:16 }}>
-                  <div style={{ background:BG2,padding:"10px 16px",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:12 }}>
+                <div style={{ background:CARD,borderRadius:10,border:`1px solid ${BORDER}`,overflowX:"auto",marginBottom:16 }}>
+                  <div style={{ background:BG2,padding:"10px 16px",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:12,minWidth:440 }}>
                     {["Título","Categoría","Condición","Precio"].map(h=><span key={h} style={{ fontSize:16,fontWeight:700,color:MUTED,fontFamily:"Barlow Condensed,sans-serif",textTransform:"uppercase" }}>{h}</span>)}
                   </div>
                   {bulkRows.map((r,i)=>(
-                    <div key={i} style={{ padding:"12px 16px",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:12,borderTop:`1px solid ${BORDER}` }}>
+                    <div key={i} style={{ padding:"12px 16px",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:12,minWidth:440,borderTop:`1px solid ${BORDER}` }}>
                       <span style={{ fontSize:16,color:TEXT }}>{r.title}</span>
                       <span style={{ fontSize:16,color:MUTED }}>{CATS.find(c=>c.id===r.cat)?.label||r.cat}</span>
                       <span style={{ fontSize:16,color:MUTED }}>{r.condition}</span>
@@ -4499,105 +4513,6 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   FOOTER
-══════════════════════════════════════════════════════════════ */
-function AppFooter() {
-  const COL = { display:"flex",flexDirection:"column",gap:10 };
-  const LNK = { fontSize:16,color:SUB,cursor:"pointer",transition:"color .15s",textDecoration:"none",background:"none",border:"none",fontFamily:"inherit",textAlign:"left",padding:0 };
-  const HDR = { fontSize:16,fontWeight:700,color:MUTED,letterSpacing:1.5,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginBottom:6 };
-
-  return (
-    <footer style={{ background:BG3,borderTop:`1px solid ${BORDER}`,marginTop:48,padding:"48px 0 0" }}>
-      <div style={{ maxWidth:1200,margin:"0 auto",padding:"0 36px" }}>
-
-        {/* Top grid */}
-        <div style={{ display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:48,marginBottom:48 }}>
-
-          {/* Brand column */}
-          <div>
-            <SpartsLogo size={34}/>
-            <p style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",marginTop:10,marginBottom:8 }}>
-              No vendemos repuestos,<br/>conectamos personas.
-            </p>
-            <p style={{ fontSize:16,color:MUTED,lineHeight:1.75,marginBottom:16,maxWidth:300 }}>
-              El marketplace industrial P2P que conecta compradores y vendedores de equipos, partes y repuestos industriales a nivel global. Sin intermediarios. Sin comisiones.
-            </p>
-            <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
-              {["P2P","0% Comisión","Global","Verificado"].map(tag=>(
-                <span key={tag} className="tag t-dim" style={{ fontSize:16 }}>{tag}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Empresa */}
-          <div style={COL}>
-            <p style={HDR}>Empresa</p>
-            {[["Quiénes somos","#"],["Cómo funciona","#"],["Industrias que cubrimos","#"],["Casos de éxito","#"],["Blog","#"],["Prensa","#"]].map(([l,h])=>(
-              <a key={l} href={h} style={LNK}
-                onMouseEnter={e=>e.currentTarget.style.color=RED}
-                onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>
-            ))}
-          </div>
-
-          {/* Políticas */}
-          <div style={COL}>
-            <p style={HDR}>Políticas</p>
-            {[["Términos y condiciones","#"],["Política de privacidad","#"],["Política de cookies","#"],["Política de uso aceptable","#"],["Resolución de disputas","#"],["Aviso legal","#"]].map(([l,h])=>(
-              <a key={l} href={h} style={LNK}
-                onMouseEnter={e=>e.currentTarget.style.color=RED}
-                onMouseLeave={e=>e.currentTarget.style.color=SUB}>{l}</a>
-            ))}
-          </div>
-
-          {/* Contacto */}
-          <div style={COL}>
-            <p style={HDR}>Contacto</p>
-            <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
-              <div>
-                <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Email general</p>
-                <a href="mailto:info@portalmaquinas.com" style={{ ...LNK,color:TEXT }}>info@portalmaquinas.com</a>
-              </div>
-              <div>
-                <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Soporte</p>
-                <a href="mailto:info@portalmaquinas.com" style={{ ...LNK,color:TEXT }}>info@portalmaquinas.com</a>
-              </div>
-              <div>
-                <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>WhatsApp</p>
-                <a href="https://wa.me/56932689914" target="_blank" style={{ ...LNK,color:TEXT }}>Escríbenos por WhatsApp</a>
-              </div>
-              <div>
-                <p style={{ fontSize:16,color:MUTED,marginBottom:3 }}>Ventas & Partnerships</p>
-                <a href="mailto:info@portalmaquinas.com" style={{ ...LNK,color:TEXT }}>info@portalmaquinas.com</a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div style={{ height:1,background:BORDER,marginBottom:20 }}/>
-
-        {/* Bottom bar */}
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,paddingBottom:24 }}>
-          <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
-            <p style={{ fontSize:16,color:MUTED }}>
-              © {new Date().getFullYear()} PortalMaquinas™ — Todos los derechos reservados.
-            </p>
-            <p style={{ fontSize:16,color:"rgba(255,255,255,.2)" }}>
-              PortalMaquinas es una marca registrada. El nombre, logo y diseño son propiedad exclusiva de PortalMaquinas. Queda prohibida su reproducción sin autorización expresa.
-            </p>
-          </div>
-          <div style={{ display:"flex",gap:16,alignItems:"center" }}>
-            <span style={{ fontSize:16,color:MUTED }}>Privacidad</span>
-            <span style={{ fontSize:16,color:MUTED }}>Términos</span>
-            <span style={{ fontSize:16,color:MUTED }}>Cookies</span>
-            <span style={{ fontSize:16,color:"rgba(255,255,255,.15)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>® & ™ PortalMaquinas</span>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════
    MOBILE TAB BAR

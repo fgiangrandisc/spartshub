@@ -28,11 +28,11 @@ export const T = {
 
 export const CSS_BASE = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
-body{background:#0B0F14;color:#F2F5F7;font-family:'Barlow',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{background:#0B0F14;color:#F2F5F7;font-family:'Barlow',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;text-size-adjust:100%;-webkit-text-size-adjust:100%}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(48,58,70,.6);border-radius:2px}
-button{cursor:pointer;border:none;font-family:inherit}
+button{cursor:pointer;border:none;font-family:inherit;touch-action:manipulation}
 input,textarea,select{font-family:inherit;outline:none}
 a{color:inherit;text-decoration:none}
 img{object-fit:cover}
