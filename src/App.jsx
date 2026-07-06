@@ -327,12 +327,12 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
 };
 
 /* ── Logo ───────────────────────────────────────────────────── */
-/* Relación de aspecto real de los SVG (viewBox): logo 1245x334, isotipo 718x729.
+/* Relación de aspecto real: logo.png 1877x838 (horizontal), isotipo.svg 718x729.
    Fijamos width explícito = alto × proporción para que nunca se recorte ni
    dependa del cálculo de width:auto (Safari + object-fit:cover global lo rompían). */
 function SpartsLogo({ size=36, onClick, icon=false }) {
-  const src    = icon ? "/isotipo.svg" : "/logo.svg";
-  const aspect = icon ? 718/729 : 1245/334;
+  const src    = icon ? "/isotipo.svg" : "/logo.png";
+  const aspect = icon ? 718/729 : 1877/838;
   return (
     <img
       src={src}
@@ -574,7 +574,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(14px,4vw,32px)", position:"sticky", top:0, zIndex:50 }}>
         <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:60, gap:12 }}>
           {/* Left: logo → inicio (Explorar). En móvil solo el isotipo para no apretar el header. */}
-          <SpartsLogo size={isMobile?32:38} icon={isMobile} onClick={onEnter}/>
+          <SpartsLogo size={isMobile?32:36} icon={isMobile} onClick={onEnter}/>
 
           {/* Center: 5 nav buttons (desktop only) */}
           {!isMobile && (
