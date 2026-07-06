@@ -327,14 +327,18 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
 };
 
 /* ── Logo ───────────────────────────────────────────────────── */
+/* Relación de aspecto real de los SVG (viewBox): logo 1245x334, isotipo 718x729.
+   Fijamos width explícito = alto × proporción para que nunca se recorte ni
+   dependa del cálculo de width:auto (Safari + object-fit:cover global lo rompían). */
 function SpartsLogo({ size=36, onClick, icon=false }) {
-  const src = icon ? "/isotipo.svg" : "/logo.svg";
+  const src    = icon ? "/isotipo.svg" : "/logo.svg";
+  const aspect = icon ? 718/729 : 1245/334;
   return (
     <img
       src={src}
       alt="PortalMaquinas"
       onClick={onClick}
-      style={{ height:size, width:"auto", display:"block", cursor:onClick?"pointer":"default" }}
+      style={{ height:size, width:size*aspect, maxWidth:"none", objectFit:"contain", display:"block", flexShrink:0, cursor:onClick?"pointer":"default" }}
     />
   );
 }
@@ -569,8 +573,8 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
 
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(14px,4vw,32px)", position:"sticky", top:0, zIndex:50 }}>
         <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:60, gap:12 }}>
-          {/* Left: logo → inicio (Explorar) */}
-          <div style={{ flexShrink:0, cursor:"pointer" }} onClick={onEnter}><SpartsLogo size={28}/></div>
+          {/* Left: logo → inicio (Explorar). En móvil solo el isotipo para no apretar el header. */}
+          <SpartsLogo size={isMobile?32:38} icon={isMobile} onClick={onEnter}/>
 
           {/* Center: 5 nav buttons (desktop only) */}
           {!isMobile && (
@@ -4782,7 +4786,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Mobile header */}
       <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"calc(8px + env(safe-area-inset-top)) 14px 8px" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <SpartsLogo size={28} icon onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
+          <SpartsLogo size={32} icon onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
           <div style={{ display:"flex",gap:6,alignItems:"center" }}>
             {/* Lang switcher */}
             <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:15,fontWeight:700 }}>
@@ -4902,10 +4906,10 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
       {/* GLOBAL HEADER */}
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 28px" }}>
-        <div style={{ display:"flex", alignItems:"center", height:56, gap:20 }}>
+        <div style={{ display:"flex", alignItems:"center", minHeight:56, padding:"8px 0", gap:20 }}>
           <div style={{ display:"flex",flexDirection:"column",gap:2,flexShrink:0 }}>
-            <SpartsLogo size={30} onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
-            <span style={{ fontSize:16,fontWeight:700,color:RED,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
+            <SpartsLogo size={36} onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
+            <span style={{ fontSize:13,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
           </div>
           <div style={{ width:1, height:32, background:BORDER }}/>
           {/* Center: 5 nav buttons */}
