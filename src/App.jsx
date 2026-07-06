@@ -1293,8 +1293,24 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
   const [showEdit,    setShowEdit]    = useState(false);
   const [confirmDel,  setConfirmDel]  = useState(false);
   const [deleting,    setDeleting]    = useState(false);
+  const [sellerPhone, setSellerPhone] = useState("");   // fallback: WhatsApp del perfil del vendedor
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const isOwner = user && l.user_id === user.id;
+
+  // Si la publicación no trae teléfono propio, busca el del perfil del vendedor
+  useEffect(() => {
+    setSellerPhone("");
+    if (l.phone || !l.user_id) return;
+    let alive = true;
+    sb.from("profiles").select("phone").eq("id", l.user_id).maybeSingle()
+      .then(({ data }) => { if (alive) setSellerPhone(data?.phone || ""); });
+    return () => { alive = false; };
+  }, [l.id, l.phone, l.user_id]);
+
+  // Teléfono efectivo: publicación → perfil del vendedor. Solo dígitos para wa.me
+  const contactPhone = (l.phone || sellerPhone || "").trim();
+  const waDigits = contactPhone.replace(/\D/g, "");
+  const hasWhatsApp = waDigits.length > 0;
 
   const deleteListing = async () => {
     setDeleting(true);
@@ -1307,8 +1323,9 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
   };
 
   const wa = () => {
+    if (!hasWhatsApp) return;
     const msg = encodeURIComponent(`Hola! Vi tu publicación en PortalMaquinas: *${l.title}*. Me interesa, ¿puedes darme más detalles?`);
-    window.open(`https://wa.me/${(l.phone||"").replace(/\D/g,"")}?text=${msg}`, "_blank");
+    window.open(`https://wa.me/${waDigits}?text=${msg}`, "_blank");
   };
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:60,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
@@ -1435,10 +1452,10 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
                 </>
               ) : (
                 <>
-                  <button onClick={l.phone ? wa : undefined}
-                    style={{ background: l.phone ? "#25D366" : BG2, color: l.phone ? "#fff" : MUTED, borderRadius:10, padding:"15px", fontSize:16, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", gap:10, border: l.phone ? "none" : `1px solid ${BORDER}`, cursor: l.phone ? "pointer" : "not-allowed", opacity: l.phone ? 1 : .6 }}
-                    title={l.phone ? undefined : "Este vendedor no publicó su WhatsApp. Usa el chat interno."}>
-                    <Ic n="wa" s={20} c={l.phone?"#fff":MUTED}/>{l.phone?"Contactar por WhatsApp":"WhatsApp no disponible"}
+                  <button onClick={hasWhatsApp ? wa : undefined}
+                    style={{ background: hasWhatsApp ? "#25D366" : BG2, color: hasWhatsApp ? "#fff" : MUTED, borderRadius:10, padding:"15px", fontSize:16, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", gap:10, border: hasWhatsApp ? "none" : `1px solid ${BORDER}`, cursor: hasWhatsApp ? "pointer" : "not-allowed", opacity: hasWhatsApp ? 1 : .6 }}
+                    title={hasWhatsApp ? undefined : "Este vendedor no tiene WhatsApp. Usa el chat interno."}>
+                    <Ic n="wa" s={20} c={hasWhatsApp?"#fff":MUTED}/>{hasWhatsApp?"Contactar por WhatsApp":"WhatsApp no disponible"}
                   </button>
                   <button className="btn-ol" style={{ padding:14 }} onClick={()=>{ onClose(); onChat(l); }}>
                     <Ic n="msg" s={18} c={RED}/><span style={{ color:RED,fontWeight:700 }}>Mensaje en PortalMaquinas</span>
