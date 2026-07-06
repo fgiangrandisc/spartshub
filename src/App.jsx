@@ -4754,6 +4754,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
   const [showBulkUpload,setShowBulkUpload]= useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
+  const [menuOpen,      setMenuOpen]      = useState(false);
   const unreadCount = useUnreadCount(session?.user?.id);
 
   // El botón "atrás" del navegador cierra los paneles abiertos
@@ -4761,52 +4762,106 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
   useBackButton(showBulkUpload,()=>setShowBulkUpload(false));
   useBackButton(showSolicitud, ()=>setShowSolicitud(false));
   useBackButton(showSupport,   ()=>setShowSupport(false));
+  useBackButton(menuOpen,      ()=>setMenuOpen(false));
+
+  // Menú hamburguesa: navegación y acciones
+  const goHome    = ()=>{ setMenuOpen(false); setSelected(null); setChatListing(null); setTab("search"); };
+  const goExplore = ()=>{ setSelected(null); setChatListing(null); setTab("search"); };
+  const onSell    = ()=> session ? setShowPublish(true)   : onGuestRegister();
+  const onRequest = ()=> session ? setShowSolicitud(true) : onGuestRegister();
+  const MENU_NAV = [
+    { key:"nav_sell",     action:onSell },
+    { key:"nav_buy",      action:goExplore },
+    { key:"nav_requests", action:onRequest },
+    { key:"nav_services", action:goExplore },
+    { key:"nav_rentals",  action:goExplore },
+  ];
+  const closeAnd = fn => { setMenuOpen(false); fn?.(); };
 
   useEffect(()=>{
     const onKey = e => {
       if (e.key !== "Escape") return;
+      if (menuOpen)      { setMenuOpen(false);      return; }
       if (showPublish)   { setShowPublish(false);   return; }
       if (showSolicitud) { setShowSolicitud(false); return; }
       if (showSupport)   { setShowSupport(false);   return; }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [showPublish, showSolicitud, showSupport]);
+  }, [menuOpen, showPublish, showSolicitud, showSupport]);
 
   return (
     <div style={{ background:BG, minHeight:"100dvh", color:TEXT }}>
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
 
-      {/* Mobile header */}
-      <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"calc(8px + env(safe-area-inset-top)) 14px 8px" }}>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <SpartsLogo size={38} icon onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
-          <div style={{ display:"flex",gap:6,alignItems:"center" }}>
-            <button className="btn-ghost" aria-label="Soporte" style={{ width:44,height:44,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={20} c={SUB}/></button>
-            {session && (
-              <button onClick={logout} title="Cerrar sesión"
-                style={{ minHeight:44,padding:"0 10px",borderRadius:6,border:`1px solid ${RED}`,background:"transparent",color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:14,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
-                <Ic n="logout" s={16} c={RED}/>Salir
-              </button>
-            )}
-            {profile?.is_admin && (
-              <button onClick={()=>setTab("admin")} aria-label="Admin" style={{ width:44, height:44, padding:0, borderRadius:6, border:`1px solid ${RED}`, background:tab==="admin"?RED:"transparent", color:tab==="admin"?"#fff":RED, cursor:"pointer", fontSize:16, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5 }}>⚙</button>
-            )}
+      {/* Mobile header: izquierda isotipo · centro wordmark · derecha hamburguesa */}
+      <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"calc(8px + env(safe-area-inset-top)) 12px 8px" }}>
+        <div style={{ display:"flex",alignItems:"center",gap:8,minHeight:44 }}>
+          <SpartsLogo size={32} icon onClick={goHome}/>
+          <div onClick={goHome} style={{ flex:1,textAlign:"center",fontFamily:"Barlow,sans-serif",fontWeight:800,fontSize:19,letterSpacing:-0.3,lineHeight:1,whiteSpace:"nowrap",overflow:"hidden",cursor:"pointer" }}>
+            <span style={{ color:TEXT }}>Portal</span><span style={{ color:RED }}>Maquinas</span>
           </div>
+          <button onClick={()=>setMenuOpen(o=>!o)} aria-label="Menú"
+            style={{ width:44,height:44,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",background:"transparent",border:`1px solid ${BORDER2}`,borderRadius:8,cursor:"pointer" }}>
+            <Ic n={menuOpen?"x":"menu"} s={22} c={TEXT}/>
+          </button>
         </div>
       </div>
 
-      {/* Guest banner */}
-      {guestMode && !session && (
-        <div style={{ position:"fixed", top:"calc(60px + env(safe-area-inset-top))", left:0, right:0, zIndex:49, background:"rgba(20,22,24,.97)", borderBottom:`1px solid rgba(255,106,0,.3)`, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
-          <p style={{ fontSize:14, color:SUB, flex:1 }}>Modo <strong style={{ color:RED }}>invitado</strong></p>
-          <button onClick={onGuestLogin} style={{ background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:6, minHeight:44, padding:"0 12px", fontSize:14, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Entrar</button>
-          <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:6, minHeight:44, padding:"0 12px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", textTransform:"uppercase" }}>Registrarse</button>
-        </div>
+      {/* Menú hamburguesa (dropdown) */}
+      {menuOpen && (
+        <>
+          <div onClick={()=>setMenuOpen(false)} style={{ position:"fixed",inset:0,zIndex:60,background:"rgba(0,0,0,.55)" }}/>
+          <div style={{ position:"fixed",top:"calc(60px + env(safe-area-inset-top))",left:0,right:0,zIndex:61,background:BG3,borderBottom:`1px solid ${BORDER}`,boxShadow:"0 16px 40px rgba(0,0,0,.55)",padding:"10px 14px calc(16px + env(safe-area-inset-bottom))",display:"flex",flexDirection:"column",gap:6,maxHeight:"calc(100dvh - 60px)",overflowY:"auto" }}>
+            {MENU_NAV.map(b=>(
+              <button key={b.key} onClick={()=>closeAnd(b.action)}
+                style={{ width:"100%",minHeight:48,padding:"0 16px",textAlign:"left",background:BG2,color:TEXT,border:`1px solid ${BORDER}`,borderRadius:10,fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",cursor:"pointer",display:"flex",alignItems:"center" }}>
+                {t(b.key)}
+              </button>
+            ))}
+            <div style={{ height:1,background:BORDER,margin:"4px 0" }}/>
+            {!session && (
+              <>
+                <button onClick={()=>closeAnd(onGuestLogin)}
+                  style={{ width:"100%",minHeight:48,background:"transparent",border:`1.5px solid ${BORDER2}`,borderRadius:10,fontSize:15,fontWeight:700,color:TEXT,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+                  {t("nav_signin")}
+                </button>
+                <button onClick={()=>closeAnd(onGuestRegister)}
+                  style={{ width:"100%",minHeight:48,background:RED,border:"none",borderRadius:10,fontSize:15,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
+                  {t("nav_signup")}
+                </button>
+              </>
+            )}
+            {/* Selector de idioma */}
+            <div style={{ display:"flex",alignItems:"center",padding:"6px 4px" }}>
+              <span style={{ fontSize:14,color:MUTED,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>Idioma</span>
+              <div style={{ display:"flex",marginLeft:"auto",border:`1px solid ${BORDER2}`,borderRadius:8,overflow:"hidden" }}>
+                {["es","en"].map(l=>(
+                  <button key={l} onClick={()=>setLang(l)}
+                    style={{ minHeight:44,padding:"0 18px",background:lang===l?RED:"transparent",color:lang===l?"#fff":TEXT,border:"none",cursor:"pointer",fontSize:15,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5 }}>
+                    {l.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {profile?.is_admin && (
+              <button onClick={()=>closeAnd(()=>setTab("admin"))}
+                style={{ width:"100%",minHeight:48,padding:"0 16px",textAlign:"left",background:BG2,color:TEXT,border:`1px solid ${BORDER}`,borderRadius:10,fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",cursor:"pointer",display:"flex",alignItems:"center",gap:8 }}>
+                ⚙ Admin
+              </button>
+            )}
+            {session && (
+              <button onClick={()=>closeAnd(logout)}
+                style={{ width:"100%",minHeight:48,background:"transparent",border:`1px solid ${RED}`,borderRadius:10,fontSize:15,fontWeight:700,color:RED,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
+                <Ic n="logout" s={16} c={RED}/>{t("nav_logout")}
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       {/* Page content */}
-      <div style={{ paddingTop: `calc(${guestMode && !session ? 122 : 64}px + env(safe-area-inset-top))`, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
+      <div style={{ paddingTop: `calc(64px + env(safe-area-inset-top))`, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
@@ -5013,8 +5068,8 @@ export default function SpartsHub() {
   const [tab,          setTab]          = useState("search");
   const [selected,     setSelected]     = useState(null);
   const [chatListing,  setChatListing]  = useState(null);
-  // Idioma fijo en español por el momento (selector ES/EN oculto).
-  const [lang,         setLangState]    = useState("es");
+  // Idioma: por defecto español; el selector del menú móvil permite cambiarlo y persiste.
+  const [lang,         setLangState]    = useState(()=>localStorage.getItem("sh_lang")||"es");
   const [region,       setRegionState]  = useState(()=>localStorage.getItem("sh_region")||"all");
 
   const setLang = v => { setLangState(v); localStorage.setItem("sh_lang", v); };
