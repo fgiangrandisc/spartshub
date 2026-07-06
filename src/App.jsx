@@ -4866,14 +4866,6 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Bottom tab bar */}
       <MobileTabBar tab={tab} setTab={setTab} onPublish={()=>setShowPublish(true)} session={session} onGuestAction={onGuestRegister}/>
 
-      {/* Floating solicitud button — above tab bar (logged-in only) */}
-      {session&&!showSolicitud&&!showPublish&&(
-        <button onClick={()=>setShowSolicitud(true)}
-          style={{ position:"fixed",bottom:"calc(88px + env(safe-area-inset-bottom))",right:16,zIndex:49,background:RED,color:"#fff",border:"none",borderRadius:14,padding:"12px 18px",minHeight:48,fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:"0 6px 24px rgba(255,106,0,.45)",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.8,textTransform:"uppercase" }}>
-          <Ic n="search" s={16} c="#fff"/>Solicita un repuesto
-        </button>
-      )}
-
       {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)} onRequireAuth={onGuestRegister}/>}
       {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
       {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>setShowBulkUpload(false)} onDone={()=>setShowBulkUpload(false)}/>}
