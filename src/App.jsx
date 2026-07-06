@@ -1944,7 +1944,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   CARGA MASIVA — Excel (.xlsx/.csv) o PDF, interpretado con IA
+   CARGA MASIVA — plantilla Excel fija (hoja "Publicaciones")
 ══════════════════════════════════════════════════════════════ */
 
 /* Carga SheetJS desde CDN solo cuando se necesita (lazy) */
@@ -1962,77 +1962,12 @@ function loadXLSX() {
   return _xlsxPromise;
 }
 
-/* Lee un File como base64 (sin el prefijo data:) */
-const fileToBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result).split(",")[1]);
-    r.onerror = () => reject(new Error("Error leyendo el archivo"));
-    r.readAsDataURL(file);
-  });
+/* Normaliza texto: minúsculas, sin acentos ni espacios extra (para mapear categorías/monedas) */
+const _norm = (s) => String(s ?? "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-/* Llama a la IA para extraer publicaciones desde texto (Excel/CSV) o un PDF */
-async function extractListingsAI({ text, pdfBase64 }) {
-  const catList = CATS.filter(c => c.id !== "all").map(c => `${c.id}(${c.label})`).join(" ");
-  const instruction = `Eres un experto en repuestos, equipos y maquinaria industrial. A partir del contenido entregado (un inventario o catálogo), extrae TODAS las publicaciones de productos que encuentres.
-
-Devuelve SOLO un arreglo JSON válido (sin markdown, sin texto extra), donde cada elemento es:
-{
-  "title": "nombre descriptivo del producto (obligatorio)",
-  "brand": "marca o null",
-  "model": "modelo o null",
-  "part_number": "número de parte o null",
-  "serial_number": "número de serie o null",
-  "cat": "una de: ${catList}",
-  "condition": "una de: Nuevo | Usado – Bueno | Usado – Regular | Reacondicionado",
-  "price": número sin separadores (ej 150000) o null si no hay,
-  "currency": "CLP | USD | EUR | COP | PEN | MXN (default CLP)",
-  "stock": número entero (default 1),
-  "location": "ubicación/ciudad o null",
-  "description": "descripción técnica breve en español o null",
-  "emoji": "un emoji que represente el producto"
-}
-
-Reglas:
-- Si un dato no aparece, usa null (no inventes).
-- Si no hay precio, price=null y currency="CLP".
-- Interpreta encabezados de columnas aunque estén en cualquier orden o idioma.
-- Ignora filas vacías, totales o encabezados que no sean productos.
-- Máximo 50 productos por carga.`;
-
-  const content = [];
-  if (pdfBase64) {
-    content.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: pdfBase64 } });
-    content.push({ type: "text", text: instruction });
-  } else {
-    content.push({ type: "text", text: `${instruction}\n\nCONTENIDO DEL ARCHIVO:\n${text}` });
-  }
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4000,
-      messages: [{ role: "user", content }],
-    }),
-  });
-  if (!response.ok) throw new Error("La IA no pudo procesar el archivo (intenta de nuevo).");
-  const data = await response.json();
-  const raw = (data.content || []).map(b => b.type === "text" ? b.text : "").join("\n");
-  const cleaned = raw.replace(/```(?:json)?/g, "").trim();
-  const match = cleaned.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error("No se detectaron productos en el archivo.");
-  let arr;
-  try { arr = JSON.parse(match[0]); } catch { throw new Error("La respuesta de la IA no se pudo leer."); }
-  if (!Array.isArray(arr) || arr.length === 0) throw new Error("No se detectaron productos en el archivo.");
-  return arr;
-}
+/* Mapa etiqueta-de-categoría (normalizada) → id, derivado de CATS */
+const CAT_BY_LABEL = CATS.reduce((m, c) => { if (c.id !== "all") m[_norm(c.label)] = c.id; return m; }, {});
+const VALID_CAT_IDS = new Set(CATS.map(c => c.id));
 
 function BulkUploadSheet({ user, profile, onClose, onDone }) {
   const isMobile = useIsMobile();
@@ -2053,7 +1988,7 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
     part_number:  r.part_number || "",
     serial_number:r.serial_number || "",
     cat:          validCats.includes(r.cat) ? r.cat : "serv",
-    condition:    CONDITIONS.includes(r.condition) ? r.condition : "Nuevo",
+    condition:    CONDITIONS.includes(r.condition) ? r.condition : "Usado – Bueno",
     price:        (r.price === null || r.price === undefined || r.price === "") ? "" : String(r.price).replace(/\D/g, ""),
     currency:     CURRENCIES.includes(r.currency) ? r.currency : "CLP",
     stock:        r.stock ? String(r.stock).replace(/\D/g, "") || "1" : "1",
@@ -2069,10 +2004,8 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
     setError("");
     setFileName(file.name);
     const ext = file.name.split(".").pop().toLowerCase();
-    const isPdf = ext === "pdf" || file.type === "application/pdf";
-    const isExcel = ["xlsx", "xls", "csv"].includes(ext);
-    if (!isPdf && !isExcel) {
-      setError("Formato no soportado. Sube un archivo .xlsx, .csv o .pdf");
+    if (!["xlsx", "xls"].includes(ext)) {
+      setError("Formato no soportado. Sube la plantilla en Excel (.xlsx).");
       e.target.value = "";
       return;
     }
@@ -2084,27 +2017,48 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
 
     setStage("processing");
     try {
-      let detected;
-      if (isPdf) {
-        const b64 = await fileToBase64(file);
-        detected = await extractListingsAI({ pdfBase64: b64 });
-      } else {
-        // Excel/CSV → texto plano con SheetJS
-        const XLSX = await loadXLSX();
-        const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, { type: "array" });
-        let text = "";
-        wb.SheetNames.forEach(name => {
-          const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name]);
-          text += `--- Hoja: ${name} ---\n${csv}\n\n`;
+      const XLSX = await loadXLSX();
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets["Publicaciones"] || wb.Sheets[wb.SheetNames[0]];
+      if (!sheet) throw new Error('No se encontró la hoja "Publicaciones". Usa la plantilla oficial.');
+
+      const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      const headers = (aoa[0] || []).map(h => _norm(h));
+      const idxOf = (...names) => { for (const n of names) { const i = headers.indexOf(_norm(n)); if (i >= 0) return i; } return -1; };
+      const iTitulo = idxOf("titulo"), iCat = idxOf("categoria"), iMarca = idxOf("marca"),
+            iModelo = idxOf("modelo"), iPrecio = idxOf("precio"), iMoneda = idxOf("moneda"),
+            iUbic = idxOf("ubicacion"), iDesc = idxOf("descripcion");
+      if (iTitulo < 0) throw new Error('La plantilla no tiene la columna "Titulo". Descárgala de nuevo.');
+
+      // Filas de datos: desde la fila 3 (índice 2). Ignora encabezado (0) y ayuda (1).
+      // Se incluyen TODAS las filas con Título no vacío (incluidos los ejemplos).
+      const parsed = [];
+      for (const row of aoa.slice(2)) {
+        const cell = i => (i >= 0 ? String(row[i] ?? "").trim() : "");
+        const title = cell(iTitulo);
+        if (!title) continue;
+        const catRaw = _norm(cell(iCat));
+        const cat = CAT_BY_LABEL[catRaw] || (VALID_CAT_IDS.has(catRaw) ? catRaw : "serv");
+        const priceDigits = cell(iPrecio).replace(/[^\d]/g, "");
+        const hasPrice = priceDigits !== "" && Number(priceDigits) > 0;
+        const monRaw = cell(iMoneda).toUpperCase().replace(/[^A-Z]/g, "");
+        parsed.push({
+          title,
+          brand:       cell(iMarca),
+          model:       cell(iModelo),
+          cat,
+          price:       hasPrice ? priceDigits : "",             // vacío → saveAll pone price=0 y currency=NEG
+          currency:    CURRENCIES.includes(monRaw) ? monRaw : "CLP",
+          location:    cell(iUbic),
+          description: cell(iDesc),
         });
-        if (!text.trim()) throw new Error("El archivo está vacío.");
-        detected = await extractListingsAI({ text });
       }
-      setRows(detected.slice(0, 50).map(normalizeRow));
+      if (parsed.length === 0) throw new Error('No se encontraron publicaciones. Llena la columna "Titulo" desde la fila 3.');
+      setRows(parsed.slice(0, 200).map(normalizeRow));
       setStage("review");
     } catch (err) {
-      setError(err.message || "Error procesando el archivo.");
+      setError(err.message || "Error leyendo el archivo.");
       setStage("upload");
     }
     e.target.value = "";
@@ -2175,7 +2129,7 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
         <div style={{ padding:"8px 20px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${BORDER}` }}>
           <div>
             <h2 style={{ fontSize:20,fontWeight:700,color:TEXT }}>Carga masiva</h2>
-            <p style={{ fontSize:14,color:MUTED }}>Sube un Excel o PDF y la IA crea tus publicaciones</p>
+            <p style={{ fontSize:14,color:MUTED }}>Sube la plantilla Excel llena con tus publicaciones</p>
           </div>
           <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
         </div>
@@ -2190,24 +2144,38 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
           {/* ── UPLOAD ── */}
           {stage === "upload" && (
             <div>
+              {/* Nota destacada */}
+              <div style={{ background:"rgba(255,106,0,.08)",border:`1px solid rgba(255,106,0,.3)`,borderRadius:10,padding:"12px 14px",marginBottom:16,fontSize:14,color:TEXT,lineHeight:1.5 }}>
+                Sube la plantilla Excel llena. Las fotos se agregan después editando cada publicación.
+              </div>
+
+              {/* Paso 1: descargar plantilla */}
+              <a href="/plantilla_carga_masiva.xlsx" download
+                style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:10,textDecoration:"none",background:BG2,border:`1.5px solid ${BORDER2}`,borderRadius:12,padding:"14px 16px",marginBottom:14,cursor:"pointer" }}>
+                <Ic n="box" s={18} c={RED}/>
+                <span style={{ fontSize:15,fontWeight:700,color:TEXT }}>Descargar plantilla</span>
+                <span style={{ fontSize:13,color:MUTED }}>.xlsx</span>
+              </a>
+
+              {/* Paso 2: subir plantilla llena */}
               <div
                 onClick={()=>fileRef.current?.click()}
-                style={{ border:`2px dashed ${BORDER2}`,borderRadius:14,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:BG2,transition:"all .15s" }}
+                style={{ border:`2px dashed ${BORDER2}`,borderRadius:14,padding:"36px 20px",textAlign:"center",cursor:"pointer",background:BG2,transition:"all .15s" }}
                 onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
                 onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER2}>
-                <div style={{ fontSize:48,marginBottom:12 }}>📂</div>
-                <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>Toca para subir un archivo</p>
-                <p style={{ fontSize:14,color:MUTED }}>Excel (.xlsx, .csv) o PDF · máx 15 MB</p>
+                <div style={{ fontSize:44,marginBottom:12 }}>📄</div>
+                <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginBottom:6 }}>Subir plantilla llena</p>
+                <p style={{ fontSize:14,color:MUTED }}>Excel (.xlsx) · máx 15 MB</p>
               </div>
-              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf,application/pdf" style={{ display:"none" }} onChange={handleFile}/>
+              <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display:"none" }} onChange={handleFile}/>
 
               <div style={{ marginTop:24,background:BG2,borderRadius:12,padding:"16px 18px",border:`1px solid ${BORDER}` }}>
                 <p style={{ fontSize:15,fontWeight:700,color:TEXT,marginBottom:10 }}>💡 Cómo funciona</p>
                 {[
-                  "Sube tu inventario en Excel, CSV o PDF.",
-                  "La IA lee el contenido y arma las publicaciones.",
-                  "Revisas y editas antes de publicar.",
-                  "Se crean todas tus publicaciones de una vez.",
+                  "Descarga la plantilla y llénala (hoja \"Publicaciones\").",
+                  "Columnas: Título, Categoría, Marca, Modelo, Precio, Moneda, Ubicación, Descripción.",
+                  "Borra las filas de ejemplo si no las quieres publicar.",
+                  "Sube la plantilla, revisa y edita, y publica todo de una vez.",
                 ].map((tx,i)=>(
                   <div key={i} style={{ display:"flex",gap:10,marginBottom:8,alignItems:"flex-start" }}>
                     <span style={{ color:RED,fontWeight:700,fontSize:15 }}>{i+1}.</span>
@@ -2215,7 +2183,7 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
                   </div>
                 ))}
                 <p style={{ fontSize:13,color:MUTED,marginTop:10,lineHeight:1.5 }}>
-                  Tip: el Excel puede tener columnas como título, marca, modelo, precio, ubicación, etc. La IA interpreta el orden automáticamente.
+                  Sin precio → se publica como "A convenir". La categoría se reconoce por su nombre (ej: Minería, Forestal, Construcción…).
                 </p>
               </div>
             </div>
@@ -2225,9 +2193,8 @@ function BulkUploadSheet({ user, profile, onClose, onDone }) {
           {stage === "processing" && (
             <div style={{ padding:"60px 20px",textAlign:"center" }}>
               <Spin/>
-              <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginTop:20,marginBottom:6 }}>Analizando el archivo…</p>
+              <p style={{ fontSize:17,fontWeight:700,color:TEXT,marginTop:20,marginBottom:6 }}>Leyendo la plantilla…</p>
               <p style={{ fontSize:14,color:MUTED }}>{fileName}</p>
-              <p style={{ fontSize:14,color:MUTED,marginTop:8 }}>La IA está extrayendo tus productos. Esto puede tomar unos segundos.</p>
             </div>
           )}
 
