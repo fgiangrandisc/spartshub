@@ -327,18 +327,19 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
 };
 
 /* ── Logo ───────────────────────────────────────────────────── */
-/* Relación de aspecto real: logo.png 1877x838 (horizontal), isotipo.svg 718x729.
-   Fijamos width explícito = alto × proporción para que nunca se recorte ni
-   dependa del cálculo de width:auto (Safari + object-fit:cover global lo rompían). */
+/* logo.png es raster horizontal: width:auto es fiable y se adapta a cualquier
+   dimensión que suba el usuario. El isotipo es SVG (width:auto puede fallar en
+   Safari), así que lo fijamos por su proporción real (718x729).
+   objectFit:contain + maxWidth:none + flexShrink:0 => nunca se recorta ni deforma. */
 function SpartsLogo({ size=36, onClick, icon=false }) {
-  const src    = icon ? "/isotipo.svg" : "/logo.png";
-  const aspect = icon ? 718/729 : 1877/838;
+  const src   = icon ? "/isotipo.svg" : "/logo.png";
+  const width = icon ? size*(718/729) : "auto";
   return (
     <img
       src={src}
       alt="PortalMaquinas"
       onClick={onClick}
-      style={{ height:size, width:size*aspect, maxWidth:"none", objectFit:"contain", display:"block", flexShrink:0, cursor:onClick?"pointer":"default" }}
+      style={{ height:size, width, maxWidth:"none", objectFit:"contain", display:"block", flexShrink:0, cursor:onClick?"pointer":"default" }}
     />
   );
 }
