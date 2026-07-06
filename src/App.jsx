@@ -591,7 +591,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
             </nav>
           )}
 
-          {/* Right: language + (desktop) Ingresar/Registrarse or (mobile) hamburger */}
+          {/* Right: (desktop) Ingresar/Registrarse or (mobile) hamburger */}
           <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
             {!isMobile && (
               <>
@@ -605,14 +605,6 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
                 </button>
               </>
             )}
-            <div style={{ display:"flex", borderRadius:7, overflow:"hidden", border:`1px solid ${BORDER}`, flexShrink:0 }}>
-              {["es","en"].map(l=>(
-                <button key={l} onClick={()=>setLang(l)}
-                  style={{ minHeight: isMobile?44:0, padding: isMobile?"0 13px":"6px 12px", background:lang===l?RED:"transparent", color:lang===l?"#fff":TEXT, border:"none", cursor:"pointer", fontSize:14, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s" }}>
-                  {l.toUpperCase()}
-                </button>
-              ))}
-            </div>
             {isMobile && (
               <button onClick={()=>setMenuOpen(o=>!o)} aria-label="Menú"
                 style={{ width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", background:"transparent", border:`1px solid ${BORDER2}`, borderRadius:8, cursor:"pointer", flexShrink:0 }}>
@@ -4790,12 +4782,6 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <SpartsLogo size={38} icon onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
           <div style={{ display:"flex",gap:6,alignItems:"center" }}>
-            {/* Lang switcher */}
-            <div style={{ display:"flex",borderRadius:6,overflow:"hidden",border:`1px solid ${BORDER}`,fontSize:15,fontWeight:700 }}>
-              {["es","en"].map(l=>(
-                <button key={l} onClick={()=>setLang(l)} style={{ minHeight:44,padding:"0 12px",background:lang===l?RED:"transparent",color:lang===l?"#fff":SUB,border:"none",cursor:"pointer",fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>{l.toUpperCase()}</button>
-              ))}
-            </div>
             <button className="btn-ghost" aria-label="Soporte" style={{ width:44,height:44,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} onClick={()=>setShowSupport(true)}><Ic n="msg" s={20} c={SUB}/></button>
             {session && (
               <button onClick={logout} title="Cerrar sesión"
@@ -4937,16 +4923,6 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
               {t("nav_signup")}
             </button>}
 
-            {/* ── Language switcher ── */}
-            <div style={{ display:"flex",borderRadius:7,overflow:"hidden",border:`1px solid ${BORDER}`,flexShrink:0,marginLeft:4 }}>
-              {["es","en"].map(l=>(
-                <button key={l} onClick={()=>setLang(l)}
-                  style={{ padding:"6px 14px",background:lang===l?RED:"transparent",color:lang===l?"#fff":TEXT,border:"none",cursor:"pointer",fontSize:16,fontWeight:700,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s" }}>
-                  {l.toUpperCase()}
-                </button>
-              ))}
-            </div>
-
             {session && <button onClick={logout}
               style={{ background:"none",color:RED,border:`1px solid ${RED}`,borderRadius:7,padding:"8px 12px",fontSize:16,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase",transition:"all .15s",whiteSpace:"nowrap" }}
               onMouseEnter={e=>{ e.currentTarget.style.background="rgba(255,106,0,.12)"; }}
@@ -5037,7 +5013,8 @@ export default function SpartsHub() {
   const [tab,          setTab]          = useState("search");
   const [selected,     setSelected]     = useState(null);
   const [chatListing,  setChatListing]  = useState(null);
-  const [lang,         setLangState]    = useState(()=>localStorage.getItem("sh_lang")||"es");
+  // Idioma fijo en español por el momento (selector ES/EN oculto).
+  const [lang,         setLangState]    = useState("es");
   const [region,       setRegionState]  = useState(()=>localStorage.getItem("sh_region")||"all");
 
   const setLang = v => { setLangState(v); localStorage.setItem("sh_lang", v); };
