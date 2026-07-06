@@ -936,20 +936,12 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
 
   return (
     <div>
-      {/* ══ SEARCH BAR (always on top) ══ */}
-      <div style={{ display:"flex", gap:10, marginBottom:12, alignItems:"center", flexWrap:"wrap" }}>
-        <div className="search-bar" style={{ flex:1, minWidth:200 }}>
+      {/* ══ SEARCH BAR (always on top) — orden fijo por más recientes, vista grilla fija ══ */}
+      <div style={{ display:"flex", gap:10, marginBottom:12, alignItems:"center" }}>
+        <div className="search-bar" style={{ flex:1, minWidth:0 }}>
           <Ic n="search" s={16} c={MUTED}/>
           <input placeholder={t("search_placeholder")} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()}/>
           {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
-        </div>
-        <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
-          style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 14px", fontSize:16, color:TEXT, outline:"none", cursor:"pointer", fontFamily:"inherit" }}>
-          {[["newest","Más recientes"],["price_asc","Menor precio"],["price_desc","Mayor precio"],["a_z","A → Z"],["z_a","Z → A"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
-        </select>
-        <div style={{ display:"flex", gap:4 }}>
-          <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="grid"?RED:MUTED }} onClick={()=>setViewMode("grid")}><Ic n="grid" s={18}/></button>
-          <button className="btn-ghost" style={{ padding:"8px", color:viewMode==="list"?RED:MUTED }} onClick={()=>setViewMode("list")}><Ic n="box" s={18}/></button>
         </div>
       </div>
 
@@ -1122,7 +1114,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
         </p>
 
         {loading ? (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(155px, 1fr))", gap:12 }}>
+          <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobile?150:230}px, 1fr))`, gap:isMobile?12:16 }}>
             {[0,1,2,3,4,5].map(i=>(
               <div key={i} style={{ background:CARD, borderRadius:10, overflow:"hidden", border:`1px solid ${BORDER}` }}>
                 <div className="skel" style={{ height:130 }}/>
@@ -1143,7 +1135,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
             <button className="btn-ol" onClick={resetFilters} style={{ fontSize:16 }}>Limpiar filtros</button>
           </div>
         ) : viewMode === "grid" ? (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(155px, 1fr))", gap:12 }}>
+          <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobile?150:230}px, 1fr))`, gap:isMobile?12:16 }}>
             {listings.map(l=>(
               <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
                 <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
@@ -4988,6 +4980,17 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
         </div>
       </header>
 
+      {/* Guest banner — ancho completo, debajo del header (no dentro de la fila flex) */}
+      {guestMode && !session && (
+        <div style={{ background:"rgba(255,106,0,.1)", borderBottom:`1px solid rgba(255,106,0,.3)`, padding:"10px 32px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+          <p style={{ fontSize:16, color:TEXT }}>Estás navegando como <strong style={{ color:RED }}>invitado</strong> — para publicar, contactar vendedores o guardar búsquedas necesitas una cuenta.</p>
+          <div style={{ display:"flex", gap:8, flexShrink:0 }}>
+            <button onClick={onGuestLogin} style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:7, padding:"7px 16px", fontSize:15, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>Iniciar sesión</button>
+            <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:7, padding:"7px 16px", fontSize:15, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>Crear cuenta gratis →</button>
+          </div>
+        </div>
+      )}
+
       <div style={{ display:"flex", flex:1, minHeight:0 }}>
         {/* Sidebar */}
         <div style={{ width:180,background:BG3,borderRight:`1px solid ${BORDER}`,position:"sticky",top:84,height:"calc(100vh - 84px)",display:"flex",flexDirection:"column",padding:"12px 0",flexShrink:0,overflowY:"auto" }}>
@@ -5018,17 +5021,6 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
             </div>
           )}
         </div>
-
-        {/* Guest banner */}
-        {guestMode && !session && (
-          <div style={{ background:"rgba(255,106,0,.1)", borderBottom:`1px solid rgba(255,106,0,.3)`, padding:"10px 32px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16 }}>
-            <p style={{ fontSize:16, color:TEXT }}>Estás navegando como <strong style={{ color:RED }}>invitado</strong> — para publicar, contactar vendedores o guardar búsquedas necesitas una cuenta.</p>
-            <div style={{ display:"flex", gap:8, flexShrink:0 }}>
-              <button onClick={onGuestLogin} style={{ background:"transparent", border:`1.5px solid ${BORDER2}`, borderRadius:7, padding:"7px 16px", fontSize:15, fontWeight:700, color:TEXT, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>Iniciar sesión</button>
-              <button onClick={onGuestRegister} style={{ background:RED, border:"none", borderRadius:7, padding:"7px 16px", fontSize:15, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.4, textTransform:"uppercase" }}>Crear cuenta gratis →</button>
-            </div>
-          </div>
-        )}
 
         {/* Main */}
         <div style={{ flex:1,minWidth:0,overflowY:"auto",padding:"24px 32px 60px" }}>
