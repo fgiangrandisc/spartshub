@@ -1594,7 +1594,6 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
   const TYPES = [
     { id:"producto", icon:"box",     titleKey:"pub_product",  subKey:"pub_product_sub" },
     { id:"servicio", icon:"settings",titleKey:"pub_service",  subKey:"pub_service_sub" },
-    { id:"excel",    icon:"grid",    titleKey:"pub_excel",    subKey:"pub_excel_sub" },
     { id:"ai",       icon:"camera",  titleKey:"pub_ai",       subKey:"pub_ai_sub", highlight:true },
   ];
 
@@ -1653,7 +1652,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
             </div>
           )}
 
-          {step===1&&type==="producto"&&(
+          {step===1&&(type==="producto"||type==="servicio")&&(
             <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
               {/* Photo upload area */}
               <input ref={photoInputRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={handlePhotoChange}/>
@@ -1933,14 +1932,6 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
             </div>
           )}
 
-          {step===1&&type!=="producto"&&type!=="ai"&&(
-            <div style={{ paddingTop:40,textAlign:"center" }}>
-              <div style={{ fontSize:64,marginBottom:16 }}>🚧</div>
-              <p className="bebas" style={{ fontSize:28,marginBottom:8 }}>Próximamente</p>
-              <p style={{ fontSize:16,color:MUTED }}>Esta función estará disponible pronto.</p>
-              <button className="btn-red" style={{ marginTop:24 }} onClick={()=>setStep(0)}>Volver</button>
-            </div>
-          )}
         </div>
       </div>
 
