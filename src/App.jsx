@@ -730,7 +730,20 @@ function AuthScreen({ initialMode="login", notice=null, onAuth, onBack }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr]       = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const upd = (k,v) => setF(p=>({...p,[k]:v}));
+
+  const sendReset = async () => {
+    setErr("");
+    const email = f.email.trim();
+    if (!email) { setErr("Ingresa tu email."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr("Ingresa un email válido."); return; }
+    setLoading(true);
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/?recovery=1` });
+    setLoading(false);
+    if (error) { setErr(error.message); return; }
+    setResetSent(true);
+  };
 
   const submit = async () => {
     setErr("");
@@ -766,6 +779,40 @@ function AuthScreen({ initialMode="login", notice=null, onAuth, onBack }) {
       </div>
 
       <div style={{ flex:1, padding:"0 24px 40px", display:"flex", flexDirection:"column", gap:14 }}>
+        {mode === "forgot" ? (
+          <>
+            <h2 className="bebas" style={{ fontSize:34, color:TEXT, marginBottom:4 }}>Recuperar contraseña</h2>
+            <p style={{ fontSize:16, color:SUB, marginBottom:8 }}>
+              {resetSent ? "Revisa tu correo" : "Te enviaremos un link para restablecerla"}
+            </p>
+
+            {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.3)",borderRadius:8,padding:"12px 16px",fontSize:16,color:DANGER }}>
+              {err === "Unable to validate email address: invalid format" ? "Ingresa un email válido." : err}
+            </div>}
+
+            {resetSent ? (
+              <>
+                <div style={{ background:"rgba(34,197,94,.08)", border:`1px solid ${GREEN}55`, borderRadius:8, padding:"14px 16px", fontSize:15, color:TEXT, lineHeight:1.5 }}>
+                  Te enviamos un correo con el link para restablecer tu contraseña. Revisa tu bandeja de entrada (y la carpeta de spam).
+                </div>
+                <button className="btn-red" onClick={()=>{ setMode("login"); setErr(""); setResetSent(false); }} style={{ marginTop:4, padding:"15px" }}>
+                  Volver a iniciar sesión
+                </button>
+              </>
+            ) : (
+              <>
+                <input className="inp" type="email" placeholder={t("auth_email")} value={f.email} onChange={e=>upd("email",e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendReset()}/>
+                <button className="btn-red" onClick={sendReset} disabled={loading} style={{ marginTop:4, opacity:loading?.6:1, padding:"15px" }}>
+                  {loading ? <Spin/> : "Enviar link de recuperación"}
+                </button>
+                <button onClick={()=>{ setMode("login"); setErr(""); }} style={{ background:"none", border:"none", color:MUTED, fontSize:15, cursor:"pointer", marginTop:4 }}>
+                  Volver a iniciar sesión
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          <>
         <h2 className="bebas" style={{ fontSize:34, color:TEXT, marginBottom:4 }}>
           {mode==="login" ? "Bienvenido de vuelta" : "Crear cuenta"}
         </h2>
@@ -808,9 +855,85 @@ function AuthScreen({ initialMode="login", notice=null, onAuth, onBack }) {
           {loading ? <Spin/> : mode==="login" ? t("auth_enter") : t("auth_create")}
         </button>
 
+        {mode === "login" && (
+          <button onClick={()=>{ setMode("forgot"); setErr(""); }} style={{ background:"none", border:"none", color:MUTED, fontSize:15, cursor:"pointer", textAlign:"center", textDecoration:"underline", padding:0 }}>
+            ¿Olvidaste tu contraseña?
+          </button>
+        )}
+
         <p style={{ textAlign:"center", fontSize:16, color:MUTED, marginTop:4 }}>
           {t("auth_tagline")}
         </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   RESET PASSWORD  (nueva contraseña tras el link del correo)
+══════════════════════════════════════════════════════════════ */
+function ResetPasswordScreen({ onDone }) {
+  const [pass, setPass]       = useState("");
+  const [pass2, setPass2]     = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr]         = useState("");
+  const [done, setDone]       = useState(false);
+
+  const save = async () => {
+    setErr("");
+    if (pass.length < 6) { setErr("La contraseña debe tener al menos 6 caracteres."); return; }
+    if (pass !== pass2)  { setErr("Las contraseñas no coinciden."); return; }
+    setLoading(true);
+    const { error } = await sb.auth.updateUser({ password: pass });
+    setLoading(false);
+    if (error) { setErr(error.message); return; }
+    setDone(true);
+  };
+
+  return (
+    <div style={{ minHeight:"100dvh", background:BG, display:"flex", flexDirection:"column" }}>
+      <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
+      <div style={{ padding:"56px 20px 20px", display:"flex", alignItems:"center", gap:12 }}>
+        <SpartsLogo size={36}/>
+      </div>
+
+      <div style={{ flex:1, padding:"0 24px 40px", display:"flex", flexDirection:"column", gap:14 }}>
+        <h2 className="bebas" style={{ fontSize:34, color:TEXT, marginBottom:4 }}>Nueva contraseña</h2>
+        <p style={{ fontSize:16, color:SUB, marginBottom:8 }}>
+          {done ? "¡Listo!" : "Ingresa tu nueva contraseña para tu cuenta"}
+        </p>
+
+        {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.3)",borderRadius:8,padding:"12px 16px",fontSize:16,color:DANGER }}>
+          {err}
+        </div>}
+
+        {done ? (
+          <>
+            <div style={{ background:"rgba(34,197,94,.08)", border:`1px solid ${GREEN}55`, borderRadius:8, padding:"14px 16px", fontSize:15, color:TEXT, lineHeight:1.5 }}>
+              Tu contraseña se actualizó correctamente. Ya puedes usar la app con tu nueva contraseña.
+            </div>
+            <button className="btn-red" onClick={onDone} style={{ marginTop:4, padding:"15px" }}>
+              Continuar
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{ position:"relative" }}>
+              <input className="inp" type={showPass?"text":"password"} placeholder="Nueva contraseña" value={pass} onChange={e=>setPass(e.target.value)} style={{ paddingRight:44 }}/>
+              <button onClick={()=>setShowPass(v=>!v)} style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:MUTED,fontSize:16,padding:0 }}>
+                {showPass?"🙈":"👁️"}
+              </button>
+            </div>
+            <input className="inp" type={showPass?"text":"password"} placeholder="Confirmar nueva contraseña" value={pass2} onChange={e=>setPass2(e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()}/>
+            <button className="btn-red" onClick={save} disabled={loading} style={{ marginTop:4, opacity:loading?.6:1, padding:"15px" }}>
+              {loading ? <Spin/> : "Guardar contraseña"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -5022,6 +5145,7 @@ export default function SpartsHub() {
   const [authNotice,   setAuthNotice]   = useState(null);
   const [guestMode,    setGuestMode]    = useState(false);
   const [guestSearch,  setGuestSearch]  = useState("");
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [profile,      setProfile]      = useState(null);
   const [authReady,    setAuthReady]    = useState(false);
   const [tab,          setTab]          = useState("search");
@@ -5037,7 +5161,13 @@ export default function SpartsHub() {
 
   useEffect(()=>{
     sb.auth.getSession().then(({ data })=>{ setSession(data.session); setAuthReady(true); });
-    const { data:{ subscription } } = sb.auth.onAuthStateChange((_,s)=>setSession(s));
+    const { data:{ subscription } } = sb.auth.onAuthStateChange((event,s)=>{
+      // Al hacer clic en el link del correo, Supabase abre la app con un
+      // token de recuperación y dispara PASSWORD_RECOVERY: mostramos el
+      // formulario para definir la nueva contraseña.
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
+      setSession(s);
+    });
     return ()=>subscription.unsubscribe();
   },[]);
 
@@ -5105,6 +5235,12 @@ export default function SpartsHub() {
         <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
         <SpartsLogo size={36}/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
       </div>
+    </LangCtx.Provider>
+  );
+
+  if (recoveryMode) return (
+    <LangCtx.Provider value={{ lang, setLang, t }}>
+      <ResetPasswordScreen onDone={()=>{ setRecoveryMode(false); sb.auth.getSession().then(({ data })=>setSession(data.session)); }}/>
     </LangCtx.Provider>
   );
 
