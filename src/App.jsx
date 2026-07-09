@@ -483,24 +483,32 @@ const levenshtein = (a, b) => {
   return prev[b.length];
 };
 
-/* ¿El texto del item coincide con la consulta? Tolerante a acentos y typos.
-   - Coincidencia directa de substring (rápida)
-   - Por cada palabra de la consulta, busca una palabra parecida en el texto
-     (Levenshtein ≤ 1 para palabras cortas, ≤ 2 para largas) */
+/* ¿La palabra del item coincide con la palabra buscada?
+   - Igualdad exacta
+   - Prefijo ("cater" → "caterpillar")
+   - Substring solo para consultas de ≥4 letras (evita que "en"/"o"/"a" matcheen todo)
+   - Tolerancia a un typo: solo palabras largas y de longitud parecida */
+const coincidePalabra = (pt, pc) => {
+  if (pt === pc) return true;
+  if (pc.length >= 3 && pt.startsWith(pc)) return true;
+  if (pc.length >= 4 && pt.includes(pc)) return true;
+  if (pc.length >= 5 && Math.abs(pt.length - pc.length) <= 1) {
+    return levenshtein(pt, pc) <= 1;
+  }
+  return false;
+};
+
+/* ¿El texto del item coincide con la consulta? Tolerante a acentos y typos. */
 const coincideBusqueda = (texto, consulta) => {
   const t = normalizar(texto);
   const c = normalizar(consulta);
   if (!c) return true;
-  if (t.includes(c)) return true;
-  const palabrasTexto = t.split(" ").filter(Boolean);
+  if (t.includes(c)) return true;                 // frase completa exacta
+  const palabrasTexto    = t.split(" ").filter(Boolean);
   const palabrasConsulta = c.split(" ").filter(Boolean);
-  return palabrasConsulta.every(pc => {
-    if (t.includes(pc)) return true;
-    const tol = pc.length <= 4 ? 1 : 2;
-    return palabrasTexto.some(pt =>
-      pt.includes(pc) || pc.includes(pt) || levenshtein(pt, pc) <= tol
-    );
-  });
+  return palabrasConsulta.every(pc =>
+    palabrasTexto.some(pt => coincidePalabra(pt, pc))
+  );
 };
 
 /* ── Shared hook: unread message count ──────────────────────── */
@@ -1017,7 +1025,7 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
     if (q && q.trim()) {
       resultados = resultados.filter(l =>
         coincideBusqueda(
-          [l.title, l.brand, l.model, l.description].filter(Boolean).join(" "),
+          [l.title, l.brand, l.model, l.description, l.operation].filter(Boolean).join(" "),
           q
         )
       );
