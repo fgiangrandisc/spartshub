@@ -564,6 +564,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
     { key:"nav_requests", action:onGateRegister },
     { key:"nav_services", action:onEnter },
     { key:"nav_rentals",  action:onEnter },
+    { key:"nav_carrete",  id:"carrete", action:onEnter },
   ];
 
   const handleSearch = () => {
@@ -4873,6 +4874,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
     { key:"nav_requests", action:onRequest },
     { key:"nav_services", action:goExplore },
     { key:"nav_rentals",  action:goExplore },
+    { key:"nav_carrete",  id:"carrete", action:goExplore },
   ];
   const closeAnd = fn => { setMenuOpen(false); fn?.(); };
 
@@ -5031,6 +5033,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
     { key:"nav_requests", action:onRequest },
     { key:"nav_services", action:goExplore },
     { key:"nav_rentals",  action:goExplore },
+    { key:"nav_carrete",  id:"carrete", action:goExplore },
   ];
 
   return (
