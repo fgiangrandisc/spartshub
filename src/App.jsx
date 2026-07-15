@@ -4652,6 +4652,28 @@ function AdminPanel({ user }) {
   const [confirmDel, setConfirmDel] = useState(null);
   const [editing, setEditing] = useState(null);
 
+  // Selector de usuario compartido
+  const [allUsers, setAllUsers]         = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userSearch, setUserSearch]     = useState("");
+  const [usersLoaded, setUsersLoaded]   = useState(false);
+
+  // Formulario Publicar 1-a-1
+  const [pubF, setPubF] = useState({ title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦" });
+  const [pubLoading, setPubLoading] = useState(false);
+  const [pubErr, setPubErr]         = useState("");
+  const [pubSuccess, setPubSuccess] = useState(false);
+
+  // Carga masiva
+  const [bulkFile, setBulkFile]           = useState(null);
+  const [bulkRows, setBulkRows]           = useState([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkDone, setBulkDone]           = useState(false);
+  const [bulkProgress, setBulkProgress]   = useState(0);
+  const [bulkError, setBulkError]         = useState("");
+  const [bulkInserted, setBulkInserted]   = useState(0);
+  const bulkRef = useRef();
+
   const TABLES = {
     users:    { table:"profiles",  label:"Usuarios",      titleField:"name" },
     listings: { table:"listings",  label:"Publicaciones", titleField:"title" },
@@ -4660,7 +4682,10 @@ function AdminPanel({ user }) {
     messages: { table:"messages",  label:"Mensajes",      titleField:"body" },
   };
 
+  const isDataSection = !!TABLES[section];
+
   const load = useCallback(async ()=>{
+    if (!TABLES[section]) return;
     setLoading(true);
     const cfg = TABLES[section];
     const orderCol = section==="users" ? "name" : "created_at";
@@ -4672,6 +4697,13 @@ function AdminPanel({ user }) {
 
   useEffect(()=>{ load(); }, [load]);
 
+  useEffect(()=>{
+    if ((section==="publicar"||section==="carga") && !usersLoaded) {
+      sb.from("profiles").select("id, name, biz, phone, location").order("name",{ascending:true})
+        .then(({ data })=>{ setAllUsers(data||[]); setUsersLoaded(true); });
+    }
+  }, [section, usersLoaded]);
+
   const handleDelete = async (id) => {
     const cfg = TABLES[section];
     const { error } = await sb.from(cfg.table).delete().eq("id", id);
@@ -4680,12 +4712,180 @@ function AdminPanel({ user }) {
     setConfirmDel(null);
   };
 
-  const cfg = TABLES[section];
-  const filtered = data.filter(row => {
-    if (!search) return true;
-    const hay = JSON.stringify(row).toLowerCase();
-    return hay.includes(search.toLowerCase());
-  });
+  const submitPub = async () => {
+    if (!selectedUser) { setPubErr("Selecciona un usuario primero."); return; }
+    if (!pubF.title.trim()) { setPubErr("El título es obligatorio."); return; }
+    setPubLoading(true); setPubErr("");
+    const isEmpty = !pubF.price || pubF.price==="0" || pubF.price==="";
+    const { error } = await sb.from("listings").insert({
+      user_id: selectedUser.id, title: pubF.title, brand: pubF.brand||null, model: pubF.model||null,
+      serial_number: pubF.serial_number||null, part_number: pubF.part_number||null,
+      cat: pubF.cat, condition: pubF.condition, operation: pubF.operation,
+      price: isEmpty ? 0 : Number(pubF.price), currency: isEmpty ? "NEG" : pubF.currency,
+      stock: Number(pubF.stock)||1, location: pubF.location||selectedUser.location||"",
+      phone: pubF.phone||selectedUser.phone||null, biz: pubF.biz||selectedUser.biz||null,
+      description: pubF.description||null, emoji: pubF.emoji||"📦", verified: false,
+    });
+    setPubLoading(false);
+    if (error) { setPubErr("Error: " + error.message); return; }
+    setPubSuccess(true);
+    setPubF({ title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦" });
+    setTimeout(()=>setPubSuccess(false), 4000);
+  };
+
+  // CSV parser que respeta comillas: soporta comas y saltos de línea dentro de
+  // campos entre comillas, y comillas escapadas ("").
+  const parseCSV = (text) => {
+    const rows = []; let row = []; let cur = ""; let inQ = false;
+    for (let i=0; i<text.length; i++) {
+      const ch = text[i];
+      if (inQ) {
+        if (ch === '"') {
+          if (text[i+1] === '"') { cur += '"'; i++; } else inQ = false;
+        } else cur += ch;
+      } else if (ch === '"') inQ = true;
+      else if (ch === ",") { row.push(cur); cur = ""; }
+      else if (ch === "\r") { /* ignora: el \n cierra la fila */ }
+      else if (ch === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; }
+      else cur += ch;
+    }
+    if (cur.length || row.length) { row.push(cur); rows.push(row); }
+    return rows.filter(r => r.some(c => c.trim() !== ""));
+  };
+
+  // aoa = array de arrays (fila 0 = encabezados). Normaliza y valida cada fila.
+  const aoaToRows = (aoa) => {
+    if (!aoa.length) return [];
+    const headers = aoa[0].map(h => String(h ?? "").trim().toLowerCase().replace(/"/g,""));
+    const VALID_CATS  = ["min","for","const","ene","trans","fae","rut","san","serv"];
+    const VALID_CONDS = ["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"];
+    const VALID_CURR  = ["CLP","USD","EUR","COP","PEN","MXN"];
+    // Neutraliza inyección de fórmulas (Excel/Sheets) al inicio del campo.
+    const sani = v => String(v ?? "").trim().replace(/^[=+\-@\t\r]+/, "");
+    return aoa.slice(1).map(cells => {
+      const obj = {};
+      headers.forEach((h,i) => obj[h] = sani(cells[i]));
+      const title     = (obj.titulo||obj.title||"").slice(0,200);
+      const brand     = (obj.marca||obj.brand||"").slice(0,100);
+      const model     = (obj.modelo||obj.model||"").slice(0,100);
+      const desc      = (obj.descripcion||obj.description||"").slice(0,300);
+      const catRaw    = (obj.categoria||obj.cat||"").toLowerCase();
+      const cat       = VALID_CATS.includes(catRaw) ? catRaw : "min";
+      const condition = VALID_CONDS.includes(obj.condicion||obj.condition) ? (obj.condicion||obj.condition) : "Nuevo";
+      const rawPrice  = obj.precio||obj.price||"";
+      // Precios enteros: quita separadores de miles/símbolos ("1.250.000", "$500" → 1250000, 500)
+      const priceNum  = Number(String(rawPrice).replace(/\D/g, ""));
+      const priceEmpty = !rawPrice || !priceNum || priceNum<=0;
+      const price     = priceEmpty ? "0" : String(Math.max(0, Math.round(priceNum)));
+      const currRaw   = (obj.moneda||obj.currency||"").toUpperCase();
+      const currency  = priceEmpty ? "NEG" : (VALID_CURR.includes(currRaw) ? currRaw : "CLP");
+      return { title, brand, model, desc, cat, condition, price, currency };
+    }).filter(r => r.title);
+  };
+
+  const handleBulkFile = async (file) => {
+    if (!file) return;
+    setBulkFile(file); setBulkDone(false); setBulkRows([]); setBulkError(""); setBulkInserted(0);
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    try {
+      let aoa;
+      if (ext === "csv" || ext === "txt") {
+        aoa = parseCSV(await file.text());
+      } else if (ext === "xlsx" || ext === "xls") {
+        const XLSX = await loadXLSX();
+        const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        if (!sheet) throw new Error("El archivo no tiene hojas legibles.");
+        aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      } else {
+        setBulkError("Formato no soportado. Sube un archivo .csv o .xlsx.");
+        setBulkFile(null);
+        return;
+      }
+      const rows = aoaToRows(aoa).slice(0, 500);
+      if (!rows.length) { setBulkError('No se detectaron filas con "titulo". Revisa los encabezados de la primera fila.'); return; }
+      setBulkRows(rows);
+    } catch (err) {
+      setBulkError("Error leyendo el archivo: " + (err.message || "intenta de nuevo."));
+      setBulkFile(null);
+    }
+  };
+
+  const uploadBulk = async () => {
+    if (!selectedUser) { alert("Selecciona un usuario primero."); return; }
+    if (!bulkRows.length) return;
+    setBulkUploading(true); setBulkProgress(0); setBulkError("");
+    const CHUNK = 50;
+    const rows = bulkRows.map(r=>({
+      user_id: selectedUser.id, title: r.title, brand: r.brand||null, model: r.model||null,
+      description: r.desc||null, cat: r.cat, condition: r.condition,
+      price: Number(r.price)||0, currency: r.currency,
+      biz: selectedUser.biz||"", location: selectedUser.location||"",
+      phone: selectedUser.phone||null, emoji:"📦", verified:false,
+    }));
+    let inserted = 0;
+    const failures = [];
+    for (let i=0; i<rows.length; i+=CHUNK) {
+      const slice = rows.slice(i, i+CHUNK);
+      const { data, error } = await sb.from("listings").insert(slice).select("id");
+      if (error) failures.push(error.message);
+      else inserted += (data?.length ?? slice.length);
+      setBulkProgress(Math.min(100, Math.round(((i+slice.length)/rows.length)*100)));
+    }
+    setBulkUploading(false);
+    setBulkInserted(inserted);
+    if (failures.length) {
+      setBulkError(`Se insertaron ${inserted} de ${rows.length}. ${failures.length} lote(s) fallaron: ${failures[0]}`);
+    }
+    setBulkDone(true);
+    setBulkRows([]); setBulkFile(null);
+  };
+
+  const filteredUsers = allUsers.filter(u=>
+    !userSearch || (u.name||"").toLowerCase().includes(userSearch.toLowerCase()) || (u.biz||"").toLowerCase().includes(userSearch.toLowerCase())
+  );
+  const cfg      = TABLES[section];
+  const filtered = isDataSection ? data.filter(row=>!search || JSON.stringify(row).toLowerCase().includes(search.toLowerCase())) : [];
+
+  const UserPicker = () => (
+    <div style={{ background:BG2, borderRadius:10, border:`1px solid ${BORDER}`, padding:16, marginBottom:20 }}>
+      <p style={{ fontSize:13, fontWeight:700, color:MUTED, textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>
+        {selectedUser ? "Usuario seleccionado:" : "Seleccionar usuario:"}
+      </p>
+      {selectedUser ? (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:"rgba(255,106,0,.1)", borderRadius:8, padding:"10px 14px", border:"1px solid rgba(255,106,0,.3)" }}>
+          <div>
+            <p style={{ fontWeight:700, color:TEXT, fontSize:16 }}>{selectedUser.name||"Sin nombre"}</p>
+            <p style={{ color:MUTED, fontSize:14 }}>{selectedUser.biz||"—"} · {selectedUser.location||"—"}</p>
+          </div>
+          <button onClick={()=>setSelectedUser(null)} style={{ background:"transparent", border:`1px solid ${BORDER}`, borderRadius:6, color:MUTED, fontSize:14, cursor:"pointer", padding:"4px 10px" }}>Cambiar</button>
+        </div>
+      ) : (
+        <>
+          <input className="inp" placeholder="Buscar por nombre o empresa…" value={userSearch} onChange={e=>setUserSearch(e.target.value)} style={{ marginBottom:8 }}/>
+          <div style={{ maxHeight:180, overflowY:"auto", display:"flex", flexDirection:"column", gap:4 }}>
+            {!usersLoaded
+              ? <p style={{ color:MUTED, fontSize:14, padding:8 }}>Cargando usuarios…</p>
+              : filteredUsers.length===0
+                ? <p style={{ color:MUTED, fontSize:14, padding:8 }}>Sin resultados</p>
+                : filteredUsers.slice(0,20).map(u=>(
+                    <button key={u.id} onClick={()=>{ setSelectedUser(u); setUserSearch(""); }}
+                      style={{ textAlign:"left", padding:"8px 12px", borderRadius:7, border:`1px solid ${BORDER}`, background:CARD, color:TEXT, cursor:"pointer", fontSize:14 }}>
+                      <strong>{u.name||"Sin nombre"}</strong>{u.biz ? ` · ${u.biz}` : ""}
+                    </button>
+                  ))
+            }
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const ALL_TABS = [
+    ...Object.entries(TABLES).map(([key,c])=>({ id:key, label:c.label })),
+    { id:"publicar", label:"+ Publicar" },
+    { id:"carga",    label:"Carga masiva" },
+  ];
 
   return (
     <div>
@@ -4696,14 +4896,138 @@ function AdminPanel({ user }) {
 
       {/* Section tabs */}
       <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-        {Object.entries(TABLES).map(([key,c])=>(
-          <button key={key} onClick={()=>{ setSection(key); setSearch(""); setConfirmDel(null); }}
+        {ALL_TABS.map(({id:key,label})=>(
+          <button key={key} onClick={()=>{ setSection(key); setSearch(""); setConfirmDel(null); setPubErr(""); setPubSuccess(false); setBulkDone(false); setBulkError(""); }}
             style={{ padding:"8px 16px", borderRadius:8, border:`1.5px solid ${section===key?RED:BORDER}`, background:section===key?"rgba(255,106,0,.1)":CARD, color:section===key?RED:SUB, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
-            {c.label}
+            {label}
           </button>
         ))}
       </div>
 
+      {/* PUBLICAR 1-A-1 */}
+      {section==="publicar" && (
+        <div style={{ maxWidth:600 }}>
+          <UserPicker/>
+          {pubSuccess && <div style={{ background:"rgba(34,197,94,.1)", border:"1px solid rgba(34,197,94,.3)", borderRadius:8, padding:"10px 14px", color:"#22c55e", fontSize:15, marginBottom:16, fontWeight:600 }}>✓ Publicación creada con éxito</div>}
+          {pubErr    && <div style={{ background:"rgba(220,38,38,.08)", border:"1px solid rgba(220,38,38,.25)", borderRadius:8, padding:"10px 14px", color:DANGER, fontSize:15, marginBottom:16 }}>{pubErr}</div>}
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, display:"flex", flexDirection:"column", gap:14 }}>
+            {[["Título *","title","Ej: Bomba hidráulica Komatsu"],["Marca","brand","Ej: Komatsu"],["Modelo","model","Ej: PC200-8"],["N° Serie","serial_number",""],["N° Parte","part_number",""],["Empresa","biz",""],["Teléfono","phone",""],["Ubicación","location","Ciudad, País"],["Emoji","emoji","📦"]].map(([label,key,ph])=>(
+              <div key={key}>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>{label}</p>
+                <input className="inp" value={pubF[key]} onChange={e=>setPubF(p=>({...p,[key]:e.target.value}))} placeholder={ph}/>
+              </div>
+            ))}
+            <div>
+              <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Descripción</p>
+              <textarea className="inp" rows={3} value={pubF.description} onChange={e=>setPubF(p=>({...p,description:e.target.value}))} style={{ resize:"none" }}/>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Categoría</p>
+                <select className="inp" value={pubF.cat} onChange={e=>setPubF(p=>({...p,cat:e.target.value}))}>
+                  {[["min","Minería"],["for","Forestal"],["const","Construcción"],["ene","Energía"],["trans","Transporte"],["fae","Faenas"],["rut","Rutas"],["san","Sanitarias"],["serv","Servicios"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                </select>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Condición</p>
+                <select className="inp" value={pubF.condition} onChange={e=>setPubF(p=>({...p,condition:e.target.value}))}>
+                  {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(v=><option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Operación</p>
+                <select className="inp" value={pubF.operation} onChange={e=>setPubF(p=>({...p,operation:e.target.value}))}>
+                  {["Venta","Servicio","Arriendo"].map(v=><option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Stock</p>
+                <input className="inp" type="number" min="1" value={pubF.stock} onChange={e=>setPubF(p=>({...p,stock:e.target.value}))}/>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Precio (vacío = A convenir)</p>
+                <input className="inp" type="number" value={pubF.price} onChange={e=>setPubF(p=>({...p,price:e.target.value}))} placeholder="0"/>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Moneda</p>
+                <select className="inp" value={pubF.currency} onChange={e=>setPubF(p=>({...p,currency:e.target.value}))}>
+                  {["CLP","USD","EUR","COP","PEN","MXN"].map(v=><option key={v}>{v}</option>)}
+                </select>
+              </div>
+            </div>
+            <button className="btn-red" onClick={submitPub} disabled={pubLoading||!selectedUser} style={{ padding:"14px", fontSize:16, marginTop:4, opacity:(pubLoading||!selectedUser)?.5:1 }}>
+              {pubLoading ? "Publicando…" : `Publicar a nombre de ${selectedUser?.name||"(selecciona usuario)"}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CARGA MASIVA */}
+      {section==="carga" && (
+        <div style={{ maxWidth:600 }}>
+          <UserPicker/>
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}` }}>
+            <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:8 }}>Subir CSV / Excel</p>
+            <p style={{ fontSize:14, color:MUTED, marginBottom:16 }}>Columnas: <code style={{ background:BG2, padding:"2px 6px", borderRadius:4 }}>titulo, marca, modelo, categoria, condicion, precio, moneda, descripcion</code>. Precio vacío o 0 = "A convenir".</p>
+            <input ref={bulkRef} type="file" accept=".csv,.xlsx,.xls" style={{ display:"none" }} onChange={e=>{ const f=e.target.files?.[0]; e.target.value=""; handleBulkFile(f); }}/>
+            <button onClick={()=>bulkRef.current?.click()}
+              style={{ padding:"12px 24px", borderRadius:8, border:`1.5px dashed ${BORDER2}`, background:"transparent", color:SUB, fontSize:15, fontWeight:600, cursor:"pointer", width:"100%", marginBottom:16 }}>
+              📁 {bulkFile ? bulkFile.name : "Seleccionar archivo…"}
+            </button>
+            {bulkError && (
+              <div style={{ background:"rgba(220,38,38,.08)", border:"1px solid rgba(220,38,38,.25)", borderRadius:8, padding:"10px 14px", color:DANGER, fontSize:14, marginBottom:16 }}>{bulkError}</div>
+            )}
+            {bulkRows.length>0 && !bulkDone && (
+              <div>
+                <p style={{ fontSize:15, color:TEXT, marginBottom:8, fontWeight:600 }}>{bulkRows.length} filas detectadas</p>
+                <div style={{ background:BG2, borderRadius:8, overflow:"auto", maxHeight:200, border:`1px solid ${BORDER}`, marginBottom:14 }}>
+                  <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, color:TEXT }}>
+                    <thead><tr style={{ background:BG3 }}>
+                      {["Título","Cat","Condición","Precio"].map(h=>(
+                        <th key={h} style={{ padding:"6px 10px", textAlign:"left", color:MUTED, fontWeight:700, borderBottom:`1px solid ${BORDER}` }}>{h}</th>
+                      ))}
+                    </tr></thead>
+                    <tbody>
+                      {bulkRows.slice(0,5).map((r,i)=>(
+                        <tr key={i} style={{ borderBottom:`1px solid ${BORDER}` }}>
+                          <td style={{ padding:"6px 10px", maxWidth:180, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{r.title}</td>
+                          <td style={{ padding:"6px 10px" }}>{r.cat}</td>
+                          <td style={{ padding:"6px 10px" }}>{r.condition}</td>
+                          <td style={{ padding:"6px 10px" }}>{r.currency==="NEG"?"A convenir":`${r.currency} ${r.price}`}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {bulkRows.length>5 && <p style={{ padding:"6px 10px", color:MUTED, fontSize:12 }}>…y {bulkRows.length-5} filas más</p>}
+                </div>
+                {bulkUploading && (
+                  <div style={{ marginBottom:14 }}>
+                    <div style={{ background:BG3, borderRadius:99, height:8, overflow:"hidden" }}>
+                      <div style={{ width:`${bulkProgress}%`, background:RED, height:"100%", transition:"width .3s" }}/>
+                    </div>
+                    <p style={{ fontSize:13, color:MUTED, marginTop:6 }}>Subiendo… {bulkProgress}%</p>
+                  </div>
+                )}
+                <button className="btn-red" onClick={uploadBulk} disabled={bulkUploading||!selectedUser}
+                  style={{ padding:"12px", fontSize:16, width:"100%", opacity:(bulkUploading||!selectedUser)?.5:1 }}>
+                  {bulkUploading ? "Subiendo…" : `Subir ${bulkRows.length} publicaciones a nombre de ${selectedUser?.name||"(selecciona usuario)"}`}
+                </button>
+              </div>
+            )}
+            {bulkDone && bulkInserted>0 && (
+              <div style={{ background:"rgba(34,197,94,.1)", border:"1px solid rgba(34,197,94,.3)", borderRadius:8, padding:"14px", color:"#22c55e", fontSize:15, fontWeight:600 }}>
+                ✓ Carga completada: {bulkInserted} publicación{bulkInserted===1?"":"es"} creada{bulkInserted===1?"":"s"}.
+                <button onClick={()=>{ setBulkDone(false); setBulkFile(null); setBulkRows([]); setBulkError(""); setBulkInserted(0); }}
+                  style={{ display:"block", marginTop:10, background:"transparent", border:"1px solid rgba(34,197,94,.4)", borderRadius:6, color:"#22c55e", fontSize:14, cursor:"pointer", padding:"6px 14px" }}>
+                  Subir otro archivo
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isDataSection && (<>
       {/* Search */}
       <div className="search-bar" style={{ marginBottom:16 }}>
         <Ic n="search" s={16} c={MUTED}/>
@@ -4774,6 +5098,7 @@ function AdminPanel({ user }) {
           ))}
         </div>
       )}
+      </>)}
 
       {/* Edit modal */}
       {editing && (
