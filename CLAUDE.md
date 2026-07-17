@@ -33,7 +33,7 @@ All application code lives in two files:
 
 ### Navigation model
 
-There is no URL router. A `tab` state string drives which "page" renders. `MobileLayout` and `DesktopLayout` are the two root containers (switched via `useIsMobile()`). The top-level `SpartsHub` default export orchestrates auth state and passes everything down as props.
+There is no URL router. A `tab` state string drives which "page" renders. `MobileLayout` and `DesktopLayout` are the two root containers (switched via `useIsMobile()`). The top-level `PortalMaquinas` default export orchestrates auth state and passes everything down as props.
 
 Auth flow: `LandingPage` → `AuthScreen` → `MobileLayout` | `DesktopLayout`
 

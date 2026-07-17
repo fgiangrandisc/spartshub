@@ -332,7 +332,7 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
    funde con el fondo oscuro y desaparece, dejando visibles el engranaje naranja
    y el texto. El isotipo es SVG transparente -> no necesita blend.
    width:auto (raster fiable) + objectFit:contain + maxWidth:none + flexShrink:0. */
-function SpartsLogo({ size=36, onClick, icon=false }) {
+function PortalMaquinasLogo({ size=36, onClick, icon=false }) {
   const src   = icon ? "/isotipo.svg" : "/logo.png";
   const width = icon ? size*(718/729) : "auto";
   return (
@@ -344,7 +344,7 @@ function SpartsLogo({ size=36, onClick, icon=false }) {
     />
   );
 }
-function Logo({ size=16 }) { return <SpartsLogo size={size===16?36:size+20}/>; }
+function Logo({ size=16 }) { return <PortalMaquinasLogo size={size===16?36:size+20}/>; }
 
 /* ── Spinner ────────────────────────────────────────────────── */
 function Spin({ size=22 }) {
@@ -584,7 +584,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, padding:"0 clamp(14px,4vw,32px)", position:"sticky", top:0, zIndex:50 }}>
         <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:68, gap:12 }}>
           {/* Left: logo → inicio (Explorar). En móvil solo el isotipo para no apretar el header. */}
-          <SpartsLogo size={isMobile?40:48} icon={isMobile} onClick={onEnter}/>
+          <PortalMaquinasLogo size={isMobile?40:48} icon={isMobile} onClick={onEnter}/>
 
           {/* Center: 5 nav buttons (desktop only) */}
           {!isMobile && (
@@ -719,7 +719,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
 
       <footer style={{ background:BG3, borderTop:`1px solid ${BORDER}`, padding:"28px 20px", textAlign:"center" }}>
         <div style={{ maxWidth:880, margin:"0 auto" }}>
-          <div style={{ display:"flex", justifyContent:"center", marginBottom:14 }}><SpartsLogo size={24}/></div>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:14 }}><PortalMaquinasLogo size={24}/></div>
           <div style={{ display:"flex", gap:"16px 24px", justifyContent:"center", flexWrap:"wrap", marginBottom:16 }}>
             {["Términos y condiciones","Política de privacidad","Contacto"].map((link,i)=>(
               <span key={i} style={{ fontSize:14, color:MUTED, cursor:"pointer" }}>{link}</span>
@@ -783,7 +783,7 @@ function AuthScreen({ initialMode="login", notice=null, onAuth, onBack }) {
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
       <div style={{ padding:"56px 20px 20px", display:"flex", alignItems:"center", gap:12 }}>
         <button className="btn-ghost" onClick={onBack}><Ic n="chevL" s={22} c={TEXT}/></button>
-        <SpartsLogo size={36}/>
+        <PortalMaquinasLogo size={36}/>
       </div>
 
       <div style={{ flex:1, padding:"0 24px 40px", display:"flex", flexDirection:"column", gap:14 }}>
@@ -906,7 +906,7 @@ function ResetPasswordScreen({ onDone }) {
     <div style={{ minHeight:"100dvh", background:BG, display:"flex", flexDirection:"column" }}>
       <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
       <div style={{ padding:"56px 20px 20px", display:"flex", alignItems:"center", gap:12 }}>
-        <SpartsLogo size={36}/>
+        <PortalMaquinasLogo size={36}/>
       </div>
 
       <div style={{ flex:1, padding:"0 24px 40px", display:"flex", flexDirection:"column", gap:14 }}>
@@ -4645,12 +4645,32 @@ function MobileTabBar({ tab, setTab, onPublish, session, onGuestAction }) {
    ADMIN PANEL — solo visible para is_admin
 ══════════════════════════════════════════════════════════════ */
 function AdminPanel({ user }) {
-  const [section, setSection] = useState("users"); // users | listings | requests | matches | messages
+  const [section, setSection] = useState("users"); // users | listings | requests | matches | messages | publicar | carga
   const [data, setData]       = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState("");
   const [confirmDel, setConfirmDel] = useState(null);
   const [editing, setEditing] = useState(null);
+
+  // ── Selector de usuario compartido entre Publicar y Carga ──
+  const [allUsers, setAllUsers]         = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userSearch, setUserSearch]     = useState("");
+  const [usersLoaded, setUsersLoaded]   = useState(false);
+
+  // ── Formulario Publicar 1-a-1 ──
+  const [pubF, setPubF] = useState({ title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦" });
+  const [pubLoading, setPubLoading] = useState(false);
+  const [pubErr, setPubErr]         = useState("");
+  const [pubSuccess, setPubSuccess] = useState(false);
+
+  // ── Carga masiva ──
+  const [bulkFile, setBulkFile]           = useState(null);
+  const [bulkRows, setBulkRows]           = useState([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkDone, setBulkDone]           = useState(false);
+  const [bulkProgress, setBulkProgress]   = useState(0);
+  const bulkRef = useRef();
 
   const TABLES = {
     users:    { table:"profiles",  label:"Usuarios",      titleField:"name" },
@@ -4659,8 +4679,10 @@ function AdminPanel({ user }) {
     matches:  { table:"matches",   label:"Matches",       titleField:"reason" },
     messages: { table:"messages",  label:"Mensajes",      titleField:"body" },
   };
+  const isDataSection = !!TABLES[section];
 
   const load = useCallback(async ()=>{
+    if (!TABLES[section]) return;
     setLoading(true);
     const cfg = TABLES[section];
     const orderCol = section==="users" ? "name" : "created_at";
@@ -4672,6 +4694,14 @@ function AdminPanel({ user }) {
 
   useEffect(()=>{ load(); }, [load]);
 
+  // Cargar lista de usuarios cuando se entra a Publicar o Carga
+  useEffect(()=>{
+    if ((section==="publicar"||section==="carga") && !usersLoaded) {
+      sb.from("profiles").select("id, name, biz, phone, location").order("name",{ascending:true})
+        .then(({ data })=>{ setAllUsers(data||[]); setUsersLoaded(true); });
+    }
+  }, [section, usersLoaded]);
+
   const handleDelete = async (id) => {
     const cfg = TABLES[section];
     const { error } = await sb.from(cfg.table).delete().eq("id", id);
@@ -4680,12 +4710,129 @@ function AdminPanel({ user }) {
     setConfirmDel(null);
   };
 
-  const cfg = TABLES[section];
-  const filtered = data.filter(row => {
-    if (!search) return true;
-    const hay = JSON.stringify(row).toLowerCase();
-    return hay.includes(search.toLowerCase());
-  });
+  // ── Publicar a nombre de usuario ──
+  const submitPub = async () => {
+    if (!selectedUser) { setPubErr("Selecciona un usuario primero."); return; }
+    if (!pubF.title.trim()) { setPubErr("El título es obligatorio."); return; }
+    setPubLoading(true); setPubErr("");
+    const isEmpty = !pubF.price || pubF.price==="0" || pubF.price==="";;
+    const { error } = await sb.from("listings").insert({
+      user_id: selectedUser.id, title: pubF.title, brand: pubF.brand||null, model: pubF.model||null,
+      serial_number: pubF.serial_number||null, part_number: pubF.part_number||null,
+      cat: pubF.cat, condition: pubF.condition, operation: pubF.operation,
+      price: isEmpty ? 0 : Number(pubF.price), currency: isEmpty ? "NEG" : pubF.currency,
+      stock: Number(pubF.stock)||1, location: pubF.location||selectedUser.location||"",
+      phone: pubF.phone||selectedUser.phone||null, biz: pubF.biz||selectedUser.biz||null,
+      description: pubF.description||null, emoji: pubF.emoji||"📦", verified: false,
+    });
+    setPubLoading(false);
+    if (error) { setPubErr("Error: " + error.message); return; }
+    setPubSuccess(true);
+    setPubF({ title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦" });
+    setTimeout(()=>setPubSuccess(false), 4000);
+  };
+
+  // ── Carga masiva CSV/Excel ──
+  const handleBulkFile = file => {
+    if (!file) return;
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["csv","xlsx","xls"].includes(ext) && !file.type.includes("csv") && !file.type.includes("spreadsheet")) {
+      alert("Solo se permiten archivos CSV o Excel (.csv, .xlsx, .xls)."); return;
+    }
+    setBulkFile(file); setBulkDone(false); setBulkRows([]);
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = e.target.result;
+      const lines = text.split("\n").filter(Boolean);
+      const headers = lines[0].split(",").map(h=>h.trim().toLowerCase().replace(/"/g,""));
+      const VALID_CATS  = ["min","for","const","ene","trans","fae","rut","san","serv","ali","her"];
+      const VALID_CONDS = ["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"];
+      const rows = lines.slice(1).map(line => {
+        const vals = line.split(",").map(v=>v.trim().replace(/"/g,"").replace(/^[=+\-@]/, ""));
+        const obj  = {};
+        headers.forEach((h,i)=>obj[h]=vals[i]||"");
+        const title    = (obj.titulo||obj.title||"").slice(0,200);
+        const brand    = (obj.marca||obj.brand||"").slice(0,100);
+        const model    = (obj.modelo||obj.model||"").slice(0,100);
+        const desc     = (obj.descripcion||obj.description||"").slice(0,300);
+        const cat      = VALID_CATS.includes(obj.categoria||obj.cat) ? (obj.categoria||obj.cat) : "min";
+        const condition= VALID_CONDS.includes(obj.condicion||obj.condition) ? (obj.condicion||obj.condition) : "Nuevo";
+        const rawPrice = obj.precio||obj.price||"";
+        const priceEmpty = !rawPrice || rawPrice.trim()==="" || Number(rawPrice)===0;
+        const price    = priceEmpty ? "0" : String(Math.max(0,Number(rawPrice)||0));
+        const currency = priceEmpty ? "NEG" : (["CLP","USD","EUR","COP","PEN","MXN"].includes(obj.moneda||obj.currency) ? (obj.moneda||obj.currency) : "CLP");
+        return { title, brand, model, desc, cat, condition, price, currency };
+      }).filter(r=>r.title);
+      setBulkRows(rows);
+    };
+    reader.readAsText(file);
+  };
+
+  const uploadBulk = async () => {
+    if (!selectedUser) { alert("Selecciona un usuario primero."); return; }
+    setBulkUploading(true); setBulkProgress(0);
+    const CHUNK = 50;
+    const rows = bulkRows.map(r=>({
+      user_id: selectedUser.id, title: r.title, brand: r.brand||null, model: r.model||null,
+      description: r.desc||null, cat: r.cat, condition: r.condition,
+      price: Number(r.price)||0, currency: r.currency,
+      biz: selectedUser.biz||"", location: selectedUser.location||"",
+      phone: selectedUser.phone||null, emoji:"📦", verified:false,
+    }));
+    for (let i=0; i<rows.length; i+=CHUNK) {
+      await sb.from("listings").insert(rows.slice(i,i+CHUNK));
+      setBulkProgress(Math.min(100,Math.round(((i+CHUNK)/rows.length)*100)));
+    }
+    setBulkUploading(false); setBulkDone(true); setBulkRows([]); setBulkFile(null);
+  };
+
+  const filteredUsers = allUsers.filter(u=>
+    !userSearch || (u.name||"").toLowerCase().includes(userSearch.toLowerCase()) || (u.biz||"").toLowerCase().includes(userSearch.toLowerCase())
+  );
+
+  const cfg      = TABLES[section];
+  const filtered = isDataSection ? data.filter(row=>!search || JSON.stringify(row).toLowerCase().includes(search.toLowerCase())) : [];
+
+  const ALL_TABS = [
+    ...Object.entries(TABLES).map(([key,c])=>({ id:key, label:c.label })),
+    { id:"publicar", label:"+ Publicar" },
+    { id:"carga",    label:"Carga masiva" },
+  ];
+
+  // ── Selector de usuario reutilizable ──
+  const UserPicker = () => (
+    <div style={{ background:BG2, borderRadius:10, border:`1px solid ${BORDER}`, padding:16, marginBottom:20 }}>
+      <p style={{ fontSize:13, fontWeight:700, color:MUTED, textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>
+        {selectedUser ? "Usuario seleccionado:" : "Seleccionar usuario:"}
+      </p>
+      {selectedUser ? (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:"rgba(255,106,0,.1)", borderRadius:8, padding:"10px 14px", border:"1px solid rgba(255,106,0,.3)" }}>
+          <div>
+            <p style={{ fontWeight:700, color:TEXT, fontSize:16 }}>{selectedUser.name||"Sin nombre"}</p>
+            <p style={{ color:MUTED, fontSize:14 }}>{selectedUser.biz||"—"} · {selectedUser.location||"—"}</p>
+          </div>
+          <button onClick={()=>setSelectedUser(null)} style={{ background:"transparent", border:`1px solid ${BORDER}`, borderRadius:6, color:MUTED, fontSize:14, cursor:"pointer", padding:"4px 10px" }}>Cambiar</button>
+        </div>
+      ) : (
+        <>
+          <input className="inp" placeholder="Buscar por nombre o empresa…" value={userSearch} onChange={e=>setUserSearch(e.target.value)} style={{ marginBottom:8 }}/>
+          <div style={{ maxHeight:180, overflowY:"auto", display:"flex", flexDirection:"column", gap:4 }}>
+            {!usersLoaded
+              ? <p style={{ color:MUTED, fontSize:14, padding:8 }}>Cargando usuarios…</p>
+              : filteredUsers.length===0
+                ? <p style={{ color:MUTED, fontSize:14, padding:8 }}>Sin resultados</p>
+                : filteredUsers.slice(0,20).map(u=>(
+                    <button key={u.id} onClick={()=>{ setSelectedUser(u); setUserSearch(""); }}
+                      style={{ textAlign:"left", padding:"8px 12px", borderRadius:7, border:`1px solid ${BORDER}`, background:CARD, color:TEXT, cursor:"pointer", fontSize:14 }}>
+                      <strong>{u.name||"Sin nombre"}</strong>{u.biz ? ` · ${u.biz}` : ""}
+                    </button>
+                  ))
+            }
+          </div>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div>
@@ -4694,95 +4841,206 @@ function AdminPanel({ user }) {
       </div>
       <p style={{ color:MUTED, fontSize:16, marginBottom:20 }}>Gestión de contenido y usuarios de PortalMaquinas. Usa con cuidado — los cambios son permanentes.</p>
 
-      {/* Section tabs */}
-      <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-        {Object.entries(TABLES).map(([key,c])=>(
-          <button key={key} onClick={()=>{ setSection(key); setSearch(""); setConfirmDel(null); }}
-            style={{ padding:"8px 16px", borderRadius:8, border:`1.5px solid ${section===key?RED:BORDER}`, background:section===key?"rgba(255,106,0,.1)":CARD, color:section===key?RED:SUB, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
-            {c.label}
+      {/* Tabs */}
+      <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
+        {ALL_TABS.map(s=>(
+          <button key={s.id} onClick={()=>{ setSection(s.id); setSearch(""); setConfirmDel(null); setPubErr(""); setPubSuccess(false); setBulkDone(false); }}
+            style={{ padding:"8px 16px", borderRadius:8, border:`1.5px solid ${section===s.id?RED:BORDER}`, background:section===s.id?"rgba(255,106,0,.1)":CARD, color:section===s.id?RED:SUB, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
+            {s.label}
           </button>
         ))}
       </div>
 
-      {/* Search */}
-      <div className="search-bar" style={{ marginBottom:16 }}>
-        <Ic n="search" s={16} c={MUTED}/>
-        <input placeholder={`Buscar en ${cfg.label.toLowerCase()}…`} value={search} onChange={e=>setSearch(e.target.value)}/>
-        {search && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setSearch("")}><Ic n="x" s={16} c={MUTED}/></button>}
-      </div>
-
-      <p style={{ fontSize:15, color:MUTED, marginBottom:12 }}>{filtered.length} {cfg.label.toLowerCase()}</p>
-
-      {loading ? (
-        <div style={{ display:"flex", justifyContent:"center", paddingTop:40 }}><Spin size={28}/></div>
-      ) : filtered.length === 0 ? (
-        <div style={{ background:CARD, borderRadius:12, padding:40, textAlign:"center", border:`1px solid ${BORDER}` }}>
-          <p style={{ color:MUTED, fontSize:16 }}>Sin resultados</p>
-        </div>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-          {filtered.map(row=>(
-            <div key={row.id} style={{ background:CARD, borderRadius:10, padding:"12px 14px", border:`1px solid ${BORDER}` }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12 }}>
-                <div style={{ flex:1, minWidth:0 }}>
-                  {/* Primary line */}
-                  <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:3 }}>
-                    {section==="users"   && (row.name || row.biz || "(sin nombre)")}
-                    {section==="listings"&& row.title}
-                    {section==="requests"&& row.title}
-                    {section==="matches" && `Match (score ${row.score||"—"})`}
-                    {section==="messages"&& (row.body?.slice(0,80) || "(vacío)")}
-                  </p>
-                  {/* Secondary line */}
-                  <p style={{ fontSize:14, color:MUTED, wordBreak:"break-all" }}>
-                    {section==="users"   && `${row.biz||"—"} · ${row.location||"—"} · ${row.phone||"sin tel"}`}
-                    {section==="listings"&& `${row.biz||"—"} · ${fmtPrice(row.price,row.currency)} · ${row.location||"—"}`}
-                    {section==="requests"&& `${row.brand||"—"} ${row.model||""} · ${row.location||"—"}`}
-                    {section==="matches" && `${row.reason||"—"}`}
-                    {section==="messages"&& `${fmtTs(row.created_at)}`}
-                  </p>
-                  <p style={{ fontSize:12, color:MUTED, marginTop:3, fontFamily:"monospace" }}>id: {row.id}</p>
-                </div>
-                <div style={{ display:"flex", gap:6, flexShrink:0 }}>
-                  {/* Edit only for content tables */}
-                  {(section==="listings"||section==="requests"||section==="users") && (
-                    <button onClick={()=>setEditing(row)}
-                      style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${BORDER}`, background:BG2, color:TEXT, fontSize:14, cursor:"pointer", fontWeight:600 }}>
-                      Editar
-                    </button>
-                  )}
-                  {confirmDel===row.id ? (
-                    <>
-                      <button onClick={()=>setConfirmDel(null)}
-                        style={{ padding:"6px 10px", borderRadius:7, border:`1px solid ${BORDER}`, background:"transparent", color:MUTED, fontSize:14, cursor:"pointer", fontWeight:600 }}>
-                        No
-                      </button>
-                      <button onClick={()=>handleDelete(row.id)}
-                        style={{ padding:"6px 10px", borderRadius:7, border:"none", background:DANGER, color:"#fff", fontSize:14, cursor:"pointer", fontWeight:700 }}>
-                        Confirmar
-                      </button>
-                    </>
-                  ) : (
-                    <button onClick={()=>setConfirmDel(row.id)}
-                      style={{ padding:"6px 12px", borderRadius:7, border:`1px solid rgba(220,38,38,.35)`, background:"rgba(220,38,38,.06)", color:DANGER, fontSize:14, cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:5 }}>
-                      <Ic n="trash" s={13} c={DANGER}/>Borrar
-                    </button>
-                  )}
-                </div>
+      {/* ── PUBLICAR 1-A-1 ── */}
+      {section==="publicar" && (
+        <div style={{ maxWidth:600 }}>
+          <UserPicker/>
+          {pubSuccess && <div style={{ background:"rgba(34,197,94,.1)", border:"1px solid rgba(34,197,94,.3)", borderRadius:8, padding:"10px 14px", color:"#22c55e", fontSize:15, marginBottom:16, fontWeight:600 }}>✓ Publicación creada con éxito</div>}
+          {pubErr    && <div style={{ background:"rgba(220,38,38,.08)", border:"1px solid rgba(220,38,38,.25)", borderRadius:8, padding:"10px 14px", color:DANGER, fontSize:15, marginBottom:16 }}>{pubErr}</div>}
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, display:"flex", flexDirection:"column", gap:14 }}>
+            {[["Título *","title","Ej: Bomba hidráulica Komatsu"],["Marca","brand","Ej: Komatsu"],["Modelo","model","Ej: PC200-8"],["N° Serie","serial_number",""],["N° Parte","part_number",""],["Empresa","biz",""],["Teléfono","phone",""],["Ubicación","location","Ciudad, País"],["Emoji","emoji","📦"]].map(([label,key,ph])=>(
+              <div key={key}>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>{label}</p>
+                <input className="inp" value={pubF[key]} onChange={e=>setPubF(p=>({...p,[key]:e.target.value}))} placeholder={ph}/>
+              </div>
+            ))}
+            <div>
+              <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Descripción</p>
+              <textarea className="inp" rows={3} value={pubF.description} onChange={e=>setPubF(p=>({...p,description:e.target.value}))} style={{ resize:"none" }}/>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Categoría</p>
+                <select className="inp" value={pubF.cat} onChange={e=>setPubF(p=>({...p,cat:e.target.value}))}>
+                  {[["min","Minería"],["for","Forestal"],["const","Construcción"],["ene","Energía"],["trans","Transporte"],["fae","Faenas"],["rut","Rutas"],["san","Sanitarias"],["serv","Servicios"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                </select>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Condición</p>
+                <select className="inp" value={pubF.condition} onChange={e=>setPubF(p=>({...p,condition:e.target.value}))}>
+                  {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(v=><option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Operación</p>
+                <select className="inp" value={pubF.operation} onChange={e=>setPubF(p=>({...p,operation:e.target.value}))}>
+                  {["Venta","Servicio","Arriendo"].map(v=><option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Stock</p>
+                <input className="inp" type="number" min="1" value={pubF.stock} onChange={e=>setPubF(p=>({...p,stock:e.target.value}))}/>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Precio (vacío = A convenir)</p>
+                <input className="inp" type="number" value={pubF.price} onChange={e=>setPubF(p=>({...p,price:e.target.value}))} placeholder="0"/>
+              </div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Moneda</p>
+                <select className="inp" value={pubF.currency} onChange={e=>setPubF(p=>({...p,currency:e.target.value}))}>
+                  {["CLP","USD","EUR","COP","PEN","MXN"].map(v=><option key={v}>{v}</option>)}
+                </select>
               </div>
             </div>
-          ))}
+            <button className="btn-red" onClick={submitPub} disabled={pubLoading||!selectedUser} style={{ padding:"14px", fontSize:16, marginTop:4, opacity:(pubLoading||!selectedUser)?.5:1 }}>
+              {pubLoading ? "Publicando…" : `Publicar a nombre de ${selectedUser?.name||"(selecciona usuario)"}`}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Edit modal */}
-      {editing && (
-        <AdminEditModal
-          row={editing}
-          table={cfg.table}
-          onClose={()=>setEditing(null)}
-          onSaved={updated=>{ setData(prev=>prev.map(r=>r.id===updated.id?updated:r)); setEditing(null); }}
-        />
+      {/* ── CARGA MASIVA ── */}
+      {section==="carga" && (
+        <div style={{ maxWidth:600 }}>
+          <UserPicker/>
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}` }}>
+            <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:8 }}>Subir CSV / Excel</p>
+            <p style={{ fontSize:14, color:MUTED, marginBottom:16 }}>Columnas: <code style={{ background:BG2, padding:"2px 6px", borderRadius:4 }}>titulo, marca, modelo, categoria, condicion, precio, moneda, descripcion</code>. Precio vacío o 0 = "A convenir".</p>
+            <input ref={bulkRef} type="file" accept=".csv,.xlsx,.xls" style={{ display:"none" }} onChange={e=>handleBulkFile(e.target.files?.[0])}/>
+            <button onClick={()=>bulkRef.current?.click()}
+              style={{ padding:"12px 24px", borderRadius:8, border:`1.5px dashed ${BORDER2}`, background:"transparent", color:SUB, fontSize:15, fontWeight:600, cursor:"pointer", width:"100%", marginBottom:16 }}>
+              📁 {bulkFile ? bulkFile.name : "Seleccionar archivo…"}
+            </button>
+            {bulkRows.length>0 && !bulkDone && (
+              <div>
+                <p style={{ fontSize:15, color:TEXT, marginBottom:8, fontWeight:600 }}>{bulkRows.length} filas detectadas</p>
+                <div style={{ background:BG2, borderRadius:8, overflow:"auto", maxHeight:200, border:`1px solid ${BORDER}`, marginBottom:14 }}>
+                  <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, color:TEXT }}>
+                    <thead>
+                      <tr style={{ background:BG3 }}>
+                        {["Título","Cat","Condición","Precio"].map(h=>(
+                          <th key={h} style={{ padding:"6px 10px", textAlign:"left", color:MUTED, fontWeight:700, borderBottom:`1px solid ${BORDER}` }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bulkRows.slice(0,5).map((r,i)=>(
+                        <tr key={i} style={{ borderBottom:`1px solid ${BORDER}` }}>
+                          <td style={{ padding:"6px 10px", maxWidth:180, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{r.title}</td>
+                          <td style={{ padding:"6px 10px" }}>{r.cat}</td>
+                          <td style={{ padding:"6px 10px" }}>{r.condition}</td>
+                          <td style={{ padding:"6px 10px" }}>{r.currency==="NEG"?"A convenir":fmtPrice(r.price,r.currency)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {bulkRows.length>5 && <p style={{ padding:"6px 10px", color:MUTED, fontSize:12 }}>…y {bulkRows.length-5} filas más</p>}
+                </div>
+                {bulkUploading && (
+                  <div style={{ marginBottom:14 }}>
+                    <div style={{ background:BG3, borderRadius:99, height:8, overflow:"hidden" }}>
+                      <div style={{ width:`${bulkProgress}%`, background:RED, height:"100%", transition:"width .3s" }}/>
+                    </div>
+                    <p style={{ fontSize:13, color:MUTED, marginTop:6 }}>Subiendo… {bulkProgress}%</p>
+                  </div>
+                )}
+                <button className="btn-red" onClick={uploadBulk} disabled={bulkUploading||!selectedUser}
+                  style={{ padding:"12px", fontSize:16, width:"100%", opacity:(bulkUploading||!selectedUser)?.5:1 }}>
+                  {bulkUploading ? "Subiendo…" : `Subir ${bulkRows.length} publicaciones a nombre de ${selectedUser?.name||"(selecciona usuario)"}`}
+                </button>
+              </div>
+            )}
+            {bulkDone && (
+              <div style={{ background:"rgba(34,197,94,.1)", border:"1px solid rgba(34,197,94,.3)", borderRadius:8, padding:"14px", color:"#22c55e", fontSize:15, fontWeight:600 }}>
+                ✓ Carga completada. Las publicaciones ya están activas.
+                <button onClick={()=>{ setBulkDone(false); setBulkFile(null); setBulkRows([]); }}
+                  style={{ display:"block", marginTop:10, background:"transparent", border:`1px solid rgba(34,197,94,.4)`, borderRadius:6, color:"#22c55e", fontSize:14, cursor:"pointer", padding:"6px 14px" }}>
+                  Subir otro archivo
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── SECCIONES DE DATOS ── */}
+      {isDataSection && (
+        <>
+          <div className="search-bar" style={{ marginBottom:16 }}>
+            <Ic n="search" s={16} c={MUTED}/>
+            <input placeholder={`Buscar en ${cfg.label.toLowerCase()}…`} value={search} onChange={e=>setSearch(e.target.value)}/>
+            {search && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setSearch("")}><Ic n="x" s={16} c={MUTED}/></button>}
+          </div>
+          <p style={{ fontSize:15, color:MUTED, marginBottom:12 }}>{filtered.length} {cfg.label.toLowerCase()}</p>
+          {loading ? (
+            <div style={{ display:"flex", justifyContent:"center", paddingTop:40 }}><Spin size={28}/></div>
+          ) : filtered.length===0 ? (
+            <div style={{ background:CARD, borderRadius:12, padding:40, textAlign:"center", border:`1px solid ${BORDER}` }}>
+              <p style={{ color:MUTED, fontSize:16 }}>Sin resultados</p>
+            </div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {filtered.map(row=>(
+                <div key={row.id} style={{ background:CARD, borderRadius:10, padding:"12px 14px", border:`1px solid ${BORDER}` }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12 }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:3 }}>
+                        {section==="users"   && (row.name||row.biz||"(sin nombre)")}
+                        {section==="listings"&& row.title}
+                        {section==="requests"&& row.title}
+                        {section==="matches" && `Match (score ${row.score||"—"})`}
+                        {section==="messages"&& (row.body?.slice(0,80)||"(vacío)")}
+                      </p>
+                      <p style={{ fontSize:14, color:MUTED, wordBreak:"break-all" }}>
+                        {section==="users"   && `${row.biz||"—"} · ${row.location||"—"} · ${row.phone||"sin tel"}`}
+                        {section==="listings"&& `${row.biz||"—"} · ${fmtPrice(row.price,row.currency)} · ${row.location||"—"}`}
+                        {section==="requests"&& `${row.brand||"—"} ${row.model||""} · ${row.location||"—"}`}
+                        {section==="matches" && `${row.reason||"—"}`}
+                        {section==="messages"&& `${fmtTs(row.created_at)}`}
+                      </p>
+                      <p style={{ fontSize:12, color:MUTED, marginTop:3, fontFamily:"monospace" }}>id: {row.id}</p>
+                    </div>
+                    <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                      {(section==="listings"||section==="requests"||section==="users") && (
+                        <button onClick={()=>setEditing(row)}
+                          style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${BORDER}`, background:BG2, color:TEXT, fontSize:14, cursor:"pointer", fontWeight:600 }}>
+                          Editar
+                        </button>
+                      )}
+                      {confirmDel===row.id ? (
+                        <>
+                          <button onClick={()=>setConfirmDel(null)}
+                            style={{ padding:"6px 10px", borderRadius:7, border:`1px solid ${BORDER}`, background:"transparent", color:MUTED, fontSize:14, cursor:"pointer", fontWeight:600 }}>No</button>
+                          <button onClick={()=>handleDelete(row.id)}
+                            style={{ padding:"6px 10px", borderRadius:7, border:"none", background:DANGER, color:"#fff", fontSize:14, cursor:"pointer", fontWeight:700 }}>Confirmar</button>
+                        </>
+                      ) : (
+                        <button onClick={()=>setConfirmDel(row.id)}
+                          style={{ padding:"6px 12px", borderRadius:7, border:`1px solid rgba(220,38,38,.35)`, background:"rgba(220,38,38,.06)", color:DANGER, fontSize:14, cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:5 }}>
+                          <Ic n="trash" s={13} c={DANGER}/>Borrar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {editing && (
+            <AdminEditModal row={editing} table={cfg.table} onClose={()=>setEditing(null)}
+              onSaved={updated=>{ setData(prev=>prev.map(r=>r.id===updated.id?updated:r)); setEditing(null); }}/>
+          )}
+        </>
       )}
     </div>
   );
@@ -4895,7 +5153,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Mobile header: izquierda isotipo · centro wordmark · derecha hamburguesa */}
       <div style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,background:"rgba(20,22,24,.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"calc(8px + env(safe-area-inset-top)) 12px 8px" }}>
         <div style={{ display:"flex",alignItems:"center",gap:8,minHeight:44 }}>
-          <SpartsLogo size={32} icon onClick={goHome}/>
+          <PortalMaquinasLogo size={32} icon onClick={goHome}/>
           <div onClick={goHome} style={{ flex:1,textAlign:"center",fontFamily:"Barlow,sans-serif",fontWeight:800,fontSize:19,letterSpacing:-0.3,lineHeight:1,whiteSpace:"nowrap",overflow:"hidden",cursor:"pointer" }}>
             <span style={{ color:TEXT }}>Portal</span><span style={{ color:RED }}>Maquinas</span>
           </div>
@@ -5041,7 +5299,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
       <header style={{ background:BG3, borderBottom:`1px solid ${BORDER}`, position:"sticky", top:0, zIndex:50, padding:"0 28px" }}>
         <div style={{ display:"flex", alignItems:"center", minHeight:64, padding:"8px 0", gap:20 }}>
           <div style={{ display:"flex",flexDirection:"column",gap:2,flexShrink:0 }}>
-            <SpartsLogo size={48} onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
+            <PortalMaquinasLogo size={48} onClick={()=>{ setSelected(null); setChatListing(null); setTab("search"); }}/>
             <span style={{ fontSize:13,fontWeight:700,color:RED,letterSpacing:1,textTransform:"uppercase",fontFamily:"Barlow Condensed,sans-serif",paddingLeft:2,whiteSpace:"nowrap" }}>{t("nav_tagline")}</span>
           </div>
           <div style={{ width:1, height:32, background:BORDER }}/>
@@ -5146,7 +5404,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 /* ══════════════════════════════════════════════════════════════
    MAIN APP
 ══════════════════════════════════════════════════════════════ */
-export default function SpartsHub() {
+export default function PortalMaquinas() {
   const isMobile = useIsMobile();
   const [session,      setSession]      = useState(null);
   const [showAuthMode, setShowAuthMode] = useState("landing");
@@ -5241,7 +5499,7 @@ export default function SpartsHub() {
     <LangCtx.Provider value={{ lang, setLang, t }}>
       <div style={{ minHeight:"100dvh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16 }}>
         <style>{CSS_BASE}</style><style>{CSS_OVERRIDE}</style>
-        <SpartsLogo size={36}/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
+        <PortalMaquinasLogo size={36}/><div className="spinner" style={{ width:28,height:28,marginTop:8 }}/>
       </div>
     </LangCtx.Provider>
   );
