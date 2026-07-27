@@ -992,8 +992,27 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
     let query = sb.from("listings").select("*").order(col, {ascending: asc});
 
     if (cat !== "all")         query = query.eq("cat", cat);
-    // NOTA: el texto libre (q) ya NO se filtra en Supabase con ilike
-    // (no maneja acentos ni typos). Se filtra en cliente más abajo.
+
+    /* PREFILTRO DE TEXTO EN EL SERVIDOR
+       Supabase corta la respuesta en 1.000 filas. Si el texto se filtrara SOLO
+       en el cliente, con un catálogo grande el buscador miraría nada más las
+       primeras 1.000 publicaciones y el resto sería invisible.
+       Por eso mandamos un prefiltro AMPLIO a Postgres: por cada palabra usamos
+       una raíz de 4 letras (así un typo al final igual pasa) y probamos tanto la
+       forma escrita como la forma sin acentos, porque ilike SÍ distingue tildes.
+       El resultado es un superconjunto; el filtro fino con acentos y Levenshtein
+       lo sigue haciendo coincideBusqueda más abajo. */
+    if (q && q.trim()) {
+      const COLS = ["title", "brand", "model", "description", "part_number"];
+      const palabras = q.toLowerCase().trim().split(/\s+/).filter(w => w.length >= 3);
+      // Un .or() por palabra ⇒ Supabase los combina con AND: todas deben aparecer.
+      for (const w of palabras) {
+        const raices = [...new Set([w.slice(0, 4), normalizar(w).slice(0, 4)])]
+          .filter(s => s.length >= 3 && /^[a-z0-9áéíóúüñ]+$/i.test(s)); // sin comas/paréntesis: rompen .or()
+        if (!raices.length) continue;
+        query = query.or(raices.flatMap(s => COLS.map(c => `${c}.ilike.%${s}%`)).join(","));
+      }
+    }
     if (condition)             query = query.eq("condition", condition);
     if (marca)                 query = query.ilike("brand", `%${marca}%`);
     if (modelo)                query = query.ilike("model", `%${modelo}%`);
@@ -1021,11 +1040,12 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
 
     const { data } = await query;
     let resultados = data || [];
-    // Filtro de texto libre tolerante a acentos y faltas de ortografía
+    // Filtro fino: sobre el superconjunto que ya acotó Postgres arriba,
+    // afinamos tolerando acentos y faltas de ortografía.
     if (q && q.trim()) {
       resultados = resultados.filter(l =>
         coincideBusqueda(
-          [l.title, l.brand, l.model, l.description, l.operation].filter(Boolean).join(" "),
+          [l.title, l.brand, l.model, l.description, l.operation, l.part_number].filter(Boolean).join(" "),
           q
         )
       );
@@ -3422,32 +3442,13 @@ function ProfilePage({ user, profile, onLogout }) {
             <h2 className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Soporte</h2>
             <p style={{ color:MUTED,fontSize:16,marginBottom:28 }}>Estamos aquí para ayudarte. Elige cómo quieres contactarnos.</p>
 
-            <div style={{ background:"rgba(255,106,0,.06)",border:"1px solid rgba(255,106,0,.2)",borderRadius:12,padding:24,marginBottom:16 }}>
-              <div style={{ display:"flex",gap:14,alignItems:"flex-start",marginBottom:16 }}>
-                <div style={{ width:44,height:44,background:RED,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                  <span style={{ color:"#fff",fontSize:20 }}>⚡</span>
-                </div>
-                <div>
-                  <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>Soporte con IA</p>
-                  <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Respuesta inmediata las 24 horas.</p>
-                </div>
-              </div>
-              <div style={{ background:BG2,borderRadius:8,padding:14,marginBottom:12,minHeight:60,fontSize:16,color:MUTED,border:`1px solid ${BORDER}` }}>
-                Escribe tu consulta y te responderemos a la brevedad.
-              </div>
-              <div style={{ display:"flex",gap:8 }}>
-                <input className="inp" placeholder="Escribe tu pregunta…" style={{ flex:1,borderRadius:8,padding:"10px 14px",fontSize:16 }}/>
-                <button className="btn-red" style={{ padding:"10px 14px" }}><Ic n="send" s={15} c="#fff"/></button>
-              </div>
-            </div>
-
             <div style={{ background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:24,marginBottom:16 }}>
               <div style={{ display:"flex",gap:14,alignItems:"flex-start",marginBottom:16 }}>
                 <div style={{ width:44,height:44,background:BG2,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:`1px solid ${BORDER}` }}>
                   <Ic n="user" s={20} c={SUB}/>
                 </div>
                 <div>
-                  <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>Soporte humano</p>
+                  <p style={{ fontWeight:700,fontSize:16,color:TEXT }}>Escríbenos</p>
                   <p style={{ fontSize:16,color:MUTED,marginTop:2 }}>Respuesta en menos de 24 horas hábiles.</p>
                 </div>
               </div>

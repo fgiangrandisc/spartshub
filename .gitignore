@@ -3,3 +3,12 @@ dist
 .env
 .env.local
 .DS_Store
+
+# Credenciales del CLI de Supabase.
+# supabase/.temp/pooler-url guarda la cadena de conexión CON la contraseña
+# de la base de datos en texto plano. Nunca debe llegar al repositorio.
+supabase/.temp/
+
+# Respaldos y archivos sueltos que no son parte del proyecto
+*.backup
+*.bak
