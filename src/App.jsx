@@ -610,10 +610,13 @@ function useUnreadCount(userId) {
   }, [userId]);
   return unreadCount;
 }
-function PhotoPlaceholder({ emoji="📦", h=160, url }) {
+function PhotoPlaceholder({ emoji="📦", h=160, url, alt }) {
   if (url) return (
     <div style={{ width:"100%", height:h, background:BG2, overflow:"hidden" }}>
-      <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+      {/* alt descriptivo: alimenta Google Imágenes y es requisito de accesibilidad */}
+      <img src={url} alt={alt || "Repuesto o maquinaria industrial publicada en PortalMaquinas"}
+           loading="lazy" decoding="async"
+           style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
     </div>
   );
   return (
@@ -1376,7 +1379,7 @@ function SearchPage({ user, onSelect, region, initQ="", initCat="all", onCatChan
           <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobile?150:230}px, 1fr))`, gap:isMobile?12:16 }}>
             {listings.map(l=>(
               <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
-                <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130}/>
+                <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130} alt={[l.title,l.brand,l.model].filter(Boolean).join(" ")}/>
                 <div style={{ padding:"10px 12px 14px" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
                     <span className="tag t-dim" style={{ fontSize:16 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
@@ -4136,7 +4139,7 @@ function MisPublicaciones({ user, onSelect, initSubTab="pubs" }) {
                 <div key={l.id} className="photo-card card" style={{ cursor:"default" }}>
                   {/* Photo — clickable to open detail */}
                   <div onClick={()=>onSelect(l)}>
-                    <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={120}/>
+                    <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={120} alt={[l.title,l.brand,l.model].filter(Boolean).join(" ")}/>
                   </div>
                   <div style={{ padding:"12px 14px 14px" }}>
                     <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>

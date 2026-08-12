@@ -28,26 +28,48 @@ const DIST = path.resolve("dist");
 /* Debe mantenerse en sintonía con CAT_SLUGS de src/App.jsx */
 const CATEGORIAS = [
   { id:"min",   slug:"mineria",      nombre:"Minería",
+    titulo:"Repuestos para minería en Chile",
+    meta:"Repuestos y equipos para faenas mineras: palas, perforadoras, chancadores, correas e hidráulica. Contacto directo, sin comisiones.",
     intro:"Repuestos y equipos para faenas mineras: camiones de extracción, palas, perforadoras, chancadores, correas transportadoras y sistemas hidráulicos." },
   { id:"for",   slug:"forestal",     nombre:"Forestal",
+    titulo:"Repuestos para maquinaria forestal en Chile",
+    meta:"Repuestos para cosechadoras, skidders, procesadoras y astilladoras. Publica y busca sin comisiones, con contacto directo entre las partes.",
     intro:"Repuestos para cosechadoras, skidders, procesadoras, astilladoras y equipos de manejo de madera." },
   { id:"const", slug:"construccion", nombre:"Construcción",
+    titulo:"Repuestos para construcción en Chile",
+    meta:"Repuestos para excavadoras, retroexcavadoras, cargadores frontales, motoniveladoras, rodillos y grúas. Sin intermediarios ni comisiones.",
     intro:"Repuestos para excavadoras, retroexcavadoras, cargadores frontales, motoniveladoras, rodillos compactadores y grúas." },
   { id:"ene",   slug:"energia",      nombre:"Energía",
+    titulo:"Repuestos y equipos de energía en Chile",
+    meta:"Generadores, motores, transformadores, tableros y sistemas de respaldo. Conecta directo con quien lo tiene, sin comisiones.",
     intro:"Repuestos y equipos para generación y distribución eléctrica: generadores, motores, transformadores, tableros y sistemas de respaldo." },
   { id:"trans", slug:"transporte",   nombre:"Transporte y Logística",
+    titulo:"Repuestos para camiones en Chile",
+    meta:"Repuestos para camiones, tractocamiones, remolques, grúas horquilla y equipos de carga. Contacto directo con el vendedor.",
     intro:"Repuestos para camiones, tractocamiones, remolques, grúas horquilla y equipos de movimiento de carga." },
   { id:"fae",   slug:"faenas",       nombre:"Faenas",
+    titulo:"Equipos y repuestos para faenas en Chile",
+    meta:"Equipamiento y repuestos para faenas industriales: instalaciones, apoyo en terreno y mantenimiento de operaciones. Sin comisiones.",
     intro:"Equipamiento y repuestos para faenas industriales: instalaciones, apoyo en terreno y mantenimiento de operaciones." },
   { id:"rut",   slug:"rutas",        nombre:"Rutas y Caminos",
+    titulo:"Maquinaria vial y repuestos en Chile",
+    meta:"Pavimentadoras, fresadoras, distribuidores de asfalto y equipos de señalización vial. Publica y busca sin comisiones.",
     intro:"Maquinaria y repuestos para obras viales: pavimentadoras, fresadoras, distribuidores de asfalto y equipos de señalización." },
   { id:"san",   slug:"sanitarias",   nombre:"Sanitarias",
+    titulo:"Bombas y equipos sanitarios en Chile",
+    meta:"Bombas, válvulas y sistemas de impulsión para plantas de tratamiento, agua potable y alcantarillado. Contacto directo.",
     intro:"Repuestos y equipos para plantas de tratamiento, redes de agua potable y alcantarillado: bombas, válvulas y sistemas de impulsión." },
   { id:"serv",  slug:"servicios",    nombre:"Servicios",
+    titulo:"Servicios industriales en Chile",
+    meta:"Mantenimiento, reparación, mecanizado, hidráulica, soldadura especializada y asistencia en terreno. Conecta directo con el proveedor.",
     intro:"Servicios industriales: mantenimiento, reparación, mecanizado, hidráulica, soldadura especializada y asistencia en terreno." },
   { id:"ali",   slug:"alimentos",    nombre:"Alimentos",
+    titulo:"Equipos para la industria alimentaria",
+    meta:"Líneas de proceso, envasado, frío industrial y transporte de producto para la industria alimentaria y agroindustrial en Chile.",
     intro:"Repuestos y equipos para la industria alimentaria y agroindustrial: líneas de proceso, envasado, frío industrial y transporte de producto." },
   { id:"her",   slug:"herramientas", nombre:"Herramientas",
+    titulo:"Herramientas industriales en Chile",
+    meta:"Herramientas hidráulicas, neumáticas, de medición y torque, y herramienta especializada de taller. Sin intermediarios.",
     intro:"Herramientas industriales y de taller: equipos hidráulicos, neumáticos, de medición, torque y herramienta especializada." },
 ];
 
@@ -95,8 +117,8 @@ async function publicacionesPorCategoria() {
 
 /* ── Reemplazos sobre el HTML base ──────────────────────────────── */
 function construirPagina(base, cat, publicaciones) {
-  const titulo = `Repuestos y maquinaria para ${cat.nombre.toLowerCase()} en Chile | PortalMaquinas`;
-  const desc   = `${cat.intro} Publica y busca sin comisiones, con contacto directo entre las partes.`.slice(0, 300);
+  const titulo = `${cat.titulo} | PortalMaquinas`;   // ≤60 caracteres: Google trunca más allá
+  const desc   = cat.meta;                            // ≤155 caracteres
   const urlCat = `${SITE}/categoria/${cat.slug}`;
 
   let html = base;
@@ -148,7 +170,7 @@ function construirPagina(base, cat, publicaciones) {
       <div style="max-width:820px;margin:0 auto;padding:56px 24px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#e9edf2;background:#0B0F14">
         <a href="/"><img src="/icon-192.png" alt="PortalMaquinas" width="72" height="72" style="border-radius:14px;border:0" /></a>
         <h1 style="font-size:30px;line-height:1.25;margin:20px 0 12px">
-          Repuestos y maquinaria para ${esc(cat.nombre.toLowerCase())} en Chile
+          ${esc(cat.titulo)}
         </h1>
         <p style="font-size:17px;line-height:1.6;color:#98a4b3;margin:0 0 20px">${esc(cat.intro)}</p>
         <p style="font-size:16px;line-height:1.7;color:#98a4b3;margin:0 0 20px">
@@ -198,14 +220,40 @@ async function main() {
     generadas++;
   }
 
-  /* /buscar como página estática propia, para que la ruta no dependa
-     únicamente del rewrite de Vercel. */
+  /* /buscar: página propia. Si fuera una copia literal de la portada
+     tendría el mismo título y el mismo canonical, y Google la trataría
+     como contenido duplicado. Le damos identidad y canonical propio. */
+  const tBuscar = "Buscar repuestos y maquinaria industrial | PortalMaquinas";
+  const dBuscar = "Busca repuestos, maquinaria y equipos industriales por marca, modelo, número de parte, serie o motor en las 16 regiones de Chile.";
+  let buscar = base
+    .replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(tBuscar)}</title>`)
+    .replace(/(<meta name="description" content=")[^"]*(")/, `$1${esc(dBuscar)}$2`)
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${SITE}/buscar$2`)
+    .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${esc(tBuscar)}$2`)
+    .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${esc(dBuscar)}$2`)
+    .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${SITE}/buscar$2`)
+    .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(tBuscar)}$2`)
+    .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(dBuscar)}$2`);
   const dirBuscar = path.join(DIST, "buscar");
   await mkdir(dirBuscar, { recursive: true });
-  await writeFile(path.join(dirBuscar, "index.html"), base, "utf8");
+  await writeFile(path.join(dirBuscar, "index.html"), buscar, "utf8");
+
+  /* Sitemap generado acá y no a mano: así nunca se desincroniza de las
+     categorías reales, y lleva lastmod con la fecha del despliegue. */
+  const hoy = new Date().toISOString().slice(0, 10);
+  const url = (loc, cf, pr) =>
+    `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${hoy}</lastmod>\n    <changefreq>${cf}</changefreq>\n    <priority>${pr}</priority>\n  </url>`;
+  const urls = [
+    url(`${SITE}/`, "daily", "1.0"),
+    url(`${SITE}/buscar`, "daily", "0.9"),
+    ...CATEGORIAS.map(c => url(`${SITE}/categoria/${c.slug}`, "daily", "0.8")),
+  ];
+  await writeFile(path.join(DIST, "sitemap.xml"),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`,
+    "utf8");
 
   const conPublicaciones = Object.values(publicaciones).filter(v => v?.length).length;
-  console.log(`[prerender] ${generadas} páginas de categoría generadas (${conPublicaciones} con publicaciones reales) + /buscar`);
+  console.log(`[prerender] ${generadas} categorías (${conPublicaciones} con publicaciones reales) + /buscar + sitemap con ${generadas + 2} URLs`);
 }
 
 main().catch(e => {

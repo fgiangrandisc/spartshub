@@ -2,7 +2,14 @@
 User-agent: *
 Allow: /
 
-# Rutas internas sin valor de indexación
-Disallow: /?recovery=
+# Vistas privadas de la aplicación. No tienen contenido propio: se sirven
+# desde index.html, así que indexarlas solo generaría duplicados sin valor.
+Disallow: /perfil
+Disallow: /mensajes
+Disallow: /coincidencias
+Disallow: /mis-publicaciones
+Disallow: /mis-solicitudes
+Disallow: /admin
+Disallow: /*?recovery=
 
 Sitemap: https://www.portalmaquinas.com/sitemap.xml
