@@ -1,24 +1,35 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-CL">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#FF6A00" />
-    <title>PortalMaquinas</title>
-    <meta name="description" content="Compra, vende y encuentra repuestos, maquinaria y equipos industriales. Conecta directo con quien lo tiene, sin intermediarios ni comisiones." />
+
+    <title>PortalMaquinas | Repuestos y maquinaria industrial en Chile</title>
+    <meta name="description" content="Marketplace chileno de repuestos, maquinaria y equipos industriales para minería, construcción, forestal, energía y transporte. Contacto directo con el vendedor, 0% de comisión." />
+
+    <link rel="canonical" href="https://www.portalmaquinas.com/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="author" content="PortalMaquinas" />
+
+    <!-- Contexto geográfico -->
+    <meta name="geo.region" content="CL" />
+    <meta name="geo.placename" content="Chile" />
 
     <!-- Open Graph (WhatsApp / Facebook / LinkedIn) -->
-    <meta property="og:title" content="PortalMaquinas" />
+    <meta property="og:title" content="PortalMaquinas | Repuestos y maquinaria industrial en Chile" />
     <meta property="og:description" content="Compra, vende y encuentra repuestos, maquinaria y equipos industriales. Conecta directo con quien lo tiene, sin intermediarios ni comisiones." />
     <meta property="og:image" content="https://www.portalmaquinas.com/social-card.png" />
-    <meta property="og:url" content="https://www.portalmaquinas.com" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="https://www.portalmaquinas.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="PortalMaquinas" />
     <meta property="og:locale" content="es_CL" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="PortalMaquinas" />
+    <meta name="twitter:title" content="PortalMaquinas | Repuestos y maquinaria industrial en Chile" />
     <meta name="twitter:description" content="Compra, vende y encuentra repuestos, maquinaria y equipos industriales. Conecta directo con quien lo tiene, sin intermediarios ni comisiones." />
     <meta name="twitter:image" content="https://www.portalmaquinas.com/social-card.png" />
 
@@ -26,6 +37,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="PortalMaquinas" />
+
     <!-- Favicon: SVG para navegadores modernos, PNG de respaldo -->
     <link rel="icon" type="image/svg+xml" href="/isotipo.svg" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
@@ -35,9 +47,87 @@
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Conexión anticipada a Supabase: ahorra el handshake en la primera consulta -->
+    <link rel="preconnect" href="https://qxudwqgsorqdcupvwgqw.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://qxudwqgsorqdcupvwgqw.supabase.co" />
+
+    <!-- Datos estructurados: identidad del sitio y acción de búsqueda -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.portalmaquinas.com/#organization",
+          "name": "PortalMaquinas",
+          "url": "https://www.portalmaquinas.com/",
+          "logo": "https://www.portalmaquinas.com/icon-512.png",
+          "email": "info@portalmaquinas.com",
+          "slogan": "No vendemos repuestos, conectamos personas",
+          "description": "Marketplace chileno de repuestos, maquinaria y equipos industriales que conecta de forma directa a quien vende con quien necesita, sin comisiones.",
+          "areaServed": { "@type": "Country", "name": "Chile" }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.portalmaquinas.com/#website",
+          "url": "https://www.portalmaquinas.com/",
+          "name": "PortalMaquinas",
+          "inLanguage": "es-CL",
+          "publisher": { "@id": "https://www.portalmaquinas.com/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://www.portalmaquinas.com/?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      El contenido de #root es lo que ven los rastreadores antes de que React
+      monte la aplicación (y lo que ve cualquiera con JavaScript desactivado).
+      React lo reemplaza por completo al arrancar, así que nunca se muestra
+      junto a la interfaz real: sirve de estado de carga y de contenido indexable.
+    -->
+    <div id="root">
+      <div style="max-width:820px;margin:0 auto;padding:56px 24px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#e9edf2;background:#0B0F14">
+        <img src="/icon-192.png" alt="PortalMaquinas" width="72" height="72" style="border-radius:14px" />
+        <h1 style="font-size:30px;line-height:1.25;margin:20px 0 12px">
+          Repuestos, maquinaria y equipos industriales en Chile
+        </h1>
+        <p style="font-size:17px;line-height:1.6;color:#98a4b3;margin:0 0 20px">
+          PortalMaquinas conecta de forma directa a quien tiene un repuesto, una máquina
+          o un servicio industrial con quien lo necesita. Sin intermediarios y sin comisiones:
+          el trato se cierra entre las partes.
+        </p>
+        <h2 style="font-size:19px;margin:28px 0 10px">Qué puedes encontrar</h2>
+        <p style="font-size:16px;line-height:1.7;color:#98a4b3;margin:0 0 20px">
+          Repuestos y maquinaria para minería, forestal, construcción, energía,
+          transporte y logística, faenas, rutas y caminos, sanitarias, servicios,
+          alimentos y herramientas. Búsqueda por marca, modelo, número de parte,
+          número de serie, número de motor y número de chasis, en las 16 regiones de Chile.
+        </p>
+        <h2 style="font-size:19px;margin:28px 0 10px">Cómo funciona</h2>
+        <p style="font-size:16px;line-height:1.7;color:#98a4b3;margin:0 0 20px">
+          Publica lo que vendes, una a una o por carga masiva. Busca lo que necesitas
+          con filtros técnicos. Deja una solicitud y recibe respuestas de quien lo tiene.
+          Contacta al vendedor por mensajería interna o directo por WhatsApp.
+          Publicar, buscar y contactar no tiene costo.
+        </p>
+        <p style="font-size:16px;color:#98a4b3">
+          Contacto: <a href="mailto:info@portalmaquinas.com" style="color:#FF6A00">info@portalmaquinas.com</a>
+        </p>
+        <p style="font-size:15px;color:#6e7987;margin-top:32px">
+          Cargando la aplicación… Si no carga, activa JavaScript en tu navegador.
+        </p>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

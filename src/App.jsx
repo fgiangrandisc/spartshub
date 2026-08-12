@@ -433,6 +433,67 @@ const CONDITIONS  = ["Nuevo","Usado – Bueno","Usado – Regular","Reacondicion
 const OPERATIONS  = ["Venta","Arriendo","Trade"];
 const CURRENCIES  = ["CLP","USD","EUR","COP","PEN","MXN"];
 
+/* ══════════════════════════════════════════════════════════════
+   RUTAS
+   La app sigue siendo una SPA: el estado vive en React y nada de esto
+   provoca recargas. Lo que agregan estas funciones es una URL real por
+   vista, con tres beneficios: los enlaces se pueden compartir, el
+   historial del navegador es legible, y Google puede indexar más de
+   una página (antes todo el sitio era una sola URL).
+
+   Son solo traductores entre la URL y el estado de navegación.
+══════════════════════════════════════════════════════════════ */
+const CAT_SLUGS = {
+  min:   "mineria",
+  for:   "forestal",
+  const: "construccion",
+  ene:   "energia",
+  trans: "transporte",
+  fae:   "faenas",
+  rut:   "rutas",
+  san:   "sanitarias",
+  serv:  "servicios",
+  ali:   "alimentos",
+  her:   "herramientas",
+};
+const SLUG_CATS = Object.fromEntries(Object.entries(CAT_SLUGS).map(([id,s]) => [s,id]));
+
+const TAB_PATHS = {
+  search:         "/buscar",
+  matches:        "/coincidencias",
+  messages:       "/mensajes",
+  profile:        "/perfil",
+  mispubs:        "/mis-publicaciones",
+  missolicitudes: "/mis-solicitudes",
+  admin:          "/admin",
+};
+const PATH_TABS = Object.fromEntries(Object.entries(TAB_PATHS).map(([t,p]) => [p,t]));
+
+/* Estado de navegación → ruta */
+const rutaDe = ({ tab, cat }) => {
+  if (tab === "search" && cat && cat !== "all" && CAT_SLUGS[cat]) {
+    return `/categoria/${CAT_SLUGS[cat]}`;
+  }
+  return TAB_PATHS[tab] || "/";
+};
+
+/* Ruta del navegador → estado de navegación */
+const rutaActual = () => {
+  const path = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
+  if (path.startsWith("/categoria/")) {
+    const cat = SLUG_CATS[path.slice("/categoria/".length)];
+    if (cat) return { tab:"search", cat };
+  }
+  return { tab: PATH_TABS[path] || "search", cat: "all" };
+};
+
+/* ¿La URL de entrada es una página pública? Si alguien llega desde Google
+   a /categoria/mineria debe ver publicaciones, no un muro de registro. */
+const entradaPublica = () => {
+  const path = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
+  return path === "/buscar" || path.startsWith("/categoria/");
+};
+
 const fmtTs = ts => {
   if (!ts) return "—";
   const d = new Date(ts);
@@ -969,10 +1030,10 @@ function ResetPasswordScreen({ onDone }) {
 /* ══════════════════════════════════════════════════════════════
    SEARCH PAGE
 ══════════════════════════════════════════════════════════════ */
-function SearchPage({ user, onSelect, region, initQ="" }) {
+function SearchPage({ user, onSelect, region, initQ="", initCat="all", onCatChange }) {
   const { t, lang } = useLang();
   const [q,          setQ]          = useState(initQ);
-  const [cat,        setCat]        = useState("all");
+  const [cat,        setCat]        = useState(initCat);
   const [condition,  setCondition]  = useState("");
   const [marca,      setMarca]      = useState("");
   const [modelo,     setModelo]     = useState("");
@@ -1002,6 +1063,14 @@ function SearchPage({ user, onSelect, region, initQ="" }) {
     if (sortBy === "z_a")        return { col:"title",      asc:false };
     return                              { col:"created_at", asc:false };
   };
+
+  /* Sincronización de la categoría con la URL.
+     Hacia arriba: al elegir una categoría, el padre reescribe la URL.
+     Hacia abajo: al usar atrás/adelante, el padre nos manda la categoría
+     de esa entrada del historial. El segundo efecto es idempotente, así
+     que no se produce un ciclo entre ambos. */
+  useEffect(()=>{ onCatChange?.(cat); }, [cat, onCatChange]);
+  useEffect(()=>{ setCat(initCat || "all"); }, [initCat]);
 
   const debounceRef = useRef(null);
   const load = useCallback(async () => {
@@ -5252,7 +5321,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
       {/* Page content */}
       <div style={{ paddingTop: `calc(64px + env(safe-area-inset-top))`, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
-        {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
+        {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch} initCat={searchCat} onCatChange={setSearchCat}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
         {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
@@ -5414,7 +5483,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
 
         {/* Main */}
         <div style={{ flex:1,minWidth:0,overflowY:"auto",padding:"24px 32px 60px" }}>
-          {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch}/>}
+          {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch} initCat={searchCat} onCatChange={setSearchCat}/>}
           {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
           {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
           {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
@@ -5443,12 +5512,15 @@ export default function PortalMaquinas() {
   const [session,      setSession]      = useState(null);
   const [showAuthMode, setShowAuthMode] = useState("landing");
   const [authNotice,   setAuthNotice]   = useState(null);
-  const [guestMode,    setGuestMode]    = useState(false);
+  // Si la URL de entrada es pública (/buscar o /categoria/…), entramos
+  // directo como invitado en vez de mostrar el muro de registro.
+  const [guestMode,    setGuestMode]    = useState(entradaPublica);
   const [guestSearch,  setGuestSearch]  = useState("");
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [profile,      setProfile]      = useState(null);
   const [authReady,    setAuthReady]    = useState(false);
-  const [tab,          setTab]          = useState("search");
+  const [tab,          setTab]          = useState(()=>rutaActual().tab);
+  const [searchCat,    setSearchCat]    = useState(()=>rutaActual().cat);
   const [selected,     setSelected]     = useState(null);
   const [chatListing,  setChatListing]  = useState(null);
   // Idioma: por defecto español; el selector del menú móvil permite cambiarlo y persiste.
@@ -5478,6 +5550,53 @@ export default function PortalMaquinas() {
 
   const logout   = async ()=>{ await sb.auth.signOut(); setSession(null); };
 
+  /* ── SEO: título y descripción por vista ──────────────────────────
+     La app es una SPA de una sola URL, así que el <title> estático del
+     index.html sería el mismo en todas partes. Actualizarlo al cambiar
+     de sección le da a Google (y sobre todo a la pestaña del navegador,
+     al historial y a los marcadores) una señal distinta por vista.
+     El detalle de una publicación usa su propio título, que es el texto
+     con más valor de búsqueda que tenemos.
+  ──────────────────────────────────────────────────────────────── */
+  useEffect(()=>{
+    const BASE = "PortalMaquinas";
+    const CLAIM = "Repuestos y maquinaria industrial en Chile";
+    let title, desc;
+
+    if (selected?.title) {
+      const partes = [selected.brand, selected.model].filter(Boolean).join(" ");
+      title = `${selected.title}${partes ? ` — ${partes}` : ""} | ${BASE}`;
+      desc  = (selected.description || "").slice(0, 155) ||
+              `${selected.title} disponible en PortalMaquinas${selected.location ? `, ${selected.location}` : ""}. Contacto directo con el vendedor, sin comisiones.`;
+    } else {
+      const VISTAS = {
+        search:   ["Buscar repuestos y maquinaria",
+                   "Busca repuestos, maquinaria y equipos industriales por marca, modelo, número de parte, serie o motor en las 16 regiones de Chile."],
+        publish:  ["Publicar repuestos y maquinaria",
+                   "Publica repuestos, maquinaria y servicios industriales gratis, una a una o por carga masiva. Sin comisiones sobre la venta."],
+        requests: ["Solicitar un repuesto",
+                   "Publica lo que necesitas y recibe respuestas directas de quien lo tiene en stock. Sin intermediarios."],
+        matches:  ["Mis coincidencias", null],
+        messages: ["Mensajes", null],
+        profile:  ["Mi perfil", null],
+      };
+      const [seccion, d] = VISTAS[tab] || [];
+      title = seccion ? `${seccion} | ${BASE}` : `${BASE} | ${CLAIM}`;
+      desc  = d;
+    }
+
+    document.title = title;
+    if (desc) {
+      let tag = document.querySelector('meta[name="description"]');
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute("name", "description");
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", desc);
+    }
+  }, [tab, selected]);
+
   /* ── Navegación con historial del navegador ──────────────────────
      Modelo: la navegación de la app es una pila de "vistas". Cada
      avance (cambiar de sección, abrir un detalle o un chat) empuja una
@@ -5494,20 +5613,35 @@ export default function PortalMaquinas() {
 
   const openChat = l=>{ if(l.user_id===session?.user?.id) return; setChatListing(l); setTab("messages"); setSelected(null); };
 
-  // Empuja/reemplaza la entrada de historial cuando cambia la navegación
+  const lastSigRef = useRef(null);   // firma de la última navegación empujada
+
+  // Empuja/reemplaza la entrada de historial —y ahora también la URL—
+  // cuando cambia la navegación.
   useEffect(()=>{
-    const snap = { sh: true, tab, selected, chatListing };
     if (isPopRef.current) {           // el cambio vino de atrás/adelante: no re-empujar
       isPopRef.current = false;
       return;
     }
+    const enLanding = !session && !guestMode && showAuthMode === "landing";
+    const snap = { sh: true, tab, selected, chatListing, searchCat };
+    const url  = enLanding ? "/" : rutaDe({ tab, cat: searchCat });
+    // La firma ignora la sesión: si lo único que cambió fue el estado de
+    // autenticación, corregimos la URL sin ensuciar el historial.
+    const sig  = JSON.stringify([tab, selected?.id ?? null, chatListing?.id ?? null, searchCat, enLanding]);
+
     if (!initedRef.current) {         // primer render: reemplaza la entrada inicial
       initedRef.current = true;
-      window.history.replaceState(snap, "");
+      lastSigRef.current = sig;
+      window.history.replaceState(snap, "", url);
       return;
     }
-    window.history.pushState(snap, "");
-  }, [tab, selected, chatListing]);
+    if (sig === lastSigRef.current) {
+      window.history.replaceState(snap, "", url);
+      return;
+    }
+    lastSigRef.current = sig;
+    window.history.pushState(snap, "", url);
+  }, [tab, selected, chatListing, searchCat, session, guestMode, showAuthMode]);
 
   // Atrás/adelante del navegador → restaura el estado de esa entrada
   useEffect(()=>{
@@ -5517,10 +5651,15 @@ export default function PortalMaquinas() {
       isPopRef.current = true;
       if (snap && snap.sh) {
         setTab(snap.tab ?? "search");
+        setSearchCat(snap.searchCat ?? "all");
         setSelected(snap.selected ?? null);
         setChatListing(snap.chatListing ?? null);
       } else {
-        // Entrada inicial sin nuestro estado: volvemos a la vista base
+        // Entrada sin nuestro estado (por ejemplo, la primera del sitio):
+        // reconstruimos la vista leyendo la URL.
+        const r = rutaActual();
+        setTab(r.tab);
+        setSearchCat(r.cat);
         setSelected(null);
         setChatListing(null);
       }
