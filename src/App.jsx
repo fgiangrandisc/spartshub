@@ -465,6 +465,24 @@ const normalizar = (s) =>
     .replace(/\s+/g, " ")
     .trim();
 
+/* Estilo compartido de los dropdown compactos (Matches, Mensajes) */
+const SELECT_STYLE = {
+  minHeight: 40,
+  padding: "8px 36px 8px 14px",
+  borderRadius: 8,
+  border: `1px solid ${BORDER}`,
+  background: CARD,
+  color: TEXT,
+  fontSize: 15,
+  fontWeight: 600,
+  cursor: "pointer",
+  appearance: "none",
+  WebkitAppearance: "none",
+  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23FF6A00' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")`,
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 12px center",
+};
+
 /* Distancia de Levenshtein (para tolerar faltas de ortografía leves) */
 const levenshtein = (a, b) => {
   if (a === b) return 0;
@@ -2483,12 +2501,11 @@ function MessagesPage({ user, initListing, onClear }) {
   const isMobile = useIsMobile();
   const [contacts, setContacts] = useState([]);
   const [active,   setActive]   = useState(null);
-  const [filter,   setFilter]   = useState("Todas");
+  const [filter,   setFilter]   = useState("all");   // all | unread | read
   const [convSearch, setConvSearch] = useState("");
   const [viewListing, setViewListing] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
   const [deleting,   setDeleting]   = useState(false);
-  const FILTERS = ["Todas","Interesado","Negociación","Vendido"];
 
   const deleteConversation = async (contactId, e) => {
     e?.stopPropagation();
@@ -2572,12 +2589,21 @@ function MessagesPage({ user, initListing, onClear }) {
   }
 
   const cq = convSearch.trim().toLowerCase();
-  const visibleContacts = cq
-    ? contacts.filter(c =>
+  // Buscador + filtro de leídas/no leídas (el filtro anterior no se aplicaba a nada)
+  const visibleContacts = contacts.filter(c => {
+    if (cq) {
+      const coincide =
         (c.name||"").toLowerCase().includes(cq) ||
         (c.biz||"").toLowerCase().includes(cq) ||
-        (contactMeta[c.id]?.listing?.title||"").toLowerCase().includes(cq))
-    : contacts;
+        (contactMeta[c.id]?.listing?.title||"").toLowerCase().includes(cq);
+      if (!coincide) return false;
+    }
+    const sinLeer = contactMeta[c.id]?.unread || 0;
+    if (filter === "unread") return sinLeer > 0;
+    if (filter === "read")   return sinLeer === 0;
+    return true;
+  });
+  const totalSinLeer = contacts.reduce((n,c)=> n + (contactMeta[c.id]?.unread || 0 ? 1 : 0), 0);
 
   return (
     <div style={{ paddingBottom:100 }}>
@@ -2589,13 +2615,17 @@ function MessagesPage({ user, initListing, onClear }) {
           {convSearch && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setConvSearch("")}><Ic n="x" s={16} c={MUTED}/></button>}
         </div>
       </div>
-      <div style={{ padding:"0 20px 16px",display:"flex",gap:8,overflowX:"auto" }}>
-        {FILTERS.map(f=>(
-          <button key={f} onClick={()=>setFilter(f)}
-            style={{ flexShrink:0,minHeight:40,padding:"8px 16px",borderRadius:20,fontSize:16,fontWeight:700,border:`1px solid ${filter===f?RED:BORDER}`,cursor:"pointer",background:filter===f?RED:CARD,color:filter===f?"#fff":SUB,fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.5,textTransform:"uppercase" }}>
-            {f}
-          </button>
-        ))}
+      <div style={{ padding:"0 20px 16px",display:"flex",gap:12,alignItems:"center",flexWrap:"wrap" }}>
+        <select value={filter} onChange={e=>setFilter(e.target.value)} style={SELECT_STYLE}>
+          <option value="all">Todas</option>
+          <option value="unread">No leídas</option>
+          <option value="read">Leídas</option>
+        </select>
+        {totalSinLeer > 0 && (
+          <span style={{ fontSize:15,color:RED,fontWeight:700 }}>
+            {totalSinLeer} sin leer
+          </span>
+        )}
       </div>
       <div style={{ padding:"0" }}>
         {visibleContacts.length===0 ? (
@@ -3028,16 +3058,18 @@ function MatchesPage({ user, onSelect, onChat }) {
           <Ic n="search" s={14} c={SUB}/> Actualizar
         </button>
       </div>
-      <p style={{ color:MUTED,fontSize:16,marginBottom:20 }}>Coincidencias que la IA encontró entre publicaciones y solicitudes.</p>
+      <p style={{ color:MUTED,fontSize:16,marginBottom:20 }}>Cruces entre publicaciones y solicitudes activas.</p>
 
-      {/* Filters */}
-      <div style={{ display:"flex",gap:8,marginBottom:20,flexWrap:"wrap" }}>
-        {[["all","Todos"],["selling","Vendo (mis publicaciones)"],["buying","Busco (mis solicitudes)"]].map(([val,lbl])=>(
-          <button key={val} onClick={()=>setFilter(val)}
-            style={{ minHeight:40,padding:"8px 16px",borderRadius:20,border:`1.5px solid ${filter===val?RED:BORDER}`,background:filter===val?"rgba(255,106,0,.1)":CARD,color:filter===val?RED:SUB,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif",letterSpacing:.3 }}>
-            {lbl}
-          </button>
-        ))}
+      {/* Filtro compacto */}
+      <div style={{ display:"flex",gap:12,marginBottom:20,alignItems:"center",flexWrap:"wrap" }}>
+        <select value={filter} onChange={e=>setFilter(e.target.value)} style={SELECT_STYLE}>
+          <option value="all">Todos</option>
+          <option value="selling">Vendo</option>
+          <option value="buying">Busco</option>
+        </select>
+        <span style={{ fontSize:15,color:MUTED }}>
+          {filtered.length} {filtered.length===1 ? "coincidencia" : "coincidencias"}
+        </span>
       </div>
 
       {loading ? (
@@ -3046,7 +3078,7 @@ function MatchesPage({ user, onSelect, onChat }) {
         <div style={{ background:CARD,borderRadius:12,padding:60,textAlign:"center",border:`1px solid ${BORDER}` }}>
           <div style={{ fontSize:56,marginBottom:16 }}>🤝</div>
           <p className="bebas" style={{ fontSize:28,color:TEXT,marginBottom:8 }}>Aún no hay matches</p>
-          <p style={{ color:MUTED,fontSize:16 }}>Cuando publiques o solicites algo, la IA buscará coincidencias automáticamente y aparecerán aquí.</p>
+          <p style={{ color:MUTED,fontSize:16 }}>Cuando publiques o solicites algo, buscaremos coincidencias automáticamente y aparecerán aquí.</p>
         </div>
       ) : (
         <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
@@ -3232,10 +3264,11 @@ function ProfilePage({ user, profile, onLogout }) {
 
   const initials = ((profile?.name||"U ").split(" ").map(w=>w[0]).join("")).slice(0,2).toUpperCase();
 
+  /* Menú de perfil reducido.
+     "Notificaciones" salió porque Configuración ya tiene ese bloque.
+     "Carga masiva" salió porque ahora vive dentro de Publicar. */
   const SECTIONS = [
     { id:"perfil",   labelKey:"profile_title",   icn:"user" },
-    { id:"notif",    labelKey:"notif_title",      icn:"bell",  label:"Notificaciones" },
-    { id:"bulk",     labelKey:"bulk_upload",      icn:"box",   label:"Carga masiva" },
     { id:"soporte",  labelKey:"support_title",    icn:"msg" },
     { id:"settings", labelKey:"settings_title",   icn:"settings" },
   ];
