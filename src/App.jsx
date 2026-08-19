@@ -1695,12 +1695,16 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
                 <>
                   <button onClick={hasWhatsApp ? wa : undefined}
                     style={{ background: hasWhatsApp ? "#25D366" : BG2, color: hasWhatsApp ? "#fff" : MUTED, borderRadius:10, padding:"15px", fontSize:16, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", gap:10, border: hasWhatsApp ? "none" : `1px solid ${BORDER}`, cursor: hasWhatsApp ? "pointer" : "not-allowed", opacity: hasWhatsApp ? 1 : .6 }}
-                    title={hasWhatsApp ? undefined : "Este vendedor no tiene WhatsApp. Usa el chat interno."}>
+                    title={hasWhatsApp ? undefined : (l.user_id ? "Este vendedor no tiene WhatsApp. Usa el chat interno." : "Este contacto no tiene WhatsApp registrado.")}>
                     <Ic n="wa" s={20} c={hasWhatsApp?"#fff":MUTED}/>{hasWhatsApp?"Contactar por WhatsApp":"WhatsApp no disponible"}
                   </button>
-                  <button className="btn-ol" style={{ padding:14 }} onClick={()=>{ onClose(); onChat(l); }}>
-                    <Ic n="msg" s={18} c={RED}/><span style={{ color:RED,fontWeight:700 }}>Mensaje en PortalMaquinas</span>
-                  </button>
+                  {/* Publicaciones sin usuario asociado (cargadas por un admin sin cuenta real)
+                      no tienen con quién abrir un chat interno: solo queda WhatsApp/llamada. */}
+                  {l.user_id && (
+                    <button className="btn-ol" style={{ padding:14 }} onClick={()=>{ onClose(); onChat(l); }}>
+                      <Ic n="msg" s={18} c={RED}/><span style={{ color:RED,fontWeight:700 }}>Mensaje en PortalMaquinas</span>
+                    </button>
+                  )}
                 </>
               )}
               <button className="btn-ghost" style={{ justifyContent:"center",padding:12 }} onClick={()=>{
@@ -4751,18 +4755,21 @@ function MobileTabBar({ tab, setTab, onPublish, session, onGuestAction }) {
    ADMIN PANEL — solo visible para is_admin
 ══════════════════════════════════════════════════════════════ */
 function AdminPanel({ user }) {
+  const toast = useToast();
   const [section, setSection] = useState("users"); // users | listings | requests | matches | messages | publicar | carga
   const [data, setData]       = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState("");
   const [confirmDel, setConfirmDel] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [showNewUser, setShowNewUser] = useState(false);
 
   // ── Selector de usuario compartido entre Publicar y Carga ──
   const [allUsers, setAllUsers]         = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userSearch, setUserSearch]     = useState("");
   const [usersLoaded, setUsersLoaded]   = useState(false);
+  const [pubNoUser, setPubNoUser]       = useState(false); // publicar sin cuenta asociada (contacto manual)
 
   // ── Formulario Publicar 1-a-1 ──
   const [pubF, setPubF] = useState({ title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦" });
@@ -4816,19 +4823,21 @@ function AdminPanel({ user }) {
     setConfirmDel(null);
   };
 
-  // ── Publicar a nombre de usuario ──
+  // ── Publicar a nombre de usuario (o sin usuario, con contacto manual) ──
   const submitPub = async () => {
-    if (!selectedUser) { setPubErr("Selecciona un usuario primero."); return; }
+    if (!pubNoUser && !selectedUser) { setPubErr('Selecciona un usuario primero, o activa "Publicar sin usuario".'); return; }
     if (!pubF.title.trim()) { setPubErr("El título es obligatorio."); return; }
+    if (pubNoUser && !pubF.phone.trim() && !pubF.biz.trim()) { setPubErr("Sin usuario asociado, ingresa al menos Empresa o Teléfono para que puedan contactar."); return; }
+    if (pubNoUser && !pubF.location.trim()) { setPubErr("Ingresa la ubicación."); return; }
     setPubLoading(true); setPubErr("");
     const isEmpty = !pubF.price || pubF.price==="0" || pubF.price==="";;
     const { error } = await sb.from("listings").insert({
-      user_id: selectedUser.id, title: pubF.title, brand: pubF.brand||null, model: pubF.model||null,
+      user_id: pubNoUser ? null : selectedUser.id, title: pubF.title, brand: pubF.brand||null, model: pubF.model||null,
       serial_number: pubF.serial_number||null, part_number: pubF.part_number||null,
       cat: pubF.cat, condition: pubF.condition, operation: pubF.operation,
       price: isEmpty ? 0 : Number(pubF.price), currency: isEmpty ? "NEG" : pubF.currency,
-      stock: Number(pubF.stock)||1, location: pubF.location||selectedUser.location||"",
-      phone: pubF.phone||selectedUser.phone||null, biz: pubF.biz||selectedUser.biz||null,
+      stock: Number(pubF.stock)||1, location: pubF.location||selectedUser?.location||"",
+      phone: pubF.phone||selectedUser?.phone||null, biz: pubF.biz||selectedUser?.biz||null,
       description: pubF.description||null, emoji: pubF.emoji||"📦", verified: false,
     });
     setPubLoading(false);
@@ -4950,7 +4959,7 @@ function AdminPanel({ user }) {
       {/* Tabs */}
       <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
         {ALL_TABS.map(s=>(
-          <button key={s.id} onClick={()=>{ setSection(s.id); setSearch(""); setConfirmDel(null); setPubErr(""); setPubSuccess(false); setBulkDone(false); }}
+          <button key={s.id} onClick={()=>{ setSection(s.id); setSearch(""); setConfirmDel(null); setPubErr(""); setPubSuccess(false); setBulkDone(false); setPubNoUser(false); }}
             style={{ padding:"8px 16px", borderRadius:8, border:`1.5px solid ${section===s.id?RED:BORDER}`, background:section===s.id?"rgba(255,106,0,.1)":CARD, color:section===s.id?RED:SUB, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
             {s.label}
           </button>
@@ -4960,7 +4969,20 @@ function AdminPanel({ user }) {
       {/* ── PUBLICAR 1-A-1 ── */}
       {section==="publicar" && (
         <div style={{ maxWidth:600 }}>
-          <UserPicker/>
+          <button onClick={()=>{ setPubNoUser(v=>!v); setSelectedUser(null); setPubErr(""); }}
+            style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:8, border:`1.5px solid ${pubNoUser?RED:BORDER}`, background:pubNoUser?"rgba(255,106,0,.1)":CARD, color:pubNoUser?RED:SUB, fontSize:14, fontWeight:700, cursor:"pointer", marginBottom:14 }}>
+            <span style={{ width:16, height:16, borderRadius:4, border:`1.5px solid ${pubNoUser?RED:BORDER2}`, background:pubNoUser?RED:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              {pubNoUser && <Ic n="check" s={11} c="#fff"/>}
+            </span>
+            Publicar sin usuario (contacto manual)
+          </button>
+          {pubNoUser ? (
+            <div style={{ background:"rgba(255,106,0,.06)", border:`1px solid rgba(255,106,0,.25)`, borderRadius:10, padding:14, marginBottom:20, fontSize:14, color:SUB, lineHeight:1.5 }}>
+              Esta publicación no queda asociada a ninguna cuenta. Completa <strong>Empresa</strong>, <strong>Teléfono</strong> y <strong>Ubicación</strong> más abajo — los interesados solo van a poder contactar por WhatsApp o llamada, no aparece la mensajería interna.
+            </div>
+          ) : (
+            <UserPicker/>
+          )}
           {pubSuccess && <div style={{ background:"rgba(34,197,94,.1)", border:"1px solid rgba(34,197,94,.3)", borderRadius:8, padding:"10px 14px", color:"#22c55e", fontSize:15, marginBottom:16, fontWeight:600 }}>✓ Publicación creada con éxito</div>}
           {pubErr    && <div style={{ background:"rgba(220,38,38,.08)", border:"1px solid rgba(220,38,38,.25)", borderRadius:8, padding:"10px 14px", color:DANGER, fontSize:15, marginBottom:16 }}>{pubErr}</div>}
           <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, display:"flex", flexDirection:"column", gap:14 }}>
@@ -5008,8 +5030,8 @@ function AdminPanel({ user }) {
                 </select>
               </div>
             </div>
-            <button className="btn-red" onClick={submitPub} disabled={pubLoading||!selectedUser} style={{ padding:"14px", fontSize:16, marginTop:4, opacity:(pubLoading||!selectedUser)?.5:1 }}>
-              {pubLoading ? "Publicando…" : `Publicar a nombre de ${selectedUser?.name||"(selecciona usuario)"}`}
+            <button className="btn-red" onClick={submitPub} disabled={pubLoading||(!pubNoUser&&!selectedUser)} style={{ padding:"14px", fontSize:16, marginTop:4, opacity:(pubLoading||(!pubNoUser&&!selectedUser))?.5:1 }}>
+              {pubLoading ? "Publicando…" : pubNoUser ? "Publicar sin usuario" : `Publicar a nombre de ${selectedUser?.name||"(selecciona usuario)"}`}
             </button>
           </div>
         </div>
@@ -5082,6 +5104,13 @@ function AdminPanel({ user }) {
       {/* ── SECCIONES DE DATOS ── */}
       {isDataSection && (
         <>
+          {section==="users" && (
+            <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:12 }}>
+              <button className="btn-red" style={{ padding:"10px 18px", fontSize:14 }} onClick={()=>setShowNewUser(true)}>
+                + Nuevo usuario
+              </button>
+            </div>
+          )}
           <div className="search-bar" style={{ marginBottom:16 }}>
             <Ic n="search" s={16} c={MUTED}/>
             <input placeholder={`Buscar en ${cfg.label.toLowerCase()}…`} value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -5148,6 +5177,94 @@ function AdminPanel({ user }) {
           )}
         </>
       )}
+      {showNewUser && (
+        <NewUserModal onClose={()=>setShowNewUser(false)}
+          onCreated={()=>{
+            setShowNewUser(false);
+            setUsersLoaded(false); // fuerza a recargar el picker de Publicar/Carga
+            toast("Usuario creado con éxito");
+            if (section==="users") load();
+          }}/>
+      )}
+    </div>
+  );
+}
+
+// Modal para crear un usuario nuevo desde el panel de administración: crea una
+// cuenta real de Supabase Auth (email + contraseña) más su fila en `profiles`,
+// vía la Edge Function `admin-create-user`. No se puede hacer con signUp()
+// normal desde acá porque eso reemplazaría la sesión del admin por la del
+// usuario nuevo.
+function NewUserModal({ onClose, onCreated }) {
+  const [f, setF]           = useState({ email:"", password:"", name:"", biz:"", phone:"", location:"" });
+  const [loading, setLoading] = useState(false);
+  const [err, setErr]       = useState("");
+  const upd = (k,v)=>setF(p=>({...p,[k]:v}));
+
+  const genPassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    let out = "";
+    for (let i=0;i<12;i++) out += chars[Math.floor(Math.random()*chars.length)];
+    upd("password", out);
+  };
+
+  const submit = async () => {
+    if (!f.email.trim() || !f.password.trim()) { setErr("Email y contraseña son obligatorios."); return; }
+    if (f.password.trim().length < 6) { setErr("La contraseña debe tener al menos 6 caracteres."); return; }
+    if (!f.name.trim()) { setErr("El nombre es obligatorio."); return; }
+    setLoading(true); setErr("");
+    const { data, error } = await sb.functions.invoke("admin-create-user", {
+      body: {
+        email: f.email.trim(), password: f.password.trim(), name: f.name.trim(),
+        biz: f.biz.trim()||null, phone: f.phone.trim()||null, location: f.location.trim()||null,
+      },
+    });
+    setLoading(false);
+    if (error) { setErr("No se pudo crear: " + (error.message||"error desconocido")); return; }
+    if (data?.error) { setErr("No se pudo crear: " + data.error); return; }
+    onCreated(data?.profile||null);
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.6)", zIndex:70, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }} onClick={onClose}>
+      <div style={{ background:CARD, borderRadius:14, padding:24, width:"100%", maxWidth:440, border:`1px solid ${BORDER}`, maxHeight:"88dvh", overflowY:"auto" }} onClick={e=>e.stopPropagation()}>
+        <h3 className="bebas" style={{ fontSize:22, color:RED, marginBottom:4 }}>Nuevo usuario</h3>
+        <p style={{ fontSize:14, color:MUTED, marginBottom:16 }}>Crea una cuenta real: la persona va a poder iniciar sesión con este email y contraseña.</p>
+        {err && <div style={{ background:"rgba(220,38,38,.08)", border:"1px solid rgba(220,38,38,.25)", borderRadius:8, padding:"10px 14px", color:DANGER, fontSize:14, marginBottom:14 }}>{err}</div>}
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Email *</p>
+            <input className="inp" type="email" value={f.email} onChange={e=>upd("email",e.target.value)} placeholder="persona@empresa.com"/>
+          </div>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Contraseña *</p>
+            <div style={{ display:"flex", gap:8 }}>
+              <input className="inp" value={f.password} onChange={e=>upd("password",e.target.value)} placeholder="Mínimo 6 caracteres" style={{ flex:1 }}/>
+              <button type="button" onClick={genPassword} style={{ padding:"0 14px", borderRadius:8, border:`1px solid ${BORDER}`, background:BG2, color:TEXT, fontSize:13, fontWeight:600, cursor:"pointer" }}>Generar</button>
+            </div>
+          </div>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Nombre *</p>
+            <input className="inp" value={f.name} onChange={e=>upd("name",e.target.value)}/>
+          </div>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Empresa</p>
+            <input className="inp" value={f.biz} onChange={e=>upd("biz",e.target.value)}/>
+          </div>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Teléfono</p>
+            <input className="inp" value={f.phone} onChange={e=>upd("phone",e.target.value)}/>
+          </div>
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Ubicación</p>
+            <input className="inp" value={f.location} onChange={e=>upd("location",e.target.value)}/>
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:10, marginTop:20 }}>
+          <button onClick={onClose} style={{ flex:1, padding:"12px", borderRadius:10, border:`1px solid ${BORDER}`, background:"transparent", color:MUTED, fontSize:15, fontWeight:600, cursor:"pointer" }}>Cancelar</button>
+          <button onClick={submit} disabled={loading} className="btn-red" style={{ flex:1, padding:"12px", opacity:loading?.6:1 }}>{loading?"Creando…":"Crear usuario"}</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -5614,7 +5731,7 @@ export default function PortalMaquinas() {
   const isPopRef = useRef(false);   // true mientras aplicamos un popstate (no re-empujar)
   const initedRef = useRef(false);
 
-  const openChat = l=>{ if(l.user_id===session?.user?.id) return; setChatListing(l); setTab("messages"); setSelected(null); };
+  const openChat = l=>{ if(!l.user_id || l.user_id===session?.user?.id) return; setChatListing(l); setTab("messages"); setSelected(null); };
 
   const lastSigRef = useRef(null);   // firma de la última navegación empujada
 
