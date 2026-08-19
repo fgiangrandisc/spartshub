@@ -5210,7 +5210,7 @@ function AdminEditModal({ row, table, onClose, onSaved }) {
 /* ══════════════════════════════════════════════════════════════
    MOBILE LAYOUT
 ══════════════════════════════════════════════════════════════ */
-function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, onGuestLogin, onGuestRegister }) {
+function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, searchCat, setSearchCat, onGuestLogin, onGuestRegister }) {
   const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
   const [showBulkUpload,setShowBulkUpload]= useState(false);
@@ -5349,7 +5349,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 /* ══════════════════════════════════════════════════════════════
    DESKTOP LAYOUT
 ══════════════════════════════════════════════════════════════ */
-function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, onGuestLogin, onGuestRegister }) {
+function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, searchCat, setSearchCat, onGuestLogin, onGuestRegister }) {
   const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
   const [showBulkUpload,setShowBulkUpload]= useState(false);
@@ -5715,6 +5715,7 @@ export default function PortalMaquinas() {
       openChat={openChat} logout={logout}
       region={region} setRegion={setRegion}
       guestMode={guestMode} guestSearch={guestSearch}
+      searchCat={searchCat} setSearchCat={setSearchCat}
       onGuestLogin={()=>{ setGuestMode(false); setShowAuthMode("login"); }}
       onGuestRegister={()=>{ setGuestMode(false); setShowAuthMode("register"); }}
     />
@@ -5732,6 +5733,7 @@ export default function PortalMaquinas() {
       openChat={openChat} logout={logout}
       region={region} setRegion={setRegion}
       guestMode={guestMode} guestSearch={guestSearch}
+      searchCat={searchCat} setSearchCat={setSearchCat}
       onGuestLogin={()=>{ setGuestMode(false); setShowAuthMode("login"); }}
       onGuestRegister={()=>{ setGuestMode(false); setShowAuthMode("register"); }}
     />
