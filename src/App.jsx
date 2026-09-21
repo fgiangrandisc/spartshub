@@ -521,6 +521,9 @@ const fmtPrice = (p, cur) => {
 const RATE_TYPE_LABELS = { fijo:"Tarifa fija", hora:"Por hora", visita:"Por visita", convenir:"A convenir" };
 const RENTAL_RATE_TYPE_LABELS = { dia:"Por día", semana:"Por semana", mes:"Por mes", convenir:"A convenir" };
 const RATE_SUFFIXES = { hora:"hora", visita:"visita", dia:"día", semana:"semana", mes:"mes" };
+/* Tipo de arriendo (no confundir con RENTAL_RATE_TYPE_LABELS, que es la
+   modalidad de tarifa): qué se está arrendando. */
+const RENTAL_TYPE_LABELS = { maquinaria:"Maquinaria / equipo", espacio:"Bodega / espacio", vehiculo:"Vehículo con conductor", otro:"Otro" };
 const fmtRate = (p, cur, rateType) => {
   if (rateType === "convenir" || cur === "NEG") return "A convenir";
   const base = fmtPrice(p, cur);
