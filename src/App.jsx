@@ -460,6 +460,7 @@ const SLUG_CATS = Object.fromEntries(Object.entries(CAT_SLUGS).map(([id,s]) => [
 
 const TAB_PATHS = {
   search:         "/buscar",
+  servicios:      "/servicios",
   matches:        "/coincidencias",
   messages:       "/mensajes",
   profile:        "/perfil",
@@ -491,7 +492,7 @@ const rutaActual = () => {
    a /categoria/mineria debe ver publicaciones, no un muro de registro. */
 const entradaPublica = () => {
   const path = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
-  return path === "/buscar" || path.startsWith("/categoria/");
+  return path === "/buscar" || path === "/servicios" || path.startsWith("/categoria/");
 };
 
 const fmtTs = ts => {
@@ -512,6 +513,18 @@ const fmtPrice = (p, cur) => {
   if (!cur || isNaN(n)) return "—";
   return `${cur} ${n.toLocaleString("es-CL")}`;
 };
+
+/* Igual que fmtPrice, pero para servicios: agrega el sufijo de la
+   modalidad de tarifa (/hora, /visita) cuando corresponde. */
+const RATE_TYPE_LABELS = { fijo:"Tarifa fija", hora:"Por hora", visita:"Por visita", convenir:"A convenir" };
+const fmtRate = (p, cur, rateType) => {
+  if (rateType === "convenir" || cur === "NEG") return "A convenir";
+  const base = fmtPrice(p, cur);
+  if (rateType === "hora")   return `${base} / hora`;
+  if (rateType === "visita") return `${base} / visita`;
+  return base;
+};
+
 
 /* ── Búsqueda tolerante: sin acentos, minúsculas, sin signos ──────
    normaliza("Camión") === normaliza("camion") === "camion"
@@ -632,7 +645,7 @@ function PhotoPlaceholder({ emoji="📦", h=160, url, alt }) {
 /* ══════════════════════════════════════════════════════════════
    LANDING PAGE
 ══════════════════════════════════════════════════════════════ */
-function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister }) {
+function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister, onEnterServices }) {
   const { t, lang, setLang } = useLang();
   const isMobile = useIsMobile();
   const [searchQ, setSearchQ] = useState("");
@@ -644,7 +657,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister })
     { key:"nav_sell",     action:onGateRegister },
     { key:"nav_buy",      action:onEnter },
     { key:"nav_requests", action:onGateRegister },
-    { key:"nav_services", action:onEnter },
+    { key:"nav_services", action:onEnterServices||onEnter },
     { key:"nav_rentals",  action:onEnter },
   ];
 
@@ -1079,7 +1092,7 @@ function SearchPage({ user, onSelect, region, initQ="", initCat="all", onCatChan
   const load = useCallback(async () => {
     setLoading(true);
     const { col, asc } = getSortParams();
-    let query = sb.from("listings").select("*").order(col, {ascending: asc});
+    let query = sb.from("listings").select("*").eq("kind","equipo").order(col, {ascending: asc});
 
     if (cat !== "all")         query = query.eq("cat", cat);
 
@@ -1405,6 +1418,130 @@ function SearchPage({ user, onSelect, region, initQ="", initCat="all", onCatChan
 }
 
 /* ══════════════════════════════════════════════════════════════
+   SERVICES PAGE
+   Sección separada de la de repuestos/maquinaria: solo publicaciones con
+   kind="servicio". Búsqueda y filtros más simples que SearchPage, porque
+   un servicio no tiene marca/modelo/N° de serie ni stock.
+══════════════════════════════════════════════════════════════ */
+function ServicesPage({ user, onSelect, region, onPublish }) {
+  const [q,         setQ]         = useState("");
+  const [cat,       setCat]       = useState("all");
+  const [ubicacion, setUbicacion] = useState("all");
+  const [listings,  setListings]  = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const isMobile = useIsMobile();
+
+  const debounceRef = useRef(null);
+  const load = useCallback(async () => {
+    setLoading(true);
+    let query = sb.from("listings").select("*").eq("kind","servicio").order("created_at",{ascending:false});
+    if (cat !== "all") query = query.eq("cat", cat);
+    if (q && q.trim()) {
+      const COLS = ["title","description","experience"];
+      const palabras = q.toLowerCase().trim().split(/\s+/).filter(w => w.length >= 3);
+      for (const w of palabras) {
+        const raices = [...new Set([w.slice(0,4), normalizar(w).slice(0,4)])]
+          .filter(s => s.length >= 3 && /^[a-z0-9áéíóúüñ]+$/i.test(s));
+        if (!raices.length) continue;
+        query = query.or(raices.flatMap(s => COLS.map(c => `${c}.ilike.%${s}%`)).join(","));
+      }
+    }
+    if (ubicacion && ubicacion !== "all") {
+      const rObj = REGIONS.find(r => r.id === ubicacion);
+      if (rObj?.q) query = query.ilike("location", `%${rObj.q}%`);
+    } else if (region && region !== "all" && region !== "intl") {
+      const rObj = REGIONS.find(r => r.id === region);
+      if (rObj?.q) query = query.ilike("location", `%${rObj.q}%`);
+    }
+    const { data } = await query;
+    let resultados = data || [];
+    if (q && q.trim()) {
+      resultados = resultados.filter(l =>
+        coincideBusqueda([l.title, l.description, l.experience].filter(Boolean).join(" "), q)
+      );
+    }
+    setListings(resultados);
+    setLoading(false);
+  }, [cat, q, ubicacion, region]);
+
+  useEffect(()=>{
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(()=>load(), 300);
+    return ()=>clearTimeout(debounceRef.current);
+  }, [load]);
+
+  return (
+    <div>
+      <div style={{ display:"flex", gap:10, marginBottom:12, alignItems:"center", flexWrap:"wrap" }}>
+        <div className="search-bar" style={{ flex:"1 1 240px", minWidth:0 }}>
+          <Ic n="search" s={16} c={MUTED}/>
+          <input placeholder="Buscar un servicio…" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()}/>
+          {q && <button className="btn-ghost" style={{ padding:"2px 4px" }} onClick={()=>setQ("")}><Ic n="x" s={16} c={MUTED}/></button>}
+        </div>
+        {user && (
+          <button className="btn-red" onClick={onPublish} style={{ padding:"10px 18px", fontSize:15, whiteSpace:"nowrap" }}>
+            + Publicar servicio
+          </button>
+        )}
+      </div>
+
+      <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+        <select className="inp" value={cat} onChange={e=>setCat(e.target.value)} style={{ width:"auto", minWidth:160 }}>
+          {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
+        <select className="inp" value={ubicacion} onChange={e=>setUbicacion(e.target.value)} style={{ width:"auto", minWidth:160 }}>
+          <option value="all">Todas las regiones</option>
+          {REGIONS.filter(r=>r.id!=="all").map(r=><option key={r.id} value={r.id}>{r.label_es||r.label}</option>)}
+        </select>
+      </div>
+
+      <p style={{ fontSize:16, color:MUTED, marginBottom:14 }}>
+        {loading ? "Buscando…" : `${listings.length} ${listings.length===1?"servicio":"servicios"}`}
+      </p>
+
+      {loading ? (
+        <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobile?150:230}px, 1fr))`, gap:isMobile?12:16 }}>
+          {[0,1,2,3].map(i=>(
+            <div key={i} style={{ background:CARD, borderRadius:10, overflow:"hidden", border:`1px solid ${BORDER}` }}>
+              <div className="skel" style={{ height:130 }}/>
+              <div style={{ padding:"10px 12px 14px" }}>
+                <div className="skel" style={{ height:12, width:"40%", borderRadius:4, marginBottom:8 }}/>
+                <div className="skel" style={{ height:14, width:"85%", borderRadius:4, marginBottom:8 }}/>
+                <div className="skel" style={{ height:16, width:"50%", borderRadius:4 }}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : listings.length === 0 ? (
+        <div style={{ padding:"60px 0", textAlign:"center" }}>
+          <div style={{ fontSize:48, marginBottom:12 }}>🔧</div>
+          <p className="bebas" style={{ fontSize:24, color:TEXT, marginBottom:8 }}>Todavía no hay servicios acá</p>
+          <p style={{ color:MUTED, fontSize:16, marginBottom:16 }}>
+            {user ? "Sé el primero en publicar un servicio en esta categoría o región." : "Iniciá sesión para publicar tu servicio."}
+          </p>
+          {user && <button className="btn-ol" onClick={onPublish} style={{ fontSize:16 }}>+ Publicar servicio</button>}
+        </div>
+      ) : (
+        <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobile?150:230}px, 1fr))`, gap:isMobile?12:16 }}>
+          {listings.map(l=>(
+            <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
+              <PhotoPlaceholder emoji={l.emoji||"🔧"} url={l.photos?.[0]} h={130} alt={l.title}/>
+              <div style={{ padding:"10px 12px 14px" }}>
+                <span className="tag t-dim" style={{ fontSize:16, marginBottom:6, display:"inline-block" }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
+                <p style={{ fontSize:17, fontWeight:700, lineHeight:1.3, marginBottom:4, color:TEXT }}>{l.title}</p>
+                <p style={{ fontSize:15, color:SUB, marginBottom:2 }}>{l.biz}</p>
+                {l.location && <p style={{ fontSize:15, color:MUTED, marginBottom:5 }}>📍 {l.location}</p>}
+                <p className="bebas" style={{ fontSize:19, color:RED, marginTop:2 }}>{fmtRate(l.price, l.currency, l.rate_type)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    LISTING DETAIL
 ══════════════════════════════════════════════════════════════ */
 function PhotoCarousel({ photos }) {
@@ -1592,10 +1729,22 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
               <h2 style={{ fontSize:22,fontWeight:700,lineHeight:1.2,color:TEXT,flex:1 }}>{l.title}</h2>
               {l.verified&&<span className="tag t-green"><Ic n="verify" s={10} c={GREEN}/>Verificado</span>}
             </div>
-            <p className="bebas" style={{ fontSize:30,color:RED,marginBottom:16 }}>{fmtPrice(l.price, l.currency)}</p>
+            <p className="bebas" style={{ fontSize:30,color:RED,marginBottom:16 }}>
+              {l.kind==="servicio" ? fmtRate(l.price, l.currency, l.rate_type) : fmtPrice(l.price, l.currency)}
+            </p>
 
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20 }}>
-              {[
+              {l.kind==="servicio" ? [
+                l.experience&&["Experiencia / certificaciones",l.experience],
+                l.availability&&["Disponibilidad",l.availability],
+                l.website&&["Sitio web",l.website],
+                l.social_media&&["Redes sociales",l.social_media],
+              ].filter(Boolean).map(([k,v])=>(
+                <div key={k} style={{ background:BG2,borderRadius:10,padding:"12px 14px",border:`1px solid ${BORDER}` }}>
+                  <p style={{ fontSize:16,color:MUTED,marginBottom:3,fontWeight:600,textTransform:"uppercase",letterSpacing:.5 }}>{k}</p>
+                  <p style={{ fontSize:16,fontWeight:600,color:TEXT }}>{v}</p>
+                </div>
+              )) : [
                 l.operation&&["Tipo",l.operation],
                 ["Condición",l.condition],
                 ["Marca",l.brand||"—"],
@@ -1734,11 +1883,11 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
 /* ══════════════════════════════════════════════════════════════
    PUBLISH SHEET
 ══════════════════════════════════════════════════════════════ */
-function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
+function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialType }) {
   const { t } = useLang();
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
-  const [step,          setStep]          = useState(0);
-  const [type,          setType]          = useState("producto");
+  const [step,          setStep]          = useState(initialType ? 1 : 0);
+  const [type,          setType]          = useState(initialType || "producto");
   const [loading,       setLoading]       = useState(false);
   const [err,           setErr]           = useState("");
   const [matchCount,    setMatchCount]    = useState(0);
@@ -1756,7 +1905,9 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
     engine_number:"", hours:"", cat:"all",
     condition:"Nuevo", price:"", currency:"CLP", stock:"1",
     location:profile?.location||"", phone:profile?.phone||"",
-    biz:profile?.biz||"", description:"", emoji:"📦"
+    biz:profile?.biz||"", description:"", emoji:"📦",
+    // Solo para servicios (formulario distinto al de productos):
+    rate_type:"fijo", experience:"", availability:"", website:"", social_media:"",
   });
   const upd = (k,v) => setF(p=>({...p,[k]:v}));
 
@@ -1805,14 +1956,15 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
   };
 
   const submit = async () => {
+    if (type === "servicio") return submitService();
     if (!f.title || (!f.price && f.currency !== "NEG")) { setErr(t("pub_error_required")); return; }
     setLoading(true); setErr("");
     const { data:inserted, error } = await sb.from("listings").insert({
-      user_id:user.id, title:f.title, brand:f.brand||null, model:f.model||null,
+      user_id:user.id, kind:"equipo", title:f.title, brand:f.brand||null, model:f.model||null,
       serial_number:f.serial_number||null, part_number:f.part_number||null,
       engine_number:f.engine_number||null,
       hours:f.hours?Number(f.hours):null,
-      cat:f.cat, condition:f.condition, operation:type==="servicio"?"Servicio":"Venta",
+      cat:f.cat, condition:f.condition, operation:"Venta",
       price:Number(f.price), currency:f.currency,
       stock:Number(f.stock)||1, location:f.location,
       phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
@@ -1836,6 +1988,35 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
     onDone();
   };
 
+  // Publicar un SERVICIO: formulario y payload completamente distintos al de
+  // un producto/repuesto — sin marca, modelo, N° de serie ni stock, y con
+  // modalidad de tarifa, experiencia y disponibilidad en su lugar. No corre
+  // el motor de matching (que compara contra solicitudes de repuestos).
+  const submitService = async () => {
+    const isNeg = f.rate_type === "convenir";
+    if (!f.title || (!isNeg && !f.price)) { setErr(t("pub_error_required")); return; }
+    setLoading(true); setErr("");
+    const { data:inserted, error } = await sb.from("listings").insert({
+      user_id:user.id, kind:"servicio", title:f.title,
+      cat:f.cat, operation:"Servicio",
+      rate_type:f.rate_type, price:isNeg?0:Number(f.price), currency:isNeg?"NEG":f.currency,
+      experience:f.experience||null, availability:f.availability||null,
+      website:f.website||null, social_media:f.social_media||null,
+      location:f.location, phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
+      description:f.description, emoji:f.emoji||"🔧", verified:false,
+    }).select().single();
+    if (error) { setErr(error.message); setLoading(false); return; }
+    if (inserted && photos.length > 0) {
+      const photoUrls = await uploadPhotos(inserted.id);
+      if (photoUrls.length > 0) {
+        await sb.from("listings").update({ photos: photoUrls }).eq("id", inserted.id);
+        inserted.photos = photoUrls;
+      }
+    }
+    setLoading(false);
+    onDone();
+  };
+
   const TYPES = [
     { id:"producto", icon:"box",     titleKey:"pub_product",  subKey:"pub_product_sub" },
     { id:"servicio", icon:"settings",titleKey:"pub_service",  subKey:"pub_service_sub" },
@@ -1851,7 +2032,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
         <div style={{ padding:"8px 20px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
             {step===1&&<button className="btn-ghost" style={{ padding:"6px 8px" }} onClick={()=>setStep(0)}><Ic n="chevL" s={20} c={TEXT}/></button>}
-            <h3 className="bebas" style={{ fontSize:22,color:TEXT }}>{step===0?"Nueva publicación":type==="producto"?"Publicar producto":"Publicar"}</h3>
+            <h3 className="bebas" style={{ fontSize:22,color:TEXT }}>{step===0?"Nueva publicación":type==="producto"?"Publicar producto":type==="servicio"?"Publicar servicio":"Publicar"}</h3>
           </div>
           <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
         </div>
@@ -1897,7 +2078,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
             </div>
           )}
 
-          {step===1&&(type==="producto"||type==="servicio")&&(
+          {step===1&&type==="producto"&&(
             <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
               {/* Photo upload area */}
               <input ref={photoInputRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={handlePhotoChange}/>
@@ -2029,6 +2210,138 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload }) {
               <button className="btn-red" onClick={submit} disabled={loading||!f.title||(!f.price&&f.currency!=="NEG")}
                 style={{ marginTop:8,opacity:(!f.title||(!f.price&&f.currency!=="NEG")||loading)?.5:1,padding:"15px",fontSize:16 }}>
                 {loading?<Spin/>:t("pub_submit")}
+              </button>
+            </div>
+          )}
+
+          {/* ══ FORMULARIO DE SERVICIO — completamente distinto al de productos:
+              sin marca/modelo/N° de serie/stock/condición; en su lugar,
+              modalidad de tarifa, experiencia y disponibilidad. ══ */}
+          {step===1&&type==="servicio"&&(
+            <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+              <input ref={photoInputRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={handlePhotoChange}/>
+
+              {previews.length === 0 ? (
+                <div onClick={()=>photoInputRef.current?.click()}
+                  style={{ border:`2px dashed ${RED}`, borderRadius:14, padding:"32px 20px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, cursor:"pointer", background:"rgba(255,106,0,.04)", transition:"background .15s" }}
+                  onMouseEnter={e=>e.currentTarget.style.background="rgba(255,106,0,.09)"}
+                  onMouseLeave={e=>e.currentTarget.style.background="rgba(255,106,0,.04)"}>
+                  <Ic n="camera" s={36} c={RED}/>
+                  <p style={{ fontSize:17, fontWeight:700, color:RED, fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", margin:0 }}>Agregar fotos</p>
+                  <p style={{ fontSize:14, color:MUTED, margin:0, textAlign:"center" }}>Trabajos anteriores, equipo o credenciales · Hasta 4 fotos</p>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display:"flex", gap:10, overflowX:"auto", paddingBottom:6 }}>
+                    {previews.map((url,i)=>(
+                      <div key={i} style={{ position:"relative", flexShrink:0 }}>
+                        <img src={url} alt="" style={{ width:88, height:88, borderRadius:10, objectFit:"cover", display:"block", border:`1.5px solid ${BORDER}` }}/>
+                        <button onClick={()=>removePhoto(i)}
+                          style={{ position:"absolute", top:-7, right:-7, width:22, height:22, borderRadius:"50%", background:"#111", border:`1px solid ${BORDER}`, color:"#fff", fontSize:14, cursor:"pointer", padding:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                          <Ic n="x" s={11} c="#fff"/>
+                        </button>
+                      </div>
+                    ))}
+                    {previews.length < 4 && (
+                      <div onClick={()=>photoInputRef.current?.click()}
+                        style={{ width:88, height:88, background:BG2, borderRadius:10, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, flexShrink:0, border:`2px dashed ${BORDER}`, cursor:"pointer", transition:"border-color .15s" }}
+                        onMouseEnter={e=>e.currentTarget.style.borderColor=RED}
+                        onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>
+                        <Ic n="camera" s={20} c={MUTED}/>
+                        <span style={{ fontSize:13, color:MUTED, fontWeight:700, fontFamily:"Barlow Condensed,sans-serif" }}>+ FOTO</span>
+                      </div>
+                    )}
+                  </div>
+                  <p style={{ fontSize:13, color:MUTED, marginTop:4 }}>{previews.length}/4 fotos</p>
+                </div>
+              )}
+
+              {err&&<div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:16,color:DANGER }}>{err}</div>}
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Título del servicio *</p>
+                <input className="inp" placeholder="Ej: Mantenimiento de bombas hidráulicas" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)}/>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Rubro</p>
+                <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
+                  {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Modalidad de tarifa</p>
+                <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+                  {Object.entries(RATE_TYPE_LABELS).map(([id,label])=>(
+                    <button key={id} onClick={()=>upd("rate_type",id)}
+                      style={{ flex:"1 1 auto",minWidth:100,padding:"9px 8px",borderRadius:8,border:`1.5px solid ${f.rate_type===id?RED:BORDER}`,background:f.rate_type===id?"rgba(255,106,0,.1)":CARD,fontWeight:700,fontSize:15,color:f.rate_type===id?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {f.rate_type !== "convenir" && (
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Precio</p>
+                  <div style={{ display:"flex",gap:8 }}>
+                    <div style={{ position:"relative",flex:1 }}>
+                      <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
+                      <input className="inp" type="number" placeholder="0" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }}/>
+                    </div>
+                    <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
+                      {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Experiencia / certificaciones <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <textarea className="inp" rows={2} placeholder="Ej: 8 años de experiencia, certificado SEC clase A" value={f.experience} maxLength={300} onChange={e=>upd("experience",e.target.value)} style={{ resize:"none" }}/>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Disponibilidad <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" placeholder="Ej: Lunes a viernes, 8:00–18:00 · Respuesta en 24h" value={f.availability} maxLength={150} onChange={e=>upd("availability",e.target.value)}/>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Descripción</p>
+                <textarea className="inp" rows={3} placeholder="Contá en qué consiste el servicio" value={f.description} maxLength={1000} onChange={e=>upd("description",e.target.value)} style={{ resize:"none" }}/>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Cobertura / Ubicación</p>
+                <input className="inp" placeholder="Ciudad, región o zona que cubres" value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)}/>
+              </div>
+
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Empresa <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                  <input className="inp" value={f.biz} maxLength={100} onChange={e=>upd("biz",e.target.value)}/>
+                </div>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Teléfono</p>
+                  <input className="inp" value={f.phone} maxLength={30} onChange={e=>upd("phone",e.target.value)}/>
+                </div>
+              </div>
+
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Sitio web <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                  <input className="inp" placeholder="www.miempresa.cl" value={f.website} maxLength={200} onChange={e=>upd("website",e.target.value)}/>
+                </div>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Redes sociales <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                  <input className="inp" placeholder="@instagram, Facebook…" value={f.social_media} maxLength={200} onChange={e=>upd("social_media",e.target.value)}/>
+                </div>
+              </div>
+
+              <button className="btn-red" onClick={submit} disabled={loading||!f.title||(f.rate_type!=="convenir"&&!f.price)}
+                style={{ marginTop:8,opacity:(!f.title||(f.rate_type!=="convenir"&&!f.price)||loading)?.5:1,padding:"15px",fontSize:16 }}>
+                {loading?<Spin/>:"Publicar servicio"}
               </button>
             </div>
           )}
@@ -5172,7 +5485,7 @@ function AdminPanel({ user }) {
             </div>
           )}
           {editing && (
-            <AdminEditModal row={editing} table={cfg.table} onClose={()=>setEditing(null)}
+            <AdminEditModal row={editing} table={cfg.table} currentUserId={user.id} onClose={()=>setEditing(null)}
               onSaved={updated=>{ setData(prev=>prev.map(r=>r.id===updated.id?updated:r)); setEditing(null); }}/>
           )}
         </>
@@ -5270,23 +5583,25 @@ function NewUserModal({ onClose, onCreated }) {
 }
 
 // Modal genérico para editar campos de cualquier tabla (admin)
-function AdminEditModal({ row, table, onClose, onSaved }) {
+function AdminEditModal({ row, table, onClose, onSaved, currentUserId }) {
   // Editable fields per table (avoid editing ids, timestamps, foreign keys)
   const FIELDS = {
-    profiles: ["name","biz","phone","location"],
+    profiles: ["name","biz","phone","location","is_admin"],
     listings: ["title","brand","model","price","currency","condition","location","description"],
     requests: ["title","brand","model","location","description","budget","currency"],
   };
+  const BOOL_FIELDS = new Set(["is_admin"]);
   const fields = FIELDS[table] || [];
-  const [f, setF] = useState(()=>{ const o={}; fields.forEach(k=>o[k]=row[k]??""); return o; });
+  const [f, setF] = useState(()=>{ const o={}; fields.forEach(k=>o[k]=BOOL_FIELDS.has(k) ? !!row[k] : (row[k]??"")); return o; });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const upd = (k,v)=>setF(p=>({...p,[k]:v}));
+  const isSelfDemote = table==="profiles" && BOOL_FIELDS.has("is_admin") && row.id===currentUserId && row.is_admin && !f.is_admin;
 
   const save = async ()=>{
     setLoading(true); setErr("");
     const payload = {};
-    fields.forEach(k=>{ payload[k] = f[k]===""?null:f[k]; });
+    fields.forEach(k=>{ payload[k] = BOOL_FIELDS.has(k) ? !!f[k] : (f[k]===""?null:f[k]); });
     if (payload.price)  payload.price  = Number(payload.price);
     if (payload.budget) payload.budget = Number(payload.budget);
     const { data, error } = await sb.from(table).update(payload).eq("id", row.id).select().single();
@@ -5305,11 +5620,19 @@ function AdminEditModal({ row, table, onClose, onSaved }) {
         </div>
         <div style={{ padding:"20px", display:"flex", flexDirection:"column", gap:14 }}>
           {err && <div style={{ background:"rgba(220,38,38,.08)", border:"1px solid rgba(220,38,38,.25)", borderRadius:8, padding:"10px 14px", fontSize:15, color:DANGER }}>{err}</div>}
+          {isSelfDemote && <div style={{ background:"rgba(255,106,0,.08)", border:"1px solid rgba(255,106,0,.3)", borderRadius:8, padding:"10px 14px", fontSize:14, color:RED }}>Te estás quitando el permiso de administrador a vos mismo. Vas a perder acceso a este panel apenas guardes.</div>}
           {fields.map(k=>(
             <div key={k}>
-              <p style={{ fontSize:14, fontWeight:700, color:MUTED, marginBottom:6, textTransform:"uppercase", letterSpacing:.5 }}>{k}</p>
+              {!BOOL_FIELDS.has(k) && (
+                <p style={{ fontSize:14, fontWeight:700, color:MUTED, marginBottom:6, textTransform:"uppercase", letterSpacing:.5 }}>{k}</p>
+              )}
               {k==="description" ? (
                 <textarea className="inp" rows={3} value={f[k]} onChange={e=>upd(k,e.target.value)} style={{ resize:"none" }}/>
+              ) : BOOL_FIELDS.has(k) ? (
+                <label style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer", padding:"8px 0" }}>
+                  <input type="checkbox" checked={!!f[k]} onChange={e=>upd(k, e.target.checked)} style={{ width:18, height:18, accentColor:RED, cursor:"pointer" }}/>
+                  <span style={{ fontSize:15, fontWeight:700, color:TEXT }}>{k==="is_admin" ? "Es administrador de PortalMaquinas" : k}</span>
+                </label>
               ) : (
                 <input className="inp" value={f[k]} onChange={e=>upd(k,e.target.value)}/>
               )}
@@ -5330,6 +5653,7 @@ function AdminEditModal({ row, table, onClose, onSaved }) {
 function MobileLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, searchCat, setSearchCat, onGuestLogin, onGuestRegister }) {
   const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
+  const [publishKind,   setPublishKind]   = useState(null); // null (equipo) | "servicio"
   const [showBulkUpload,setShowBulkUpload]= useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
@@ -5345,14 +5669,16 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 
   // Menú hamburguesa: navegación y acciones
   const goHome    = ()=>{ setMenuOpen(false); setSelected(null); setChatListing(null); setTab("search"); };
-  const goExplore = ()=>{ setSelected(null); setChatListing(null); setTab("search"); };
-  const onSell    = ()=> session ? setShowPublish(true)   : onGuestRegister();
+  const goExplore  = ()=>{ setSelected(null); setChatListing(null); setTab("search"); };
+  const goServices = ()=>{ setSelected(null); setChatListing(null); setTab("servicios"); };
+  const onSell    = ()=> session ? (setPublishKind(null), setShowPublish(true)) : onGuestRegister();
+  const onPublishService = ()=> session ? (setPublishKind("servicio"), setShowPublish(true)) : onGuestRegister();
   const onRequest = ()=> session ? setShowSolicitud(true) : onGuestRegister();
   const MENU_NAV = [
     { key:"nav_sell",     action:onSell },
     { key:"nav_buy",      action:goExplore },
     { key:"nav_requests", action:onRequest },
-    { key:"nav_services", action:goExplore },
+    { key:"nav_services", action:goServices },
     { key:"nav_rentals",  action:goExplore },
   ];
   const closeAnd = fn => { setMenuOpen(false); fn?.(); };
@@ -5442,6 +5768,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       {/* Page content */}
       <div style={{ paddingTop: `calc(64px + env(safe-area-inset-top))`, paddingBottom:90, ...((tab==="messages"||tab==="profile") ? {} : { paddingLeft:14, paddingRight:14 }) }}>
         {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch} initCat={searchCat} onCatChange={setSearchCat}/>}
+        {tab==="servicios" &&<ServicesPage user={session?.user||null} onSelect={setSelected} region={region} onPublish={onPublishService}/>}
         {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
         {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
         {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
@@ -5454,7 +5781,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
       <MobileTabBar tab={tab} setTab={setTab} onPublish={()=>setShowPublish(true)} session={session} onGuestAction={onGuestRegister}/>
 
       {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)} onRequireAuth={onGuestRegister}/>}
-      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
+      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} initialType={publishKind} onClose={()=>{setShowPublish(false);setPublishKind(null);}} onDone={()=>{setShowPublish(false);setPublishKind(null);}} onBulkUpload={()=>setShowBulkUpload(true)}/>}
       {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>{ setShowBulkUpload(false); setShowPublish(false); }} onDone={()=>{ setShowBulkUpload(false); setShowPublish(false); }}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&session&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
@@ -5469,6 +5796,7 @@ function MobileLayout({ tab, setTab, session, profile, selected, setSelected, ch
 function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, chatListing, setChatListing, openChat, logout, region, setRegion, guestMode, guestSearch, searchCat, setSearchCat, onGuestLogin, onGuestRegister }) {
   const { t, lang, setLang } = useLang();
   const [showPublish,   setShowPublish]   = useState(false);
+  const [publishKind,   setPublishKind]   = useState(null); // null (equipo) | "servicio"
   const [showBulkUpload,setShowBulkUpload]= useState(false);
   const [showSupport,   setShowSupport]   = useState(false);
   const [showSolicitud, setShowSolicitud] = useState(false);
@@ -5502,15 +5830,17 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
     ...(profile?.is_admin ? [{ id:"admin", icon:"settings", key:"nav_admin", label:"⚙ Admin" }] : []),
   ];
 
-  const goExplore = ()=>{ setSelected(null); setChatListing(null); setTab("search"); };
-  const onSell    = ()=> session ? setShowPublish(true)   : onGuestRegister();
+  const goExplore  = ()=>{ setSelected(null); setChatListing(null); setTab("search"); };
+  const goServices = ()=>{ setSelected(null); setChatListing(null); setTab("servicios"); };
+  const onSell    = ()=> session ? (setPublishKind(null), setShowPublish(true)) : onGuestRegister();
+  const onPublishService = ()=> session ? (setPublishKind("servicio"), setShowPublish(true)) : onGuestRegister();
   const onRequest = ()=> session ? setShowSolicitud(true) : onGuestRegister();
   const centerBtn = { background:"transparent", color:RED, border:`1.5px solid ${RED}`, borderRadius:7, padding:"8px 13px", fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase", transition:"all .15s", whiteSpace:"nowrap" };
   const CENTER_NAV = [
     { key:"nav_sell",     action:onSell },
     { key:"nav_buy",      action:goExplore },
     { key:"nav_requests", action:onRequest },
-    { key:"nav_services", action:goExplore },
+    { key:"nav_services", action:goServices },
     { key:"nav_rentals",  action:goExplore },
   ];
 
@@ -5604,6 +5934,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
         {/* Main */}
         <div style={{ flex:1,minWidth:0,overflowY:"auto",padding:"24px 32px 60px" }}>
           {tab==="search"  &&<SearchPage  user={session?.user||null} onSelect={setSelected} region={region} initQ={guestSearch} initCat={searchCat} onCatChange={setSearchCat}/>}
+          {tab==="servicios" &&<ServicesPage user={session?.user||null} onSelect={setSelected} region={region} onPublish={onPublishService}/>}
           {tab==="matches" &&session&&<MatchesPage user={session.user} onSelect={setSelected} onChat={openChat}/>}
           {tab==="messages"&&session&&<MessagesPage user={session.user} initListing={chatListing} onClear={()=>setChatListing(null)}/>}
           {tab==="profile" &&session&&<ProfilePage  user={session.user} profile={profile} onLogout={logout}/>}
@@ -5614,7 +5945,7 @@ function DesktopLayout({ tab, setTab, session, profile, selected, setSelected, c
       </div>
 
       {selected&&<ListingDetail l={selected} user={session?.user||null} onClose={()=>setSelected(null)} onChat={openChat} onDeleted={()=>setSelected(null)} onEdited={updated=>setSelected(updated)} onRequireAuth={onGuestRegister}/>}
-      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} onClose={()=>setShowPublish(false)} onDone={()=>setShowPublish(false)} onBulkUpload={()=>setShowBulkUpload(true)}/>}
+      {showPublish&&session&&<PublishSheet user={session.user} profile={profile} initialType={publishKind} onClose={()=>{setShowPublish(false);setPublishKind(null);}} onDone={()=>{setShowPublish(false);setPublishKind(null);}} onBulkUpload={()=>setShowBulkUpload(true)}/>}
       {showBulkUpload&&session&&<BulkUploadSheet user={session.user} profile={profile} onClose={()=>{ setShowBulkUpload(false); setShowPublish(false); }} onDone={()=>{ setShowBulkUpload(false); setShowPublish(false); }}/>}
       {showSupport&&<SupportPanel onClose={()=>setShowSupport(false)}/>}
       {showSolicitud&&session&&<SolicitudSheet user={session.user} profile={profile} onClose={()=>setShowSolicitud(false)} onDone={()=>setShowSolicitud(false)}/>}
@@ -5692,6 +6023,8 @@ export default function PortalMaquinas() {
       const VISTAS = {
         search:   ["Buscar repuestos y maquinaria",
                    "Busca repuestos, maquinaria y equipos industriales por marca, modelo, número de parte, serie o motor en las 16 regiones de Chile."],
+        servicios:["Servicios industriales",
+                   "Encuentra servicios industriales especiales: mantenimiento, asesorías técnicas y trabajos a medida. Contacto directo con quien lo presta."],
         publish:  ["Publicar repuestos y maquinaria",
                    "Publica repuestos, maquinaria y servicios industriales gratis, una a una o por carga masiva. Sin comisiones sobre la venta."],
         requests: ["Solicitar un repuesto",
@@ -5812,6 +6145,7 @@ export default function PortalMaquinas() {
           onGateRegister={()=>{ setAuthNotice("auth_gate_msg"); setShowAuthMode("register"); }}
           onSearch={q=>{ setGuestSearch(q); setGuestMode(true); setTab("search"); }}
           onEnter={()=>{ setGuestMode(true); setTab("search"); }}
+          onEnterServices={()=>{ setGuestMode(true); setTab("servicios"); }}
         />
       </LangCtx.Provider>
     );
