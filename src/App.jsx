@@ -5136,6 +5136,21 @@ function AdminPanel({ user }) {
     setConfirmDel(null);
   };
 
+  // ── Administradores: marcar/desmarcar directo desde la lista de usuarios ──
+  const [confirmSelfDemote, setConfirmSelfDemote] = useState(null); // id del propio usuario, pendiente de confirmar auto-degradación
+  const toggleAdmin = async (row) => {
+    const next = !row.is_admin;
+    if (!next && row.id === user.id && confirmSelfDemote !== row.id) {
+      setConfirmSelfDemote(row.id);
+      return;
+    }
+    setConfirmSelfDemote(null);
+    const { data: updated, error } = await sb.from("profiles").update({ is_admin: next }).eq("id", row.id).select().single();
+    if (error) { toast("No se pudo actualizar: " + error.message, "error"); return; }
+    setData(prev => prev.map(r => r.id===updated.id ? updated : r));
+    toast(next ? `${row.name||row.biz||"Usuario"} ahora es administrador` : `${row.name||row.biz||"Usuario"} ya no es administrador`);
+  };
+
   // ── Publicar a nombre de usuario (o sin usuario, con contacto manual) ──
   const submitPub = async () => {
     if (!pubNoUser && !selectedUser) { setPubErr('Selecciona un usuario primero, o activa "Publicar sin usuario".'); return; }
@@ -5272,7 +5287,7 @@ function AdminPanel({ user }) {
       {/* Tabs */}
       <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
         {ALL_TABS.map(s=>(
-          <button key={s.id} onClick={()=>{ setSection(s.id); setSearch(""); setConfirmDel(null); setPubErr(""); setPubSuccess(false); setBulkDone(false); setPubNoUser(false); }}
+          <button key={s.id} onClick={()=>{ setSection(s.id); setSearch(""); setConfirmDel(null); setConfirmSelfDemote(null); setPubErr(""); setPubSuccess(false); setBulkDone(false); setPubNoUser(false); }}
             style={{ padding:"8px 16px", borderRadius:8, border:`1.5px solid ${section===s.id?RED:BORDER}`, background:section===s.id?"rgba(255,106,0,.1)":CARD, color:section===s.id?RED:SUB, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"Barlow Condensed,sans-serif", letterSpacing:.5, textTransform:"uppercase" }}>
             {s.label}
           </button>
@@ -5442,12 +5457,17 @@ function AdminPanel({ user }) {
                 <div key={row.id} style={{ background:CARD, borderRadius:10, padding:"12px 14px", border:`1px solid ${BORDER}` }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12 }}>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:3 }}>
+                      <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:3, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
                         {section==="users"   && (row.name||row.biz||"(sin nombre)")}
                         {section==="listings"&& row.title}
                         {section==="requests"&& row.title}
                         {section==="matches" && `Match (score ${row.score||"—"})`}
                         {section==="messages"&& (row.body?.slice(0,80)||"(vacío)")}
+                        {section==="users" && row.is_admin && (
+                          <span style={{ fontSize:11, fontWeight:700, color:RED, background:"rgba(255,106,0,.1)", border:"1px solid rgba(255,106,0,.35)", borderRadius:6, padding:"2px 8px", textTransform:"uppercase", letterSpacing:.5 }}>
+                            ⚙ Admin
+                          </span>
+                        )}
                       </p>
                       <p style={{ fontSize:14, color:MUTED, wordBreak:"break-all" }}>
                         {section==="users"   && `${row.biz||"—"} · ${row.location||"—"} · ${row.phone||"sin tel"}`}
@@ -5458,7 +5478,21 @@ function AdminPanel({ user }) {
                       </p>
                       <p style={{ fontSize:12, color:MUTED, marginTop:3, fontFamily:"monospace" }}>id: {row.id}</p>
                     </div>
-                    <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                    <div style={{ display:"flex", gap:6, flexShrink:0, flexWrap:"wrap", justifyContent:"flex-end" }}>
+                      {section==="users" && confirmSelfDemote===row.id ? (
+                        <>
+                          <span style={{ fontSize:13, color:DANGER, fontWeight:600, alignSelf:"center" }}>¿Quitarte el acceso de admin a ti mismo?</span>
+                          <button onClick={()=>setConfirmSelfDemote(null)}
+                            style={{ padding:"6px 10px", borderRadius:7, border:`1px solid ${BORDER}`, background:"transparent", color:MUTED, fontSize:14, cursor:"pointer", fontWeight:600 }}>No</button>
+                          <button onClick={()=>toggleAdmin(row)}
+                            style={{ padding:"6px 10px", borderRadius:7, border:"none", background:DANGER, color:"#fff", fontSize:14, cursor:"pointer", fontWeight:700 }}>Sí, quitar</button>
+                        </>
+                      ) : section==="users" ? (
+                        <button onClick={()=>toggleAdmin(row)}
+                          style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${row.is_admin?"rgba(220,38,38,.35)":"rgba(255,106,0,.35)"}`, background:row.is_admin?"rgba(220,38,38,.06)":"rgba(255,106,0,.1)", color:row.is_admin?DANGER:RED, fontSize:14, cursor:"pointer", fontWeight:600 }}>
+                          {row.is_admin ? "Quitar admin" : "Hacer admin"}
+                        </button>
+                      ) : null}
                       {(section==="listings"||section==="requests"||section==="users") && (
                         <button onClick={()=>setEditing(row)}
                           style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${BORDER}`, background:BG2, color:TEXT, fontSize:14, cursor:"pointer", fontWeight:600 }}>
