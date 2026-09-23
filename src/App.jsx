@@ -5774,7 +5774,6 @@ function AdminPanel({ user }) {
               ["Empresa","biz",""],["Teléfono","phone",""],["Ubicación","location","Ciudad, País"],
               ...(pubType==="servicio" ? [["Experiencia/Certificaciones","experience","Ej: 10 años, certificado ISO"],["Disponibilidad","availability","Ej: Lunes a viernes 9-18h"],["Sitio web","website",""],["Redes sociales","social_media",""]] : []),
               ...(pubType==="arriendo" ? [["Período mínimo","min_period","Ej: 3 días"],["Depósito de garantía","deposit","Ej: CLP 200.000"]] : []),
-              ["Emoji","emoji", pubType==="servicio"?"🔧":pubType==="arriendo"?"🔑":"📦"],
             ].map(([label,key,ph])=>(
               <div key={key}>
                 <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>{label}</p>
