@@ -5430,7 +5430,13 @@ function AdminPanel({ user }) {
   const [pubNoUser, setPubNoUser]       = useState(false); // publicar sin cuenta asociada (contacto manual)
 
   // ── Formulario Publicar 1-a-1 ──
-  const [pubF, setPubF] = useState({ title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦" });
+  const [pubType, setPubType] = useState("producto"); // producto | servicio | arriendo — determina el formulario y el `kind` a insertar
+  const PUB_F_DEFAULT = { title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦",
+    // Solo para servicios:
+    rate_type:"fijo", experience:"", availability:"", website:"", social_media:"",
+    // Solo para arriendos:
+    rental_type:"maquinaria", includes_operator:false, deposit:"", min_period:"" };
+  const [pubF, setPubF] = useState(PUB_F_DEFAULT);
   const [pubLoading, setPubLoading] = useState(false);
   const [pubErr, setPubErr]         = useState("");
   const [pubSuccess, setPubSuccess] = useState(false);
@@ -5524,26 +5530,49 @@ function AdminPanel({ user }) {
   };
 
   // ── Publicar a nombre de usuario (o sin usuario, con contacto manual) ──
+  // El payload a insertar depende de pubType (producto/servicio/arriendo),
+  // igual que en PublishSheet (la sección "Publicar" del usuario) — mismo
+  // esquema de la tabla `listings` con la columna discriminadora `kind`.
   const submitPub = async () => {
     if (!pubNoUser && !selectedUser) { setPubErr('Selecciona un usuario primero, o activa "Publicar sin usuario".'); return; }
     if (!pubF.title.trim()) { setPubErr("El título es obligatorio."); return; }
     if (pubNoUser && !pubF.phone.trim() && !pubF.biz.trim()) { setPubErr("Sin usuario asociado, ingresa al menos Empresa o Teléfono para que puedan contactar."); return; }
     if (pubNoUser && !pubF.location.trim()) { setPubErr("Ingresa la ubicación."); return; }
     setPubLoading(true); setPubErr("");
-    const isEmpty = !pubF.price || pubF.price==="0" || pubF.price==="";;
-    const { error } = await sb.from("listings").insert({
-      user_id: pubNoUser ? null : selectedUser.id, title: pubF.title, brand: pubF.brand||null, model: pubF.model||null,
-      serial_number: pubF.serial_number||null, part_number: pubF.part_number||null,
-      cat: pubF.cat, condition: pubF.condition, operation: pubF.operation,
-      price: isEmpty ? 0 : Number(pubF.price), currency: isEmpty ? "NEG" : pubF.currency,
-      stock: Number(pubF.stock)||1, location: pubF.location||selectedUser?.location||"",
-      phone: pubF.phone||selectedUser?.phone||null, biz: pubF.biz||selectedUser?.biz||null,
-      description: pubF.description||null, emoji: pubF.emoji||"📦", verified: false,
-    });
+
+    const baseUser = { user_id: pubNoUser ? null : selectedUser.id, location: pubF.location||selectedUser?.location||"",
+      phone: pubF.phone||selectedUser?.phone||null, biz: pubF.biz||selectedUser?.biz||null };
+
+    let payload;
+    if (pubType === "servicio") {
+      const isNeg = pubF.rate_type === "convenir";
+      payload = { ...baseUser, kind:"servicio", title:pubF.title, cat:pubF.cat, operation:"Servicio",
+        rate_type:pubF.rate_type, price:isNeg?0:Number(pubF.price)||0, currency:isNeg?"NEG":pubF.currency,
+        experience:pubF.experience||null, availability:pubF.availability||null,
+        website:pubF.website||null, social_media:pubF.social_media||null,
+        description:pubF.description||null, emoji:pubF.emoji||"🔧", verified:false };
+    } else if (pubType === "arriendo") {
+      const isNeg = pubF.rate_type === "convenir";
+      payload = { ...baseUser, kind:"arriendo", title:pubF.title, cat:pubF.cat, operation:"Arriendo",
+        rental_type:pubF.rental_type,
+        includes_operator: (pubF.rental_type==="maquinaria"||pubF.rental_type==="vehiculo") ? !!pubF.includes_operator : null,
+        rate_type:pubF.rate_type, price:isNeg?0:Number(pubF.price)||0, currency:isNeg?"NEG":pubF.currency,
+        deposit:pubF.deposit||null, min_period:pubF.min_period||null,
+        description:pubF.description||null, emoji:pubF.emoji||"🔑", verified:false };
+    } else {
+      const isEmpty = !pubF.price || pubF.price==="0" || pubF.price==="";
+      payload = { ...baseUser, kind:"equipo", title:pubF.title, brand:pubF.brand||null, model:pubF.model||null,
+        serial_number:pubF.serial_number||null, part_number:pubF.part_number||null,
+        cat:pubF.cat, condition:pubF.condition, operation:pubF.operation,
+        price:isEmpty?0:Number(pubF.price), currency:isEmpty?"NEG":pubF.currency,
+        stock:Number(pubF.stock)||1, description:pubF.description||null, emoji:pubF.emoji||"📦", verified:false };
+    }
+
+    const { error } = await sb.from("listings").insert(payload);
     setPubLoading(false);
     if (error) { setPubErr("Error: " + error.message); return; }
     setPubSuccess(true);
-    setPubF({ title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦" });
+    setPubF(PUB_F_DEFAULT);
     setTimeout(()=>setPubSuccess(false), 4000);
   };
 
@@ -5712,6 +5741,17 @@ function AdminPanel({ user }) {
       {/* ── PUBLICAR 1-A-1 ── */}
       {section==="publicar" && (
         <div style={{ maxWidth:600 }}>
+          <div style={{ marginBottom:14 }}>
+            <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:6, textTransform:"uppercase", letterSpacing:.5 }}>Tipo de publicación</p>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+              {[["producto","📦 Producto"],["servicio","🔧 Servicio"],["arriendo","🔑 Arriendo"]].map(([v,l])=>(
+                <button key={v} onClick={()=>{ setPubType(v); setPubErr(""); }}
+                  style={{ padding:"8px 16px", borderRadius:8, border:`1.5px solid ${pubType===v?RED:BORDER}`, background:pubType===v?"rgba(255,106,0,.1)":CARD, color:pubType===v?RED:SUB, fontSize:14, fontWeight:700, cursor:"pointer" }}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
           <button onClick={()=>{ setPubNoUser(v=>!v); setSelectedUser(null); setPubErr(""); }}
             style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:8, border:`1.5px solid ${pubNoUser?RED:BORDER}`, background:pubNoUser?"rgba(255,106,0,.1)":CARD, color:pubNoUser?RED:SUB, fontSize:14, fontWeight:700, cursor:"pointer", marginBottom:14 }}>
             <span style={{ width:16, height:16, borderRadius:4, border:`1.5px solid ${pubNoUser?RED:BORDER2}`, background:pubNoUser?RED:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
@@ -5729,7 +5769,13 @@ function AdminPanel({ user }) {
           {pubSuccess && <div style={{ background:"rgba(34,197,94,.1)", border:"1px solid rgba(34,197,94,.3)", borderRadius:8, padding:"10px 14px", color:"#22c55e", fontSize:15, marginBottom:16, fontWeight:600 }}>✓ Publicación creada con éxito</div>}
           {pubErr    && <div style={{ background:"rgba(220,38,38,.08)", border:"1px solid rgba(220,38,38,.25)", borderRadius:8, padding:"10px 14px", color:DANGER, fontSize:15, marginBottom:16 }}>{pubErr}</div>}
           <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, display:"flex", flexDirection:"column", gap:14 }}>
-            {[["Título *","title","Ej: Bomba hidráulica Komatsu"],["Marca","brand","Ej: Komatsu"],["Modelo","model","Ej: PC200-8"],["N° Serie","serial_number",""],["N° Parte","part_number",""],["Empresa","biz",""],["Teléfono","phone",""],["Ubicación","location","Ciudad, País"],["Emoji","emoji","📦"]].map(([label,key,ph])=>(
+            {[["Título *","title","Ej: Bomba hidráulica Komatsu"],
+              ...(pubType==="producto" ? [["Marca","brand","Ej: Komatsu"],["Modelo","model","Ej: PC200-8"],["N° Serie","serial_number",""],["N° Parte","part_number",""]] : []),
+              ["Empresa","biz",""],["Teléfono","phone",""],["Ubicación","location","Ciudad, País"],
+              ...(pubType==="servicio" ? [["Experiencia/Certificaciones","experience","Ej: 10 años, certificado ISO"],["Disponibilidad","availability","Ej: Lunes a viernes 9-18h"],["Sitio web","website",""],["Redes sociales","social_media",""]] : []),
+              ...(pubType==="arriendo" ? [["Período mínimo","min_period","Ej: 3 días"],["Depósito de garantía","deposit","Ej: CLP 200.000"]] : []),
+              ["Emoji","emoji", pubType==="servicio"?"🔧":pubType==="arriendo"?"🔑":"📦"],
+            ].map(([label,key,ph])=>(
               <div key={key}>
                 <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>{label}</p>
                 <input className="inp" value={pubF[key]} onChange={e=>setPubF(p=>({...p,[key]:e.target.value}))} placeholder={ph}/>
@@ -5746,25 +5792,51 @@ function AdminPanel({ user }) {
                   {[["min","Minería"],["for","Forestal"],["const","Construcción"],["ene","Energía"],["trans","Transporte"],["fae","Faenas"],["rut","Rutas"],["san","Sanitarias"],["serv","Servicios"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
                 </select>
               </div>
+
+              {pubType==="producto" && (
+                <>
+                  <div>
+                    <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Condición</p>
+                    <select className="inp" value={pubF.condition} onChange={e=>setPubF(p=>({...p,condition:e.target.value}))}>
+                      {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(v=><option key={v}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Operación</p>
+                    <select className="inp" value={pubF.operation} onChange={e=>setPubF(p=>({...p,operation:e.target.value}))}>
+                      {["Venta","Servicio","Arriendo"].map(v=><option key={v}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Stock</p>
+                    <input className="inp" type="number" min="1" value={pubF.stock} onChange={e=>setPubF(p=>({...p,stock:e.target.value}))}/>
+                  </div>
+                </>
+              )}
+
+              {(pubType==="servicio"||pubType==="arriendo") && (
+                <div>
+                  <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Modalidad de tarifa</p>
+                  <select className="inp" value={pubF.rate_type} onChange={e=>setPubF(p=>({...p,rate_type:e.target.value}))}>
+                    {pubType==="servicio"
+                      ? [["fijo","Tarifa fija"],["hora","Por hora"],["visita","Por visita"],["convenir","A convenir"]].map(([v,l])=><option key={v} value={v}>{l}</option>)
+                      : [["dia","Por día"],["semana","Por semana"],["mes","Por mes"],["convenir","A convenir"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {pubType==="arriendo" && (
+                <div>
+                  <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Tipo de arriendo</p>
+                  <select className="inp" value={pubF.rental_type} onChange={e=>setPubF(p=>({...p,rental_type:e.target.value}))}>
+                    {[["maquinaria","Maquinaria / equipo"],["espacio","Bodega / espacio"],["vehiculo","Vehículo con conductor"],["otro","Otro"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                  </select>
+                </div>
+              )}
+
               <div>
-                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Condición</p>
-                <select className="inp" value={pubF.condition} onChange={e=>setPubF(p=>({...p,condition:e.target.value}))}>
-                  {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(v=><option key={v}>{v}</option>)}
-                </select>
-              </div>
-              <div>
-                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Operación</p>
-                <select className="inp" value={pubF.operation} onChange={e=>setPubF(p=>({...p,operation:e.target.value}))}>
-                  {["Venta","Servicio","Arriendo"].map(v=><option key={v}>{v}</option>)}
-                </select>
-              </div>
-              <div>
-                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Stock</p>
-                <input className="inp" type="number" min="1" value={pubF.stock} onChange={e=>setPubF(p=>({...p,stock:e.target.value}))}/>
-              </div>
-              <div>
-                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Precio (vacío = A convenir)</p>
-                <input className="inp" type="number" value={pubF.price} onChange={e=>setPubF(p=>({...p,price:e.target.value}))} placeholder="0"/>
+                <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Precio (vacío o "A convenir" = sin precio fijo)</p>
+                <input className="inp" type="number" value={pubF.price} onChange={e=>setPubF(p=>({...p,price:e.target.value}))} placeholder="0" disabled={pubType!=="producto"&&pubF.rate_type==="convenir"}/>
               </div>
               <div>
                 <p style={{ fontSize:13, fontWeight:700, color:MUTED, marginBottom:5, textTransform:"uppercase", letterSpacing:.5 }}>Moneda</p>
@@ -5773,6 +5845,17 @@ function AdminPanel({ user }) {
                 </select>
               </div>
             </div>
+
+            {pubType==="arriendo" && (pubF.rental_type==="maquinaria"||pubF.rental_type==="vehiculo") && (
+              <button onClick={()=>setPubF(p=>({...p,includes_operator:!p.includes_operator}))}
+                style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:8, border:`1.5px solid ${pubF.includes_operator?RED:BORDER}`, background:pubF.includes_operator?"rgba(255,106,0,.1)":CARD, color:pubF.includes_operator?RED:SUB, fontSize:14, fontWeight:700, cursor:"pointer", alignSelf:"flex-start" }}>
+                <span style={{ width:16, height:16, borderRadius:4, border:`1.5px solid ${pubF.includes_operator?RED:BORDER2}`, background:pubF.includes_operator?RED:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  {pubF.includes_operator && <Ic n="check" s={11} c="#fff"/>}
+                </span>
+                Incluye operador/conductor
+              </button>
+            )}
+
             <button className="btn-red" onClick={submitPub} disabled={pubLoading||(!pubNoUser&&!selectedUser)} style={{ padding:"14px", fontSize:16, marginTop:4, opacity:(pubLoading||(!pubNoUser&&!selectedUser))?.5:1 }}>
               {pubLoading ? "Publicando…" : pubNoUser ? "Publicar sin usuario" : `Publicar a nombre de ${selectedUser?.name||"(selecciona usuario)"}`}
             </button>
