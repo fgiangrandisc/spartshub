@@ -182,7 +182,7 @@ function construirPagina(base, cat, publicaciones) {
         <h2 style="font-size:19px;margin:28px 0 10px">Otras categorías</h2>
         <p style="font-size:16px;line-height:1.9">${otras}</p>
         <p style="font-size:16px;color:#98a4b3;margin-top:24px">
-          Contacto: <a href="mailto:info@portalmaquinas.com" style="color:#FF6A00">info@portalmaquinas.com</a>
+          Contacto: <a href="mailto:contacto@portalmaquinas.com" style="color:#FF6A00">contacto@portalmaquinas.com</a>
         </p>
         <p style="font-size:15px;color:#6e7987;margin-top:32px">
           Cargando la aplicación… Si no carga, activa JavaScript en tu navegador.
