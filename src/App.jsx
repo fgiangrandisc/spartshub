@@ -826,7 +826,7 @@ function LandingPage({ onLogin, onRegister, onSearch, onEnter, onGateRegister, o
               <span key={i} style={{ fontSize:14, color:MUTED, cursor:"pointer" }}>{link}</span>
             ))}
           </div>
-          <p style={{ fontSize:14, color:MUTED, lineHeight:1.6 }}>© 2026 PortalMaquinas™ · info@portalmaquinas.com</p>
+          <p style={{ fontSize:14, color:MUTED, lineHeight:1.6 }}>© 2026 PortalMaquinas™ · contacto@portalmaquinas.com</p>
         </div>
       </footer>
     </div>
@@ -3928,7 +3928,7 @@ function ProfilePage({ user, profile, onLogout }) {
     if(!supportMsg.trim()) return;
     const subject = encodeURIComponent("Soporte PortalMaquinas");
     const body    = encodeURIComponent(supportMsg.trim());
-    window.location.href = `mailto:info@portalmaquinas.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contacto@portalmaquinas.com?subject=${subject}&body=${body}`;
     setSupportSent(true); setSupportMsg(""); setTimeout(()=>setSupportSent(false),4000);
   };
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -4332,7 +4332,7 @@ function SupportPanel({ onClose }) {
     if (!msg.trim()) return;
     const subject = encodeURIComponent("Soporte PortalMaquinas");
     const body    = encodeURIComponent(msg.trim());
-    window.location.href = `mailto:info@portalmaquinas.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contacto@portalmaquinas.com?subject=${subject}&body=${body}`;
     setSent(true);
   };
 
