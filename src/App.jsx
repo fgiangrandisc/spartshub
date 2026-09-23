@@ -1397,8 +1397,9 @@ function SearchPage({ user, onSelect, region, initQ="", initCat="all", onCatChan
         ) : viewMode === "grid" ? (
           <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobile?150:230}px, 1fr))`, gap:isMobile?12:16 }}>
             {listings.map(l=>(
-              <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)}>
+              <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)} style={l.sold?{position:"relative"}:undefined}>
                 <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130} alt={[l.title,l.brand,l.model].filter(Boolean).join(" ")}/>
+                {l.sold && <span className="tag" style={{ position:"absolute",top:8,left:8,fontSize:12,fontWeight:700,color:"#fff",background:DANGER,border:"none",padding:"3px 8px",borderRadius:6 }}>VENDIDO</span>}
                 <div style={{ padding:"10px 12px 14px" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
                     <span className="tag t-dim" style={{ fontSize:16 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
@@ -1802,6 +1803,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
   const [confirmDel,  setConfirmDel]  = useState(false);
   const [deleting,    setDeleting]    = useState(false);
   const [sellerPhone, setSellerPhone] = useState("");   // fallback: WhatsApp del perfil del vendedor
+  const [togglingSold, setTogglingSold] = useState(false);
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const isOwner = user && l.user_id === user.id;
 
@@ -1835,6 +1837,20 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
     const msg = encodeURIComponent(`Hola! Vi tu publicación en PortalMaquinas: *${l.title}*. Me interesa, ¿puedes darme más detalles?`);
     window.open(`https://wa.me/${waDigits}?text=${msg}`, "_blank");
   };
+
+  // Marcar/desmarcar como vendido — solo equipos/repuestos (kind==="equipo").
+  // La publicación sigue visible en la búsqueda, pero etiquetada "VENDIDO".
+  const toggleSold = async () => {
+    setTogglingSold(true);
+    const nextSold = !l.sold;
+    const { data: updated, error } = await sb.from("listings")
+      .update({ sold: nextSold, sold_at: nextSold ? new Date().toISOString() : null })
+      .eq("id", l.id).select().single();
+    setTogglingSold(false);
+    if (error) { toast("No se pudo actualizar: " + error.message, "error"); return; }
+    toast(nextSold ? "Publicación marcada como vendida" : "Publicación marcada como disponible de nuevo");
+    if (onEdited) onEdited(updated);
+  };
   return (
     <div className="fi" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:60,display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
       <div className="sheet sheet-up" style={{ maxHeight:"92dvh",overflow:"hidden",display:"flex",flexDirection:"column",...sheetStyle }} onClick={e=>e.stopPropagation()}>
@@ -1857,6 +1873,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
           <div style={{ padding:"20px 20px 0" }}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:8 }}>
               <h2 style={{ fontSize:22,fontWeight:700,lineHeight:1.2,color:TEXT,flex:1 }}>{l.title}</h2>
+              {l.sold&&<span className="tag" style={{ fontSize:13,fontWeight:700,color:"#fff",background:DANGER,border:"none" }}>VENDIDO</span>}
               {l.verified&&<span className="tag t-green"><Ic n="verify" s={10} c={GREEN}/>Verificado</span>}
             </div>
             <p className="bebas" style={{ fontSize:30,color:RED,marginBottom:16 }}>
@@ -1949,6 +1966,14 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
             <div style={{ display:"flex",flexDirection:"column",gap:12,padding:"0 0 20px" }}>
               {isOwner ? (
                 <>
+                  {l.kind==="equipo" && (
+                    <button onClick={toggleSold} disabled={togglingSold}
+                      style={l.sold
+                        ? { background:"transparent",color:MUTED,borderRadius:10,padding:"14px",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${BORDER}`,cursor:"pointer" }
+                        : { background:"rgba(34,197,94,.1)",color:"#22c55e",borderRadius:10,padding:"14px",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid rgba(34,197,94,.3)`,cursor:"pointer" }}>
+                      {togglingSold ? <Spin/> : (l.sold ? <><Ic n="x" s={18} c={MUTED}/>Marcar como disponible de nuevo</> : <><Ic n="check" s={18} c="#22c55e"/>Marcar como vendido</>)}
+                    </button>
+                  )}
                   <button onClick={()=>setShowEdit(true)}
                     style={{ background:BG2,color:TEXT,borderRadius:10,padding:"14px",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${BORDER}`,cursor:"pointer" }}>
                     <Ic n="settings" s={18} c={TEXT}/>Editar publicación
@@ -4767,11 +4792,12 @@ function MisPublicaciones({ user, onSelect, initSubTab="pubs" }) {
           ) : (
             <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))",gap:12 }}>
               {listings.map(l=>(
-                <div key={l.id} className="photo-card card" style={{ cursor:"default" }}>
+                <div key={l.id} className="photo-card card" style={{ cursor:"default", position:"relative" }}>
                   {/* Photo — clickable to open detail */}
                   <div onClick={()=>onSelect(l)}>
                     <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={120} alt={[l.title,l.brand,l.model].filter(Boolean).join(" ")}/>
                   </div>
+                  {l.sold && <span className="tag" style={{ position:"absolute",top:8,left:8,fontSize:12,fontWeight:700,color:"#fff",background:DANGER,border:"none",padding:"3px 8px",borderRadius:6 }}>VENDIDO</span>}
                   <div style={{ padding:"12px 14px 14px" }}>
                     <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
                       <span className="tag t-dim" style={{ fontSize:16 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
@@ -5383,13 +5409,18 @@ function MobileTabBar({ tab, setTab, onPublish, session, onGuestAction }) {
 ══════════════════════════════════════════════════════════════ */
 function AdminPanel({ user }) {
   const toast = useToast();
-  const [section, setSection] = useState("users"); // users | listings | requests | matches | messages | publicar | carga
+  const [section, setSection] = useState("reporte"); // reporte | users | listings | requests | matches | messages | publicar | carga
   const [data, setData]       = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState("");
   const [confirmDel, setConfirmDel] = useState(null);
   const [editing, setEditing] = useState(null);
   const [showNewUser, setShowNewUser] = useState(false);
+
+  // ── Reporte diario ──
+  const [reportData, setReportData]     = useState(null);
+  const [reportLoading, setReportLoading] = useState(true);
+  const [reportDay, setReportDay]       = useState(0); // 0 = hoy, 1 = ayer
 
   // ── Selector de usuario compartido entre Publicar y Carga ──
   const [allUsers, setAllUsers]         = useState([]);
@@ -5441,6 +5472,33 @@ function AdminPanel({ user }) {
         .then(({ data })=>{ setAllUsers(data||[]); setUsersLoaded(true); });
     }
   }, [section, usersLoaded]);
+
+  // Reporte diario: conteos de hoy (o el día elegido) vs Supabase, en vivo.
+  const loadReport = useCallback(async () => {
+    setReportLoading(true);
+    const now = new Date();
+    const start = new Date(now); start.setDate(start.getDate() - reportDay); start.setHours(0,0,0,0);
+    const end   = new Date(start); end.setDate(end.getDate() + 1);
+    const isoStart = start.toISOString(), isoEnd = end.toISOString();
+    const countBetween = (table, col, extraFilter) => {
+      let q = sb.from(table).select("*", { count:"exact", head:true }).gte(col, isoStart).lt(col, isoEnd);
+      if (extraFilter) q = extraFilter(q);
+      return q.then(({ count, error }) => { if (error) console.error(error); return count||0; });
+    };
+    const [newUsers, newEquipos, newServicios, newArriendos, sold, newRequests, newMatches] = await Promise.all([
+      countBetween("profiles", "created_at"),
+      countBetween("listings", "created_at", q=>q.eq("kind","equipo")),
+      countBetween("listings", "created_at", q=>q.eq("kind","servicio")),
+      countBetween("listings", "created_at", q=>q.eq("kind","arriendo")),
+      countBetween("listings", "sold_at"),
+      countBetween("requests", "created_at"),
+      countBetween("matches", "created_at"),
+    ]);
+    setReportData({ newUsers, newEquipos, newServicios, newArriendos, newListings: newEquipos+newServicios+newArriendos, sold, newRequests, newMatches, start });
+    setReportLoading(false);
+  }, [reportDay]);
+
+  useEffect(()=>{ if (section==="reporte") loadReport(); }, [section, loadReport]);
 
   const handleDelete = async (id) => {
     const cfg = TABLES[section];
@@ -5551,6 +5609,7 @@ function AdminPanel({ user }) {
   const filtered = isDataSection ? data.filter(row=>!search || JSON.stringify(row).toLowerCase().includes(search.toLowerCase())) : [];
 
   const ALL_TABS = [
+    { id:"reporte", label:"📊 Reporte" },
     ...Object.entries(TABLES).map(([key,c])=>({ id:key, label:c.label })),
     { id:"publicar", label:"+ Publicar" },
     { id:"carga",    label:"Carga masiva" },
@@ -5607,6 +5666,48 @@ function AdminPanel({ user }) {
           </button>
         ))}
       </div>
+
+      {/* ── REPORTE DIARIO ── */}
+      {section==="reporte" && (
+        <div>
+          <div style={{ display:"flex", gap:8, marginBottom:18 }}>
+            <button onClick={()=>setReportDay(0)}
+              style={{ padding:"7px 14px", borderRadius:8, border:`1.5px solid ${reportDay===0?RED:BORDER}`, background:reportDay===0?"rgba(255,106,0,.1)":CARD, color:reportDay===0?RED:SUB, fontSize:14, fontWeight:700, cursor:"pointer" }}>
+              Hoy
+            </button>
+            <button onClick={()=>setReportDay(1)}
+              style={{ padding:"7px 14px", borderRadius:8, border:`1.5px solid ${reportDay===1?RED:BORDER}`, background:reportDay===1?"rgba(255,106,0,.1)":CARD, color:reportDay===1?RED:SUB, fontSize:14, fontWeight:700, cursor:"pointer" }}>
+              Ayer
+            </button>
+          </div>
+          {reportLoading || !reportData ? (
+            <p style={{ color:MUTED, fontSize:16 }}>Calculando estadísticas…</p>
+          ) : (
+            <>
+              <p style={{ color:MUTED, fontSize:15, marginBottom:16 }}>
+                Estadísticas de {reportData.start.toLocaleDateString("es-CL",{ day:"numeric", month:"long", year:"numeric" })}
+              </p>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:14 }}>
+                {[
+                  ["👤 Usuarios nuevos",            reportData.newUsers],
+                  ["📦 Publicaciones nuevas",       reportData.newListings],
+                  ["   · Equipos/repuestos",        reportData.newEquipos],
+                  ["   · Servicios",                reportData.newServicios],
+                  ["   · Arriendos",                reportData.newArriendos],
+                  ["✅ Marcados como vendidos",      reportData.sold],
+                  ["📝 Solicitudes nuevas",          reportData.newRequests],
+                  ["🤝 Matches generados (IA)",      reportData.newMatches],
+                ].map(([label,val])=>(
+                  <div key={label} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:12, padding:"16px 18px" }}>
+                    <p style={{ fontSize:14, color:MUTED, marginBottom:6, fontWeight:600 }}>{label}</p>
+                    <p className="bebas" style={{ fontSize:32, color:TEXT }}>{val}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ── PUBLICAR 1-A-1 ── */}
       {section==="publicar" && (
