@@ -2069,7 +2069,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialTyp
     title:"", brand:"", model:"", serial_number:"", part_number:"",
     engine_number:"", hours:"", cat:"all",
     condition:"Nuevo", price:"", currency:"CLP", stock:"1",
-    location:profile?.location||"", phone:profile?.phone||"",
+    location:profile?.location||"", phone:profile?.phone||"", email:user?.email||"",
     biz:profile?.biz||"", description:"", emoji:"📦",
     // Solo para servicios (formulario distinto al de productos):
     rate_type:"fijo", experience:"", availability:"", website:"", social_media:"",
@@ -2135,7 +2135,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialTyp
       cat:f.cat, condition:f.condition, operation:"Venta",
       price:Number(f.price), currency:f.currency,
       stock:Number(f.stock)||1, location:f.location,
-      phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
+      phone:f.phone||profile?.phone, email:f.email||user?.email||null, biz:f.biz||profile?.biz,
       description:f.description, emoji:f.emoji||"📦", verified:false,
     }).select().single();
     if (error) { setErr(error.message); setLoading(false); return; }
@@ -2170,7 +2170,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialTyp
       rate_type:f.rate_type, price:isNeg?0:Number(f.price), currency:isNeg?"NEG":f.currency,
       experience:f.experience||null, availability:f.availability||null,
       website:f.website||null, social_media:f.social_media||null,
-      location:f.location, phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
+      location:f.location, phone:f.phone||profile?.phone, email:f.email||user?.email||null, biz:f.biz||profile?.biz,
       description:f.description, emoji:f.emoji||"🔧", verified:false,
     }).select().single();
     if (error) { setErr(error.message); setLoading(false); return; }
@@ -2199,7 +2199,7 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialTyp
       includes_operator: (f.rental_type==="maquinaria"||f.rental_type==="vehiculo") ? !!f.includes_operator : null,
       rate_type:f.rate_type, price:isNeg?0:Number(f.price), currency:isNeg?"NEG":f.currency,
       deposit:f.deposit||null, min_period:f.min_period||null,
-      location:f.location, phone:f.phone||profile?.phone, biz:f.biz||profile?.biz,
+      location:f.location, phone:f.phone||profile?.phone, email:f.email||user?.email||null, biz:f.biz||profile?.biz,
       description:f.description, emoji:f.emoji||"🔑", verified:false,
     }).select().single();
     if (error) { setErr(error.message); setLoading(false); return; }
@@ -2405,6 +2405,11 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialTyp
                 <input className="inp" placeholder={t("pub_location_ph")} value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)}/>
               </div>
 
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Email de contacto <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" type="email" placeholder="tu@correo.com" value={f.email} maxLength={200} onChange={e=>upd("email",e.target.value)}/>
+              </div>
+
               <button className="btn-red" onClick={submit} disabled={loading||!f.title||(!f.price&&f.currency!=="NEG")}
                 style={{ marginTop:8,opacity:(!f.title||(!f.price&&f.currency!=="NEG")||loading)?.5:1,padding:"15px",fontSize:16 }}>
                 {loading?<Spin/>:t("pub_submit")}
@@ -2524,6 +2529,11 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialTyp
                   <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Teléfono</p>
                   <input className="inp" value={f.phone} maxLength={30} onChange={e=>upd("phone",e.target.value)}/>
                 </div>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Email de contacto <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" type="email" placeholder="tu@correo.com" value={f.email} maxLength={200} onChange={e=>upd("email",e.target.value)}/>
               </div>
 
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
@@ -2676,6 +2686,11 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialTyp
                   <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Teléfono</p>
                   <input className="inp" value={f.phone} maxLength={30} onChange={e=>upd("phone",e.target.value)}/>
                 </div>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Email de contacto <span style={{ fontWeight:400,textTransform:"none" }}>{t("optional")}</span></p>
+                <input className="inp" type="email" placeholder="tu@correo.com" value={f.email} maxLength={200} onChange={e=>upd("email",e.target.value)}/>
               </div>
 
               <button className="btn-red" onClick={submit} disabled={loading||!f.title||(f.rate_type!=="convenir"&&!f.price)}
@@ -4398,6 +4413,7 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
   const [newFiles,  setNewFiles]  = useState([]);
   const [newPreviews, setNewPreviews] = useState([]);
 
+  const kind = listing.kind || "equipo"; // equipo | servicio | arriendo — determina qué formulario mostrar y qué payload guardar
   const [f, setF] = useState({
     title:         listing.title        || "",
     brand:         listing.brand        || "",
@@ -4413,11 +4429,25 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
     stock:         listing.stock != null ? String(listing.stock) : "1",
     location:      listing.location     || "",
     phone:         listing.phone        || "",
+    email:         listing.email        || "",
     biz:           listing.biz          || "",
     description:   listing.description  || "",
     emoji:         listing.emoji        || "📦",
+    // Solo para servicios:
+    rate_type:     listing.rate_type    || (kind==="arriendo" ? "dia" : "fijo"),
+    experience:    listing.experience   || "",
+    availability:  listing.availability || "",
+    website:       listing.website      || "",
+    social_media:  listing.social_media || "",
+    // Solo para arriendos:
+    rental_type:      listing.rental_type      || "maquinaria",
+    includes_operator: !!listing.includes_operator,
+    deposit:       listing.deposit      || "",
+    min_period:    listing.min_period   || "",
   });
   const upd = (k, v) => setF(p => ({ ...p, [k]: v }));
+  const isNeg = (kind==="servicio"||kind==="arriendo") ? f.rate_type==="convenir" : f.currency==="NEG";
+  const canSave = !loading && !!f.title && (isNeg || !!f.price);
 
   const handleNewPhotos = e => {
     const files = Array.from(e.target.files || []);
@@ -4461,30 +4491,56 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
   };
 
   const save = async () => {
-    if (!f.title || (!f.price && f.currency !== "NEG")) { setErr(t("pub_error_required")); return; }
+    if (!f.title || (!isNeg && !f.price)) { setErr(t("pub_error_required")); return; }
     setLoading(true); setErr("");
     const uploadedUrls = await uploadNewPhotos();
     const allPhotos = [...existingPhotos, ...uploadedUrls];
-    const { error } = await sb.from("listings").update({
+
+    const common = {
       title:          f.title,
-      brand:          f.brand   || null,
-      model:          f.model   || null,
-      serial_number:  f.serial_number || null,
-      part_number:    f.part_number   || null,
-      engine_number:  f.engine_number || null,
-      hours:          f.hours   ? Number(f.hours)  : null,
       cat:            f.cat,
-      condition:      f.condition,
-      price:          f.currency==="NEG" ? 0 : Number(f.price),
-      currency:       f.currency,
-      stock:          Number(f.stock) || 1,
       location:       f.location,
       phone:          f.phone   || null,
+      email:          f.email   || null,
       biz:            f.biz     || null,
       description:    f.description || null,
-      emoji:          f.emoji   || "📦",
       photos:         Array.isArray(allPhotos) ? allPhotos : [],
-    }).eq("id", listing.id).eq("user_id", user.id);
+    };
+
+    let payload;
+    if (kind === "servicio") {
+      payload = { ...common,
+        rate_type:    f.rate_type, price: isNeg?0:Number(f.price), currency: isNeg?"NEG":f.currency,
+        experience:   f.experience   || null,
+        availability: f.availability || null,
+        website:      f.website      || null,
+        social_media: f.social_media || null,
+      };
+    } else if (kind === "arriendo") {
+      payload = { ...common,
+        rental_type: f.rental_type,
+        includes_operator: (f.rental_type==="maquinaria"||f.rental_type==="vehiculo") ? !!f.includes_operator : null,
+        rate_type:   f.rate_type, price: isNeg?0:Number(f.price), currency: isNeg?"NEG":f.currency,
+        deposit:     f.deposit    || null,
+        min_period:  f.min_period || null,
+      };
+    } else {
+      payload = { ...common,
+        brand:          f.brand   || null,
+        model:          f.model   || null,
+        serial_number:  f.serial_number || null,
+        part_number:    f.part_number   || null,
+        engine_number:  f.engine_number || null,
+        hours:          f.hours   ? Number(f.hours)  : null,
+        condition:      f.condition,
+        price:          f.currency==="NEG" ? 0 : Number(f.price),
+        currency:       f.currency,
+        stock:          Number(f.stock) || 1,
+        emoji:          f.emoji   || "📦",
+      };
+    }
+
+    const { error } = await sb.from("listings").update(payload).eq("id", listing.id).eq("user_id", user.id);
     setLoading(false);
     if (error) { setErr(error.message); return; }
     onSaved({ ...listing, ...f, photos: allPhotos });
@@ -4558,85 +4614,208 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
             <input className="inp" value={f.title} maxLength={200} onChange={e=>upd("title",e.target.value)} placeholder={t("pub_title_ph")}/>
           </div>
 
-          {/* Industry + Brand */}
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
-            <div>
-              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
-              <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
-                {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_brand")}</p>
-              <input className="inp" value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)} placeholder={t("pub_brand_ph")}/>
-            </div>
-          </div>
-
-          {/* Model */}
-          <div>
-            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_model")}</p>
-            <input className="inp" value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)} placeholder={t("pub_model_ph")}/>
-          </div>
-
-          {/* Technical numbers: Serial + Part */}
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
-            <div>
-              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Serie</p>
-              <input className="inp" value={f.serial_number} maxLength={100} onChange={e=>upd("serial_number",e.target.value)} placeholder="N° serie del equipo"/>
-            </div>
-            <div>
-              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Parte</p>
-              <input className="inp" value={f.part_number} maxLength={100} onChange={e=>upd("part_number",e.target.value)} placeholder="Part number"/>
-            </div>
-          </div>
-
-          {/* Engine number + Hours */}
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
-            <div>
-              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Motor</p>
-              <input className="inp" value={f.engine_number} maxLength={100} onChange={e=>upd("engine_number",e.target.value)} placeholder="N° motor"/>
-            </div>
-            <div>
-              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Horas de Uso</p>
-              <input className="inp" type="number" min="0" value={f.hours} onChange={e=>upd("hours",e.target.value)} placeholder="Ej: 4500"/>
-            </div>
-          </div>
-
-          {/* Condition */}
-          <div>
-            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
-            <div style={{ display:"flex",gap:8 }}>
-              {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
-                <button key={c} onClick={()=>upd("condition",c)}
-                  style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,106,0,.1)":CARD,fontWeight:700,fontSize:16,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Price */}
-          <div>
-            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
-            <button onClick={()=>upd("currency", f.currency==="NEG"?"CLP":"NEG")}
-              style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,background:"none",border:"none",cursor:"pointer",padding:0 }}>
-              <div style={{ width:38,height:22,borderRadius:11,background:f.currency==="NEG"?RED:BG3,border:`1.5px solid ${f.currency==="NEG"?RED:BORDER}`,position:"relative",transition:"all .2s",flexShrink:0 }}>
-                <div style={{ width:16,height:16,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:f.currency==="NEG"?18:2,transition:"left .2s" }}/>
-              </div>
-              <span style={{ fontSize:15,color:f.currency==="NEG"?RED:MUTED,fontWeight:600 }}>Precio a convenir</span>
-            </button>
-            {f.currency !== "NEG" && (
-              <div style={{ display:"flex",gap:8 }}>
-                <div style={{ position:"relative",flex:1 }}>
-                  <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
-                  <input className="inp" type="number" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }} placeholder="0"/>
+          {kind==="equipo" && (
+            <>
+              {/* Industry + Brand */}
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_industry")}</p>
+                  <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
+                    {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+                  </select>
                 </div>
-                <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
-                  {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_brand")}</p>
+                  <input className="inp" value={f.brand} maxLength={100} onChange={e=>upd("brand",e.target.value)} placeholder={t("pub_brand_ph")}/>
+                </div>
+              </div>
+
+              {/* Model */}
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_model")}</p>
+                <input className="inp" value={f.model} maxLength={100} onChange={e=>upd("model",e.target.value)} placeholder={t("pub_model_ph")}/>
+              </div>
+
+              {/* Technical numbers: Serial + Part */}
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Serie</p>
+                  <input className="inp" value={f.serial_number} maxLength={100} onChange={e=>upd("serial_number",e.target.value)} placeholder="N° serie del equipo"/>
+                </div>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Parte</p>
+                  <input className="inp" value={f.part_number} maxLength={100} onChange={e=>upd("part_number",e.target.value)} placeholder="Part number"/>
+                </div>
+              </div>
+
+              {/* Engine number + Hours */}
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>N° de Motor</p>
+                  <input className="inp" value={f.engine_number} maxLength={100} onChange={e=>upd("engine_number",e.target.value)} placeholder="N° motor"/>
+                </div>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Horas de Uso</p>
+                  <input className="inp" type="number" min="0" value={f.hours} onChange={e=>upd("hours",e.target.value)} placeholder="Ej: 4500"/>
+                </div>
+              </div>
+
+              {/* Condition */}
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_condition")}</p>
+                <div style={{ display:"flex",gap:8 }}>
+                  {["Nuevo","Usado – Bueno","Usado – Regular","Reacondicionado"].map(c=>(
+                    <button key={c} onClick={()=>upd("condition",c)}
+                      style={{ flex:1,padding:"9px 4px",borderRadius:8,border:`1.5px solid ${f.condition===c?RED:BORDER}`,background:f.condition===c?"rgba(255,106,0,.1)":CARD,fontWeight:700,fontSize:16,color:f.condition===c?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price */}
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>{t("pub_price")}</p>
+                <button onClick={()=>upd("currency", f.currency==="NEG"?"CLP":"NEG")}
+                  style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,background:"none",border:"none",cursor:"pointer",padding:0 }}>
+                  <div style={{ width:38,height:22,borderRadius:11,background:f.currency==="NEG"?RED:BG3,border:`1.5px solid ${f.currency==="NEG"?RED:BORDER}`,position:"relative",transition:"all .2s",flexShrink:0 }}>
+                    <div style={{ width:16,height:16,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:f.currency==="NEG"?18:2,transition:"left .2s" }}/>
+                  </div>
+                  <span style={{ fontSize:15,color:f.currency==="NEG"?RED:MUTED,fontWeight:600 }}>Precio a convenir</span>
+                </button>
+                {f.currency !== "NEG" && (
+                  <div style={{ display:"flex",gap:8 }}>
+                    <div style={{ position:"relative",flex:1 }}>
+                      <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
+                      <input className="inp" type="number" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }} placeholder="0"/>
+                    </div>
+                    <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
+                      {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {kind==="servicio" && (
+            <>
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Rubro</p>
+                <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
+                  {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
                 </select>
               </div>
-            )}
-          </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Modalidad de tarifa</p>
+                <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+                  {Object.entries(RATE_TYPE_LABELS).map(([id,label])=>(
+                    <button key={id} onClick={()=>upd("rate_type",id)}
+                      style={{ flex:"1 1 auto",minWidth:100,padding:"9px 8px",borderRadius:8,border:`1.5px solid ${f.rate_type===id?RED:BORDER}`,background:f.rate_type===id?"rgba(255,106,0,.1)":CARD,fontWeight:700,fontSize:15,color:f.rate_type===id?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {f.rate_type !== "convenir" && (
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Precio</p>
+                  <div style={{ display:"flex",gap:8 }}>
+                    <div style={{ position:"relative",flex:1 }}>
+                      <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
+                      <input className="inp" type="number" placeholder="0" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }}/>
+                    </div>
+                    <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
+                      {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Experiencia / certificaciones</p>
+                <textarea className="inp" rows={2} placeholder="Ej: 8 años de experiencia, certificado SEC clase A" value={f.experience} maxLength={300} onChange={e=>upd("experience",e.target.value)} style={{ resize:"none" }}/>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Disponibilidad</p>
+                <input className="inp" placeholder="Ej: Lunes a viernes, 8:00–18:00 · Respuesta en 24h" value={f.availability} maxLength={150} onChange={e=>upd("availability",e.target.value)}/>
+              </div>
+            </>
+          )}
+
+          {kind==="arriendo" && (
+            <>
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Tipo de arriendo</p>
+                <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+                  {Object.entries(RENTAL_TYPE_LABELS).map(([id,label])=>(
+                    <button key={id} onClick={()=>upd("rental_type",id)}
+                      style={{ flex:"1 1 auto",minWidth:110,padding:"9px 8px",borderRadius:8,border:`1.5px solid ${f.rental_type===id?RED:BORDER}`,background:f.rental_type===id?"rgba(255,106,0,.1)":CARD,fontWeight:700,fontSize:15,color:f.rental_type===id?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {(f.rental_type==="maquinaria"||f.rental_type==="vehiculo") && (
+                <button onClick={()=>upd("includes_operator",!f.includes_operator)}
+                  style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:8, border:`1.5px solid ${f.includes_operator?RED:BORDER}`, background:f.includes_operator?"rgba(255,106,0,.1)":CARD, color:f.includes_operator?RED:SUB, fontSize:14, fontWeight:700, cursor:"pointer", width:"fit-content" }}>
+                  <span style={{ width:16, height:16, borderRadius:4, border:`1.5px solid ${f.includes_operator?RED:BORDER2}`, background:f.includes_operator?RED:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    {f.includes_operator && <Ic n="check" s={11} c="#fff"/>}
+                  </span>
+                  Incluye operador/conductor
+                </button>
+              )}
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Rubro</p>
+                <select className="inp" value={f.cat} onChange={e=>upd("cat",e.target.value)}>
+                  {CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:8,textTransform:"uppercase",letterSpacing:.5 }}>Modalidad de tarifa</p>
+                <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+                  {Object.entries(RENTAL_RATE_TYPE_LABELS).map(([id,label])=>(
+                    <button key={id} onClick={()=>upd("rate_type",id)}
+                      style={{ flex:"1 1 auto",minWidth:100,padding:"9px 8px",borderRadius:8,border:`1.5px solid ${f.rate_type===id?RED:BORDER}`,background:f.rate_type===id?"rgba(255,106,0,.1)":CARD,fontWeight:700,fontSize:15,color:f.rate_type===id?RED:SUB,cursor:"pointer",fontFamily:"Barlow Condensed,sans-serif" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {f.rate_type !== "convenir" && (
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Precio</p>
+                  <div style={{ display:"flex",gap:8 }}>
+                    <div style={{ position:"relative",flex:1 }}>
+                      <span style={{ position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:MUTED }}>$</span>
+                      <input className="inp" type="number" placeholder="0" value={f.price} onChange={e=>upd("price",e.target.value)} style={{ paddingLeft:30 }}/>
+                    </div>
+                    <select className="inp" value={f.currency} onChange={e=>upd("currency",e.target.value)} style={{ width:88 }}>
+                      {["CLP","USD","EUR","COP","PEN","MXN"].map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Período mínimo</p>
+                  <input className="inp" placeholder="Ej: 3 días" value={f.min_period} maxLength={60} onChange={e=>upd("min_period",e.target.value)}/>
+                </div>
+                <div>
+                  <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Depósito de garantía</p>
+                  <input className="inp" placeholder="Ej: $200.000" value={f.deposit} maxLength={60} onChange={e=>upd("deposit",e.target.value)}/>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Description */}
           <div>
@@ -4650,11 +4829,25 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
             <input className="inp" value={f.location} maxLength={100} onChange={e=>upd("location",e.target.value)} placeholder={t("pub_location_ph")}/>
           </div>
 
-          {/* Stock */}
-          <div>
-            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Stock disponible</p>
-            <input className="inp" type="number" min="1" value={f.stock} onChange={e=>upd("stock",e.target.value)} placeholder="1"/>
-          </div>
+          {kind==="equipo" && (
+            <div>
+              <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Stock disponible</p>
+              <input className="inp" type="number" min="1" value={f.stock} onChange={e=>upd("stock",e.target.value)} placeholder="1"/>
+            </div>
+          )}
+
+          {kind==="servicio" && (
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Sitio web</p>
+                <input className="inp" placeholder="www.miempresa.cl" value={f.website} maxLength={200} onChange={e=>upd("website",e.target.value)}/>
+              </div>
+              <div>
+                <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Redes sociales</p>
+                <input className="inp" placeholder="@instagram, Facebook…" value={f.social_media} maxLength={200} onChange={e=>upd("social_media",e.target.value)}/>
+              </div>
+            </div>
+          )}
 
           {/* Contact: Phone + Company */}
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
@@ -4668,8 +4861,13 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
             </div>
           </div>
 
-          <button className="btn-red" onClick={save} disabled={loading||!f.title||(!f.price&&f.currency!=="NEG")}
-            style={{ marginTop:4,opacity:(!f.title||(!f.price&&f.currency!=="NEG")||loading)?.5:1,padding:"15px",fontSize:16 }}>
+          <div>
+            <p style={{ fontSize:16,fontWeight:700,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5 }}>Email de contacto</p>
+            <input className="inp" type="email" value={f.email} maxLength={200} onChange={e=>upd("email",e.target.value)} placeholder="tu@correo.com"/>
+          </div>
+
+          <button className="btn-red" onClick={save} disabled={!canSave}
+            style={{ marginTop:4,opacity:canSave?1:.5,padding:"15px",fontSize:16 }}>
             {loading?<Spin/>:"Guardar cambios"}
           </button>
 
@@ -5431,7 +5629,7 @@ function AdminPanel({ user }) {
 
   // ── Formulario Publicar 1-a-1 ──
   const [pubType, setPubType] = useState("producto"); // producto | servicio | arriendo — determina el formulario y el `kind` a insertar
-  const PUB_F_DEFAULT = { title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", biz:"", description:"", emoji:"📦",
+  const PUB_F_DEFAULT = { title:"", brand:"", model:"", serial_number:"", part_number:"", cat:"min", condition:"Nuevo", operation:"Venta", price:"", currency:"CLP", stock:"1", location:"", phone:"", email:"", biz:"", description:"", emoji:"📦",
     // Solo para servicios:
     rate_type:"fijo", experience:"", availability:"", website:"", social_media:"",
     // Solo para arriendos:
@@ -5541,7 +5739,7 @@ function AdminPanel({ user }) {
     setPubLoading(true); setPubErr("");
 
     const baseUser = { user_id: pubNoUser ? null : selectedUser.id, location: pubF.location||selectedUser?.location||"",
-      phone: pubF.phone||selectedUser?.phone||null, biz: pubF.biz||selectedUser?.biz||null };
+      phone: pubF.phone||selectedUser?.phone||null, email: pubF.email||selectedUser?.email||null, biz: pubF.biz||selectedUser?.biz||null };
 
     let payload;
     if (pubType === "servicio") {
@@ -5771,7 +5969,7 @@ function AdminPanel({ user }) {
           <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, display:"flex", flexDirection:"column", gap:14 }}>
             {[["Título *","title","Ej: Bomba hidráulica Komatsu"],
               ...(pubType==="producto" ? [["Marca","brand","Ej: Komatsu"],["Modelo","model","Ej: PC200-8"],["N° Serie","serial_number",""],["N° Parte","part_number",""]] : []),
-              ["Empresa","biz",""],["Teléfono","phone",""],["Ubicación","location","Ciudad, País"],
+              ["Empresa","biz",""],["Teléfono","phone",""],["Email de contacto","email",""],["Ubicación","location","Ciudad, País"],
               ...(pubType==="servicio" ? [["Experiencia/Certificaciones","experience","Ej: 10 años, certificado ISO"],["Disponibilidad","availability","Ej: Lunes a viernes 9-18h"],["Sitio web","website",""],["Redes sociales","social_media",""]] : []),
               ...(pubType==="arriendo" ? [["Período mínimo","min_period","Ej: 3 días"],["Depósito de garantía","deposit","Ej: CLP 200.000"]] : []),
             ].map(([label,key,ph])=>(
