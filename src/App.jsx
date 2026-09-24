@@ -316,6 +316,7 @@ const Ic = ({ n, s=22, c="currentColor", sw=1.8, fill="none", style:extStyle, cl
     grid:     <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>,
     phone:    <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,
     menu:     <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>,
+    crop:     <><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/></>,
     wa:       null,
   };
   if (n === "wa") return (
@@ -4381,12 +4382,119 @@ function SupportPanel({ onClose }) {
 
 
 /* ══════════════════════════════════════════════════════════════
+   PHOTO CROP MODAL
+   Recorte simple: recuadro arrastrable + 4 esquinas para redimensionar.
+   Devuelve un Blob JPEG recortado vía onApply(blob).
+══════════════════════════════════════════════════════════════ */
+function PhotoCropModal({ src, onCancel, onApply }) {
+  const imgRef = useRef(null);
+  const [natural, setNatural] = useState({ w:0, h:0 });
+  const [display, setDisplay] = useState({ w:0, h:0 });
+  const [rect, setRect]       = useState(null); // {x,y,w,h} en px de la imagen mostrada
+  const [drag, setDrag]       = useState(null); // { mode, startX, startY, startRect }
+  const [busy, setBusy]       = useState(false);
+
+  const MIN_SIZE = 30;
+
+  const clampRect = (r, dw, dh) => {
+    let { x, y, w, h } = r;
+    w = Math.max(MIN_SIZE, Math.min(w, dw));
+    h = Math.max(MIN_SIZE, Math.min(h, dh));
+    x = Math.max(0, Math.min(x, dw - w));
+    y = Math.max(0, Math.min(y, dh - h));
+    return { x, y, w, h };
+  };
+
+  const onImgLoad = e => {
+    const img = e.target;
+    const nw = img.naturalWidth || 1, nh = img.naturalHeight || 1;
+    const maxW = Math.min(460, window.innerWidth - 64);
+    const maxH = Math.min(460, window.innerHeight * 0.5);
+    const scale = Math.min(maxW / nw, maxH / nh, 1);
+    const dw = Math.max(1, Math.round(nw * scale)), dh = Math.max(1, Math.round(nh * scale));
+    setNatural({ w:nw, h:nh });
+    setDisplay({ w:dw, h:dh });
+    const margin = 0.1;
+    setRect({ x:dw*margin, y:dh*margin, w:dw*(1-2*margin), h:dh*(1-2*margin) });
+  };
+
+  useEffect(() => {
+    if (!drag) return;
+    const onMove = e => {
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
+      setRect(() => {
+        let { x, y, w, h } = drag.startRect;
+        if (drag.mode === "move") { x += dx; y += dy; }
+        else {
+          if (drag.mode.includes("w")) { x += dx; w -= dx; }
+          if (drag.mode.includes("e")) { w += dx; }
+          if (drag.mode.includes("n")) { y += dy; h -= dy; }
+          if (drag.mode.includes("s")) { h += dy; }
+        }
+        return clampRect({ x, y, w, h }, display.w, display.h);
+      });
+    };
+    const onUp = () => setDrag(null);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); };
+  }, [drag, display]);
+
+  const onPointerDown = mode => e => { e.preventDefault(); e.stopPropagation(); setDrag({ mode, startX:e.clientX, startY:e.clientY, startRect:rect }); };
+
+  const apply = () => {
+    if (!rect || !display.w || !imgRef.current) return;
+    setBusy(true);
+    const scaleX = natural.w / display.w, scaleY = natural.h / display.h;
+    const sx = rect.x*scaleX, sy = rect.y*scaleY, sw = rect.w*scaleX, sh = rect.h*scaleY;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(sw));
+    canvas.height = Math.max(1, Math.round(sh));
+    canvas.getContext("2d").drawImage(imgRef.current, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => { setBusy(false); if (blob) onApply(blob); else onCancel(); }, "image/jpeg", 0.88);
+  };
+
+  const handleStyle = cursor => ({ position:"absolute", width:16, height:16, background:"#fff", border:`2px solid ${RED}`, borderRadius:"50%", cursor, touchAction:"none" });
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:400, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }} onClick={onCancel}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:BG, borderRadius:16, padding:20, maxWidth:"92vw", display:"flex", flexDirection:"column", gap:14, alignItems:"center", border:`1px solid ${BORDER2}` }}>
+        <h3 className="bebas" style={{ fontSize:20, color:TEXT }}>Recortar foto</h3>
+        <div style={{ position:"relative", width:display.w||300, height:display.h||300, background:"#000", touchAction:"none" }}>
+          <img ref={imgRef} src={src} crossOrigin="anonymous" onLoad={onImgLoad} draggable={false}
+            style={{ width:display.w||300, height:display.h||300, display:"block", userSelect:"none" }}/>
+          {rect && (
+            <>
+              <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,.55)",
+                clipPath:`polygon(0 0,100% 0,100% 100%,0 100%,0 ${rect.y}px,${rect.x}px ${rect.y}px,${rect.x}px ${rect.y+rect.h}px,${rect.x+rect.w}px ${rect.y+rect.h}px,${rect.x+rect.w}px ${rect.y}px,0 ${rect.y}px)` }}/>
+              <div onPointerDown={onPointerDown("move")}
+                style={{ position:"absolute", left:rect.x, top:rect.y, width:rect.w, height:rect.h, border:`2px solid ${RED}`, cursor:"move", touchAction:"none" }}>
+                <div onPointerDown={onPointerDown("nw")} style={{ ...handleStyle("nwse-resize"), left:-8, top:-8 }}/>
+                <div onPointerDown={onPointerDown("ne")} style={{ ...handleStyle("nesw-resize"), right:-8, top:-8 }}/>
+                <div onPointerDown={onPointerDown("sw")} style={{ ...handleStyle("nesw-resize"), left:-8, bottom:-8 }}/>
+                <div onPointerDown={onPointerDown("se")} style={{ ...handleStyle("nwse-resize"), right:-8, bottom:-8 }}/>
+              </div>
+            </>
+          )}
+        </div>
+        <p style={{ fontSize:13, color:MUTED, textAlign:"center", maxWidth:340 }}>Arrastra el recuadro para moverlo, o las esquinas para cambiar el tamaño del recorte.</p>
+        <div style={{ display:"flex", gap:10, width:"100%" }}>
+          <button className="btn-ol" onClick={onCancel} style={{ flex:1, padding:"12px" }}>Cancelar</button>
+          <button className="btn-red" onClick={apply} disabled={busy} style={{ flex:1, padding:"12px", opacity:busy?.5:1 }}>{busy?<Spin size={18}/>:"Aplicar recorte"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    MIS PUBLICACIONES PAGE
 ══════════════════════════════════════════════════════════════ */
 /* ══════════════════════════════════════════════════════════════
    EDIT LISTING SHEET
 ══════════════════════════════════════════════════════════════ */
-function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
+function EditListingSheet({ user, listing, onClose, onSaved, onDeleted, isAdmin=false }) {
   const { t } = useLang();
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const [loading, setLoading]   = useState(false);
@@ -4475,6 +4583,48 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
     setNewPreviews(np);
   };
 
+  // Reordenar fotos ya guardadas (arrastrar visualmente con flechas ‹ ›)
+  const moveExisting = (idx, dir) => setExistingPhotos(p => {
+    const j = idx + dir;
+    if (j < 0 || j >= p.length) return p;
+    const copy = [...p];
+    [copy[idx], copy[j]] = [copy[j], copy[idx]];
+    return copy;
+  });
+
+  // Recorte de fotos: abre PhotoCropModal sobre una foto existente o recién agregada
+  const [cropTarget, setCropTarget]     = useState(null); // { type:"existing"|"new", index }
+  const [cropUploading, setCropUploading] = useState(false);
+  const cropSrc = cropTarget ? (cropTarget.type==="existing" ? existingPhotos[cropTarget.index] : newPreviews[cropTarget.index]) : null;
+
+  const applyCrop = async blob => {
+    if (!cropTarget) return;
+    if (cropTarget.type === "new") {
+      const idx = cropTarget.index;
+      const croppedFile = new File([blob], `crop_${Date.now()}.jpg`, { type:"image/jpeg" });
+      setNewFiles(p => p.map((f,i)=> i===idx ? croppedFile : f));
+      setNewPreviews(p => {
+        URL.revokeObjectURL(p[idx]);
+        const copy = [...p];
+        copy[idx] = URL.createObjectURL(croppedFile);
+        return copy;
+      });
+      setCropTarget(null);
+      return;
+    }
+    setCropUploading(true);
+    const path = `${user.id}/${listing.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+    const { error: upErr } = await sb.storage.from("listing-photos").upload(path, blob, {
+      contentType:"image/jpeg", cacheControl:"31536000", upsert:false,
+    });
+    setCropUploading(false);
+    if (upErr) { setErr("No se pudo guardar el recorte: " + upErr.message); setCropTarget(null); return; }
+    const { data } = sb.storage.from("listing-photos").getPublicUrl(path);
+    const idx = cropTarget.index;
+    setExistingPhotos(p => p.map((u,i)=> i===idx ? data.publicUrl : u));
+    setCropTarget(null);
+  };
+
   const uploadNewPhotos = async () => {
     const uploadOne = async file => {
       const compressed = await compressImage(file);
@@ -4540,7 +4690,9 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
       };
     }
 
-    const { error } = await sb.from("listings").update(payload).eq("id", listing.id).eq("user_id", user.id);
+    let q = sb.from("listings").update(payload).eq("id", listing.id);
+    if (!isAdmin) q = q.eq("user_id", user.id);
+    const { error } = await q;
     setLoading(false);
     if (error) { setErr(error.message); return; }
     onSaved({ ...listing, ...f, photos: allPhotos });
@@ -4555,11 +4707,16 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
           <div style={{ width:36,height:4,background:MUTED,borderRadius:2 }}/>
         </div>
         <div style={{ padding:"8px 20px 12px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <h3 className="bebas" style={{ fontSize:22,color:TEXT }}>Editar publicación</h3>
+          <h3 className="bebas" style={{ fontSize:22,color:TEXT }}>Editar publicación{isAdmin && <span style={{ color:RED }}> (admin)</span>}</h3>
           <button className="btn-ghost" style={{ padding:"6px" }} onClick={onClose}><Ic n="x" s={20} c={MUTED}/></button>
         </div>
 
         <div style={{ overflowY:"auto",flex:1,padding:"0 20px 40px",display:"flex",flexDirection:"column",gap:14 }}>
+          {isAdmin && (
+            <div style={{ background:"rgba(255,106,0,.06)", border:`1px solid rgba(255,106,0,.25)`, borderRadius:10, padding:"10px 14px", fontSize:14, color:MUTED }}>
+              Editando como administrador la publicación de <strong style={{ color:TEXT }}>{listing.biz || listing.phone || "un usuario"}</strong>. Los cambios son visibles de inmediato.
+            </div>
+          )}
           {err && <div style={{ background:"rgba(220,38,38,.08)",border:"1px solid rgba(220,38,38,.25)",borderRadius:8,padding:"10px 14px",fontSize:16,color:DANGER }}>{err}</div>}
 
           {/* Photos */}
@@ -4578,19 +4735,43 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
               <div>
                 <div style={{ display:"flex",gap:10,overflowX:"auto",paddingBottom:6 }}>
                   {existingPhotos.map((url,i)=>(
-                    <div key={"ex"+i} style={{ position:"relative",flexShrink:0 }}>
-                      <img src={url} alt="" style={{ width:88,height:88,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${BORDER}` }}/>
-                      <button onClick={()=>removeExisting(i)} style={{ position:"absolute",top:-7,right:-7,width:22,height:22,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
-                        <Ic n="x" s={11} c="#fff"/>
-                      </button>
+                    <div key={"ex"+i} style={{ display:"flex",flexDirection:"column",gap:4,flexShrink:0 }}>
+                      <div style={{ position:"relative" }}>
+                        <img src={url} alt="" style={{ width:88,height:88,borderRadius:10,objectFit:"cover",display:"block",border:`1.5px solid ${BORDER}` }}/>
+                        <button onClick={()=>removeExisting(i)} style={{ position:"absolute",top:-7,right:-7,width:22,height:22,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                          <Ic n="x" s={11} c="#fff"/>
+                        </button>
+                      </div>
+                      <div style={{ display:"flex",gap:3,justifyContent:"center" }}>
+                        <button onClick={()=>moveExisting(i,-1)} disabled={i===0} title="Mover antes"
+                          style={{ width:22,height:22,borderRadius:6,background:BG2,border:`1px solid ${BORDER}`,cursor:i===0?"default":"pointer",opacity:i===0?.35:1,display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                          <Ic n="chevL" s={12} c={TEXT}/>
+                        </button>
+                        <button onClick={()=>setCropTarget({type:"existing",index:i})} title="Recortar / redimensionar"
+                          style={{ width:22,height:22,borderRadius:6,background:BG2,border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                          <Ic n="crop" s={12} c={TEXT}/>
+                        </button>
+                        <button onClick={()=>moveExisting(i,1)} disabled={i===existingPhotos.length-1} title="Mover después"
+                          style={{ width:22,height:22,borderRadius:6,background:BG2,border:`1px solid ${BORDER}`,cursor:i===existingPhotos.length-1?"default":"pointer",opacity:i===existingPhotos.length-1?.35:1,display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                          <Ic n="chevR" s={12} c={TEXT}/>
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {newPreviews.map((url,i)=>(
-                    <div key={"nw"+i} style={{ position:"relative",flexShrink:0 }}>
-                      <img src={url} alt="" style={{ width:88,height:88,borderRadius:10,objectFit:"cover",display:"block",border:`2px solid ${RED}`,opacity:.9 }}/>
-                      <button onClick={()=>removeNew(i)} style={{ position:"absolute",top:-7,right:-7,width:22,height:22,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
-                        <Ic n="x" s={11} c="#fff"/>
-                      </button>
+                    <div key={"nw"+i} style={{ display:"flex",flexDirection:"column",gap:4,flexShrink:0 }}>
+                      <div style={{ position:"relative" }}>
+                        <img src={url} alt="" style={{ width:88,height:88,borderRadius:10,objectFit:"cover",display:"block",border:`2px solid ${RED}`,opacity:.9 }}/>
+                        <button onClick={()=>removeNew(i)} style={{ position:"absolute",top:-7,right:-7,width:22,height:22,borderRadius:"50%",background:"#111",border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                          <Ic n="x" s={11} c="#fff"/>
+                        </button>
+                      </div>
+                      <div style={{ display:"flex",justifyContent:"center" }}>
+                        <button onClick={()=>setCropTarget({type:"new",index:i})} title="Recortar / redimensionar"
+                          style={{ width:22,height:22,borderRadius:6,background:BG2,border:`1px solid ${BORDER}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0 }}>
+                          <Ic n="crop" s={12} c={TEXT}/>
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {totalSlots < 4 && (
@@ -4894,6 +5075,14 @@ function EditListingSheet({ user, listing, onClose, onSaved, onDeleted }) {
           )}
         </div>
       </div>
+      {cropTarget && (
+        <PhotoCropModal src={cropSrc} onCancel={()=>setCropTarget(null)} onApply={applyCrop}/>
+      )}
+      {cropUploading && (
+        <div style={{ position:"fixed",inset:0,zIndex:410,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+          <Spin size={32}/>
+        </div>
+      )}
     </div>
   );
 }
@@ -6214,8 +6403,14 @@ function AdminPanel({ user }) {
             </div>
           )}
           {editing && (
-            <AdminEditModal row={editing} table={cfg.table} currentUserId={user.id} onClose={()=>setEditing(null)}
-              onSaved={updated=>{ setData(prev=>prev.map(r=>r.id===updated.id?updated:r)); setEditing(null); }}/>
+            section==="listings" ? (
+              <EditListingSheet user={user} listing={editing} isAdmin onClose={()=>setEditing(null)}
+                onSaved={updated=>{ setData(prev=>prev.map(r=>r.id===updated.id?{...r,...updated}:r)); setEditing(null); }}
+                onDeleted={id=>{ setData(prev=>prev.filter(r=>r.id!==id)); setEditing(null); }}/>
+            ) : (
+              <AdminEditModal row={editing} table={cfg.table} currentUserId={user.id} onClose={()=>setEditing(null)}
+                onSaved={updated=>{ setData(prev=>prev.map(r=>r.id===updated.id?updated:r)); setEditing(null); }}/>
+            )
           )}
         </>
       )}
