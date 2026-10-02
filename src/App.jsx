@@ -6555,7 +6555,20 @@ function NewUserModal({ onClose, onCreated }) {
       },
     });
     setLoading(false);
-    if (error) { setErr("No se pudo crear: " + (error.message||"error desconocido")); return; }
+    if (error) {
+      // supabase-js no expone el cuerpo JSON real del error (el mensaje con el
+      // motivo real que arma la función) en `error.message` cuando la función
+      // respondió con un status distinto de 2xx — solo dice genéricamente
+      // "Edge Function returned a non-2xx status code". El detalle real viaja
+      // en `error.context`, que es la Response cruda de la función.
+      let detail = error.message || "error desconocido";
+      try {
+        const body = await error.context?.json();
+        if (body?.error) detail = body.error;
+      } catch { /* el cuerpo no era JSON parseable, nos quedamos con error.message */ }
+      setErr("No se pudo crear: " + detail);
+      return;
+    }
     if (data?.error) { setErr("No se pudo crear: " + data.error); return; }
     onCreated(data?.profile||null);
   };
