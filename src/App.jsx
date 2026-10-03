@@ -5940,10 +5940,33 @@ function AdminPanel({ user }) {
 
   useEffect(()=>{ if (section==="reporte") loadReport(); }, [section, loadReport]);
 
+  // Lee el motivo real de un error de sb.functions.invoke(): por defecto
+  // supabase-js solo expone el genérico "Edge Function returned a non-2xx
+  // status code" en error.message -- el cuerpo JSON con el motivo real
+  // viaja en error.context (la Response cruda de la función).
+  const edgeErrorMessage = async (error) => {
+    let detail = error.message || "error desconocido";
+    try {
+      const body = await error.context?.json();
+      if (body?.error) detail = body.error;
+    } catch { /* el cuerpo no era JSON parseable, nos quedamos con error.message */ }
+    return detail;
+  };
+
   const handleDelete = async (id) => {
     const cfg = TABLES[section];
-    const { error } = await sb.from(cfg.table).delete().eq("id", id);
-    if (error) { alert("No se pudo borrar: " + error.message); return; }
+    if (section === "users") {
+      // Borrar un usuario borra también su cuenta real de Supabase Auth
+      // (login + contraseña), no solo la fila de `profiles` -- si no, el
+      // email queda "fantasma" registrado en Auth y no se puede volver a
+      // usar para crear un usuario nuevo. Requiere Service Role, por eso
+      // pasa por la Edge Function `admin-delete-user`.
+      const { error } = await sb.functions.invoke("admin-delete-user", { body: { id } });
+      if (error) { alert("No se pudo borrar: " + await edgeErrorMessage(error)); return; }
+    } else {
+      const { error } = await sb.from(cfg.table).delete().eq("id", id);
+      if (error) { alert("No se pudo borrar: " + error.message); return; }
+    }
     setData(prev => prev.filter(r => r.id !== id));
     setConfirmDel(null);
   };
