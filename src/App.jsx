@@ -1160,6 +1160,9 @@ function SearchPage({ user, onSelect, region, initQ="", initCat="all", onCatChan
         )
       );
     }
+    // Destacadas primero (orden estable: dentro de cada grupo se mantiene el
+    // orden elegido por el usuario).
+    resultados = [...resultados].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
     setListings(resultados);
     setLoading(false);
   }, [cat, q, condition, marca, modelo, nSerie, nParte, nMotor, horasMin, horasMax,
@@ -1398,9 +1401,10 @@ function SearchPage({ user, onSelect, region, initQ="", initCat="all", onCatChan
         ) : viewMode === "grid" ? (
           <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobile?150:230}px, 1fr))`, gap:isMobile?12:16 }}>
             {listings.map(l=>(
-              <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)} style={l.sold?{position:"relative"}:undefined}>
+              <div key={l.id} className="photo-card card" onClick={()=>onSelect(l)} style={(l.sold||l.featured)?{position:"relative",...(l.featured?{border:`1px solid ${RED}`}:{})}:undefined}>
                 <PhotoPlaceholder emoji={l.emoji||"📦"} url={l.photos?.[0]} h={130} alt={[l.title,l.brand,l.model].filter(Boolean).join(" ")}/>
                 {l.sold && <span className="tag" style={{ position:"absolute",top:8,left:8,fontSize:12,fontWeight:700,color:"#fff",background:DANGER,border:"none",padding:"3px 8px",borderRadius:6 }}>VENDIDO</span>}
+                {l.featured && <span className="tag" style={{ position:"absolute",top:8,right:8,fontSize:12,fontWeight:700,color:"#fff",background:RED,border:"none",padding:"3px 8px",borderRadius:6 }}>⭐ Destacado</span>}
                 <div style={{ padding:"10px 12px 14px" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
                     <span className="tag t-dim" style={{ fontSize:16 }}>{CATS.find(c=>c.id===l.cat)?.label||"—"}</span>
@@ -1805,8 +1809,32 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
   const [deleting,    setDeleting]    = useState(false);
   const [sellerPhone, setSellerPhone] = useState("");   // fallback: WhatsApp del perfil del vendedor
   const [togglingSold, setTogglingSold] = useState(false);
+  const [togglingFeatured, setTogglingFeatured] = useState(false);
+  const [viewerIsAdmin, setViewerIsAdmin] = useState(false);
   const { handleProps, sheetStyle } = useSwipeToClose(onClose);
   const isOwner = user && l.user_id === user.id;
+
+  // Solo los administradores ven el botón "Destacar".
+  useEffect(() => {
+    setViewerIsAdmin(false);
+    if (!user?.id) return;
+    let alive = true;
+    sb.from("profiles").select("is_admin").eq("id", user.id).maybeSingle()
+      .then(({ data }) => { if (alive) setViewerIsAdmin(!!data?.is_admin); });
+    return () => { alive = false; };
+  }, [user?.id]);
+
+  const toggleFeatured = async () => {
+    setTogglingFeatured(true);
+    const next = !l.featured;
+    const { data: updated, error } = await sb.from("listings")
+      .update({ featured: next, featured_at: next ? new Date().toISOString() : null })
+      .eq("id", l.id).select().single();
+    setTogglingFeatured(false);
+    if (error) { toast("No se pudo actualizar: " + error.message, "error"); return; }
+    toast(next ? "Publicación destacada" : "Publicación ya no está destacada");
+    if (onEdited) onEdited(updated);
+  };
 
   // Si la publicación no trae teléfono propio, busca el del perfil del vendedor
   useEffect(() => {
@@ -1875,6 +1903,7 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:8 }}>
               <h2 style={{ fontSize:22,fontWeight:700,lineHeight:1.2,color:TEXT,flex:1 }}>{l.title}</h2>
               {l.sold&&<span className="tag" style={{ fontSize:13,fontWeight:700,color:"#fff",background:DANGER,border:"none" }}>VENDIDO</span>}
+              {l.featured&&<span className="tag" style={{ fontSize:13,fontWeight:700,color:"#fff",background:RED,border:"none" }}>⭐ Destacado</span>}
               {l.verified&&<span className="tag t-green"><Ic n="verify" s={10} c={GREEN}/>Verificado</span>}
             </div>
             <p className="bebas" style={{ fontSize:30,color:RED,marginBottom:16 }}>
@@ -1965,6 +1994,14 @@ function ListingDetail({ l, onClose, onChat, user, onDeleted, onEdited, onRequir
             </div>
 
             <div style={{ display:"flex",flexDirection:"column",gap:12,padding:"0 0 20px" }}>
+              {viewerIsAdmin && l.kind==="equipo" && (
+                <button onClick={toggleFeatured} disabled={togglingFeatured}
+                  style={l.featured
+                    ? { background:"transparent",color:MUTED,borderRadius:10,padding:"14px",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid ${BORDER}`,cursor:"pointer" }
+                    : { background:"rgba(255,106,0,.1)",color:RED,borderRadius:10,padding:"14px",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:`1px solid rgba(255,106,0,.35)`,cursor:"pointer" }}>
+                  {togglingFeatured ? <Spin/> : (l.featured ? <>Quitar destacado</> : <>⭐ Destacar publicación</>)}
+                </button>
+              )}
               {isOwner ? (
                 <>
                   {l.kind==="equipo" && (
@@ -2149,9 +2186,12 @@ function PublishSheet({ user, profile, onClose, onDone, onBulkUpload, initialTyp
     }
     setLoading(false);
     if (inserted) {
-      runMatchEngine(inserted, "listing", user, profile).then(async matches => {
-        for (const match of matches) await notifyMatch(match, inserted, "listing", user, profile);
-        if (matches.length > 0) { setMatchCount(matches.length); setShowMatchAlert(true); }
+      // Matching en el servidor (misma función que las solicitudes): prefiltra
+      // todas las solicitudes por palabras clave en vez de mirar solo 50 al azar.
+      sb.functions.invoke("match-request", { body: { listing_id: inserted.id } }).then(({ data:mres, error:merr }) => {
+        if (merr) { console.error("[match-request]", merr); return; }
+        const n = mres?.matches?.length || 0;
+        if (n > 0) { setMatchCount(n); setShowMatchAlert(true); }
       });
     }
     onDone();
@@ -5540,19 +5580,20 @@ function SolicitudSheet({ user, profile, onClose, onDone }) {
       return;
     }
 
-    // Run match engine in background
-    if (inserted) {
-      runMatchEngine(inserted, "request", user, profile).then(async matches => {
-        for (const match of matches) {
-          await notifyMatch(match, inserted, "request", user, profile);
-        }
-        if (matches.length > 0) {
-          setSolicitudMatches(matches.length);
-        }
-      });
-    }
+    // Muestra la pantalla de "enviada / analizando" y busca coincidencias en el
+    // servidor (Edge Function match-request): prefiltra por palabras clave el
+    // catálogo completo y analiza con IA las mejores candidatas. Antes corría
+    // en el navegador contra 50 filas al azar y la ventana se cerraba a los 3
+    // segundos, antes de que terminara — por eso nunca aparecían matches.
     setDone(true);
-    setTimeout(()=>{ onDone(); }, 3000);
+    let found = 0;
+    if (inserted) {
+      const { data: mres, error: merr } = await sb.functions.invoke("match-request", { body: { request_id: inserted.id } });
+      if (merr) console.error("[match-request]", merr);
+      found = mres?.matches?.length || 0;
+      setSolicitudMatches(found);
+    }
+    setTimeout(()=>{ onDone(); }, found > 0 ? 7000 : 3000);
   };
 
   const INP = { background:"rgba(255,255,255,.07)", border:"1.5px solid rgba(255,255,255,.15)", borderRadius:8, padding:"11px 14px", fontSize:16, color:TEXT, width:"100%", outline:"none", fontFamily:"inherit", transition:"border-color .2s" };
@@ -5971,6 +6012,17 @@ function AdminPanel({ user }) {
     setConfirmDel(null);
   };
 
+  // ── Destacar/quitar destacado de una publicación desde la lista del panel ──
+  const toggleFeaturedRow = async (row) => {
+    const next = !row.featured;
+    const { data: updated, error } = await sb.from("listings")
+      .update({ featured: next, featured_at: next ? new Date().toISOString() : null })
+      .eq("id", row.id).select().single();
+    if (error) { toast("No se pudo actualizar: " + error.message, "error"); return; }
+    setData(prev => prev.map(r => r.id===updated.id ? updated : r));
+    toast(next ? "Publicación destacada" : "Publicación ya no está destacada");
+  };
+
   // ── Administradores: marcar/desmarcar directo desde la lista de usuarios ──
   const [confirmSelfDemote, setConfirmSelfDemote] = useState(null); // id del propio usuario, pendiente de confirmar auto-degradación
   const toggleAdmin = async (row) => {
@@ -6048,9 +6100,8 @@ function AdminPanel({ user }) {
     // solicitudes existentes, igual que cuando publica el propio usuario.
     // Si se publicó "sin usuario asociado" no hay a quién notificar, se salta.
     if (inserted && pubType==="producto" && inserted.user_id) {
-      runMatchEngine(inserted, "listing", { id:inserted.user_id }, null).then(async matches => {
-        for (const match of matches) await notifyMatch(match, inserted, "listing", { id:inserted.user_id }, null);
-      });
+      sb.functions.invoke("match-request", { body: { listing_id: inserted.id } })
+        .then(({ error:merr }) => { if (merr) console.error("[match-request]", merr); });
     }
   };
 
@@ -6465,6 +6516,9 @@ function AdminPanel({ user }) {
                       <p style={{ fontSize:16, fontWeight:700, color:TEXT, marginBottom:3, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
                         {section==="users"   && (row.name||row.biz||"(sin nombre)")}
                         {section==="listings"&& row.title}
+                        {section==="listings" && row.featured && (
+                          <span style={{ fontSize:11, fontWeight:700, color:"#fff", background:RED, borderRadius:6, padding:"2px 8px", letterSpacing:.5 }}>⭐ Destacado</span>
+                        )}
                         {section==="requests"&& row.title}
                         {section==="matches" && `Match (score ${row.score||"—"})`}
                         {section==="messages"&& (row.body?.slice(0,80)||"(vacío)")}
@@ -6498,6 +6552,12 @@ function AdminPanel({ user }) {
                           {row.is_admin ? "Quitar admin" : "Hacer admin"}
                         </button>
                       ) : null}
+                      {section==="listings" && row.kind==="equipo" && (
+                        <button onClick={()=>toggleFeaturedRow(row)}
+                          style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${row.featured?BORDER:"rgba(255,106,0,.35)"}`, background:row.featured?"transparent":"rgba(255,106,0,.1)", color:row.featured?MUTED:RED, fontSize:14, cursor:"pointer", fontWeight:600 }}>
+                          {row.featured ? "Quitar destacado" : "⭐ Destacar"}
+                        </button>
+                      )}
                       {(section==="listings"||section==="requests"||section==="users") && (
                         <button onClick={()=>setEditing(row)}
                           style={{ padding:"6px 12px", borderRadius:7, border:`1px solid ${BORDER}`, background:BG2, color:TEXT, fontSize:14, cursor:"pointer", fontWeight:600 }}>
